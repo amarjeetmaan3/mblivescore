@@ -1,159 +1,672 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>M.B. Live Studio - Broadcast Overlay</title>
+<title>M.B. Live Studio - Professional Cricket Overlay</title>
 
-    <style>
+<style>
+*{
+    box-sizing:border-box;
+}
 
-        body {
-            background-color: transparent;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            color: white;
-            overflow: hidden;
-        }
+html,
+body{
+    width:100%;
+    height:100%;
+    margin:0;
+    padding:0;
+}
 
-        .scoreboard-container {
+body{
+    background:transparent;
+    overflow:hidden;
+    font-family:Arial,Helvetica,sans-serif;
+    color:white;
+}
 
-            position: absolute;
 
-            bottom: 50px;
-            left: 50px;
+/* =====================================================
+   SCOREBUG
+===================================================== */
 
-            display: flex;
+#scorebug{
 
-            background: linear-gradient(
-                to right,
-                #001f3f,
-                #003366
-            );
+    position:absolute;
 
-            border: 2px solid #ffcc00;
+    left:50px;
+    bottom:50px;
 
-            border-radius: 10px;
+    display:flex;
 
-            overflow: hidden;
+    min-height:62px;
 
-            box-shadow:
-                0 6px 12px rgba(0,0,0,0.6);
-        }
+    border:2px solid #ffcc00;
 
-        .team-name {
+    border-radius:10px;
 
-            background-color: #001f3f;
+    overflow:hidden;
 
-            padding: 10px 20px;
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.55);
 
-            font-size: 32px;
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+}
 
-            font-weight: 900;
+#scorebug.hidden{
 
-            display: flex;
+    opacity:0;
 
-            align-items: center;
+    pointer-events:none;
 
-            text-transform: uppercase;
-        }
+    transform:translateY(15px);
+}
 
-        .score-section {
 
-            background-color: white;
+.team-box{
 
-            color: black;
+    min-width:190px;
 
-            padding: 10px 20px;
+    padding:8px 18px;
 
-            font-size: 36px;
+    background:#001f3f;
 
-            font-weight: 900;
+    display:flex;
 
-            display: flex;
+    flex-direction:column;
 
-            align-items: center;
-        }
+    justify-content:center;
 
-        .overs-section {
+    text-transform:uppercase;
+}
 
-            background-color: #d32f2f;
 
-            padding: 10px 20px;
+.team-name{
 
-            font-size: 24px;
+    font-size:25px;
 
-            font-weight: bold;
+    font-weight:900;
+}
 
-            display: flex;
 
-            align-items: center;
-        }
+.match-title{
 
-        .situation-banner {
+    font-size:10px;
 
-            position: absolute;
+    margin-top:3px;
 
-            bottom: 18px;
-            left: 50px;
+    color:#b8c9e8;
+}
 
-            background-color: #ffcc00;
 
-            color: #000000;
+.score-box{
 
-            padding: 4px 15px;
+    background:#fff;
 
-            font-size: 16px;
+    color:#000;
 
-            font-weight: bold;
+    min-width:125px;
 
-            border-radius: 4px;
+    padding:6px 15px;
 
-            text-transform: uppercase;
+    display:flex;
 
-            box-shadow:
-                0 2px 5px rgba(0,0,0,0.5);
+    align-items:center;
 
-            display: none;
-        }
+    justify-content:center;
 
-        #connection-status {
+    font-size:34px;
 
-            position: fixed;
+    font-weight:900;
+}
 
-            top: 10px;
-            left: 10px;
 
-            padding: 5px 10px;
+.score-box .separator{
 
-            background: rgba(0,0,0,0.7);
+    margin:0 5px;
 
-            color: white;
+    color:#555;
+}
 
-            font-size: 12px;
 
-            border-radius: 4px;
+.overs-box{
 
-            display: none;
-        }
+    background:#d32f2f;
 
-    </style>
+    min-width:120px;
 
+    padding:0 14px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-weight:bold;
+}
+
+
+.overs-label{
+
+    font-size:10px;
+
+    opacity:.85;
+}
+
+
+.overs-value{
+
+    font-size:22px;
+}
+
+
+/* =====================================================
+   LOWER THIRD
+===================================================== */
+
+#lowerThird{
+
+    position:absolute;
+
+    left:50px;
+    bottom:135px;
+
+    min-width:360px;
+
+    max-width:650px;
+
+    background:linear-gradient(
+        90deg,
+        #001f3f,
+        #003d73
+    );
+
+    border-left:6px solid #ffcc00;
+
+    padding:12px 20px;
+
+    border-radius:5px;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.5);
+
+    opacity:0;
+
+    transform:translateX(-30px);
+
+    transition:
+        opacity .25s ease,
+        transform .25s ease;
+}
+
+
+#lowerThird.show{
+
+    opacity:1;
+
+    transform:translateX(0);
+}
+
+
+.lower-title{
+
+    font-size:12px;
+
+    color:#ffcc00;
+
+    font-weight:bold;
+
+    text-transform:uppercase;
+}
+
+
+.lower-text{
+
+    font-size:25px;
+
+    font-weight:900;
+
+    margin-top:3px;
+}
+
+
+/* =====================================================
+   BATSMAN GRAPHIC
+===================================================== */
+
+#batsmanGraphic{
+
+    position:absolute;
+
+    left:50px;
+    bottom:220px;
+
+    width:420px;
+
+    background:#071a32;
+
+    border:2px solid #ffcc00;
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+    opacity:0;
+
+    transform:translateX(-30px);
+
+    transition:.25s;
+}
+
+
+#batsmanGraphic.show{
+
+    opacity:1;
+
+    transform:translateX(0);
+}
+
+
+.player-header{
+
+    background:#003d73;
+
+    padding:7px 12px;
+
+    font-size:12px;
+
+    font-weight:bold;
+
+    text-transform:uppercase;
+}
+
+
+.player-body{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:12px;
+}
+
+
+.player-name{
+
+    font-size:23px;
+
+    font-weight:900;
+}
+
+
+.player-stats{
+
+    text-align:right;
+
+    font-size:18px;
+
+    font-weight:bold;
+}
+
+
+.player-stats small{
+
+    display:block;
+
+    color:#aab9d4;
+
+    font-size:10px;
+}
+
+
+/* =====================================================
+   BOWLER GRAPHIC
+===================================================== */
+
+#bowlerGraphic{
+
+    position:absolute;
+
+    right:50px;
+
+    bottom:135px;
+
+    width:380px;
+
+    background:#071a32;
+
+    border:2px solid #ffcc00;
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+    opacity:0;
+
+    transform:translateX(30px);
+
+    transition:.25s;
+}
+
+
+#bowlerGraphic.show{
+
+    opacity:1;
+
+    transform:translateX(0);
+}
+
+
+.bowler-body{
+
+    padding:12px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+}
+
+
+.bowler-name{
+
+    font-size:22px;
+
+    font-weight:900;
+}
+
+
+.bowler-stats{
+
+    text-align:right;
+
+    font-weight:bold;
+}
+
+
+.bowler-stats small{
+
+    display:block;
+
+    color:#aab9d4;
+
+    font-size:10px;
+}
+
+
+/* =====================================================
+   SPONSOR
+===================================================== */
+
+#sponsor{
+
+    position:absolute;
+
+    top:30px;
+
+    right:30px;
+
+    padding:10px 18px;
+
+    background:rgba(0,0,0,.75);
+
+    border:1px solid #ffcc00;
+
+    border-radius:5px;
+
+    font-size:15px;
+
+    font-weight:bold;
+
+    opacity:0;
+
+    transition:.25s;
+}
+
+
+#sponsor.show{
+
+    opacity:1;
+}
+
+
+/* =====================================================
+   ANNOUNCEMENT
+===================================================== */
+
+#announcement{
+
+    position:absolute;
+
+    left:50%;
+
+    top:40%;
+
+    transform:translate(-50%,-50%) scale(.9);
+
+    min-width:450px;
+
+    max-width:80%;
+
+    text-align:center;
+
+    background:rgba(0,31,63,.96);
+
+    border:3px solid #ffcc00;
+
+    border-radius:10px;
+
+    padding:18px 30px;
+
+    font-size:30px;
+
+    font-weight:900;
+
+    box-shadow:0 8px 30px rgba(0,0,0,.65);
+
+    opacity:0;
+
+    transition:.25s;
+}
+
+
+#announcement.show{
+
+    opacity:1;
+
+    transform:
+        translate(-50%,-50%)
+        scale(1);
+}
+
+
+/* =====================================================
+   RESULT
+===================================================== */
+
+#resultGraphic{
+
+    position:absolute;
+
+    left:50%;
+
+    top:35%;
+
+    transform:translate(-50%,-50%);
+
+    min-width:500px;
+
+    text-align:center;
+
+    background:rgba(0,31,63,.97);
+
+    border:3px solid #ffcc00;
+
+    border-radius:12px;
+
+    padding:25px 35px;
+
+    box-shadow:0 10px 35px rgba(0,0,0,.7);
+
+    opacity:0;
+
+    transition:.25s;
+}
+
+
+#resultGraphic.show{
+
+    opacity:1;
+}
+
+
+.result-title{
+
+    color:#ffcc00;
+
+    font-size:16px;
+
+    font-weight:bold;
+}
+
+
+.result-text{
+
+    font-size:34px;
+
+    font-weight:900;
+
+    margin-top:8px;
+}
+
+
+/* =====================================================
+   MATCH INFO
+===================================================== */
+
+#matchInfo{
+
+    position:absolute;
+
+    top:25px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    background:rgba(0,0,0,.65);
+
+    padding:6px 15px;
+
+    border-radius:4px;
+
+    font-size:13px;
+
+    opacity:0;
+
+}
+
+
+#matchInfo.show{
+
+    opacity:1;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:700px){
+
+    #scorebug{
+
+        left:15px;
+        bottom:25px;
+
+        transform:scale(.75);
+
+        transform-origin:left bottom;
+    }
+
+    #lowerThird{
+
+        left:15px;
+        bottom:105px;
+
+        min-width:300px;
+
+        transform-origin:left bottom;
+    }
+
+    #batsmanGraphic{
+
+        left:15px;
+        bottom:175px;
+
+        transform:scale(.8);
+
+        transform-origin:left bottom;
+    }
+
+    #bowlerGraphic{
+
+        right:15px;
+        bottom:105px;
+
+        transform:scale(.75);
+
+        transform-origin:right bottom;
+    }
+
+}
+
+
+/* =====================================================
+   DEBUG MESSAGE
+===================================================== */
+
+#debug{
+
+    position:fixed;
+
+    top:5px;
+    left:5px;
+
+    padding:4px 8px;
+
+    background:rgba(0,0,0,.65);
+
+    color:#9cffbd;
+
+    font-size:10px;
+
+    border-radius:3px;
+
+    display:none;
+}
+
+</style>
 </head>
+
 
 <body>
 
 
-    <!-- CONNECTION STATUS -->
+<!-- SCOREBUG -->
 
-    <div id="connection-status">
-        Connecting...
-    </div>
+<div id="scorebug">
 
-
-    <!-- SCOREBOARD -->
-
-    <div class="scoreboard-container">
+    <div class="team-box">
 
         <div
             class="team-name"
@@ -161,217 +674,588 @@
             TEAM
         </div>
 
-
-        <div class="score-section">
-
-            <span id="display_score">
-                0
-            </span>
-
-            <span style="margin: 0 4px;">
-                -
-            </span>
-
-            <span id="display_wickets">
-                0
-            </span>
-
-        </div>
-
-
-        <div class="overs-section">
-
-            Overs:
-
-            <span
-                id="display_overs"
-                style="margin-left: 6px;">
-                0.0
-            </span>
-
+        <div
+            class="match-title"
+            id="display_match_title">
+            LIVE MATCH
         </div>
 
     </div>
 
 
-    <!-- SITUATION -->
+    <div class="score-box">
+
+        <span id="display_score">
+            0
+        </span>
+
+        <span class="separator">
+            /
+        </span>
+
+        <span id="display_wickets">
+            0
+        </span>
+
+    </div>
+
+
+    <div class="overs-box">
+
+        <div class="overs-label">
+            OVERS
+        </div>
+
+        <div
+            class="overs-value"
+            id="display_overs">
+            0.0
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- MATCH INFO -->
+
+<div id="matchInfo">
+    <span id="display_tournament">
+        LIVE CRICKET
+    </span>
+</div>
+
+
+<!-- LOWER THIRD -->
+
+<div id="lowerThird">
+
+    <div class="lower-title">
+        LIVE UPDATE
+    </div>
 
     <div
-        class="situation-banner"
-        id="display_situation">
+        class="lower-text"
+        id="display_lower">
     </div>
 
+</div>
 
 
-    <script type="module">
+<!-- BATSMAN -->
+
+<div id="batsmanGraphic">
+
+    <div class="player-header">
+        BATSMAN
+    </div>
+
+    <div class="player-body">
+
+        <div
+            class="player-name"
+            id="display_striker">
+            -
+        </div>
+
+        <div class="player-stats">
+
+            <span id="display_striker_runs">
+                0
+            </span>
+            (
+            <span id="display_striker_balls">
+                0
+            </span>
+            )
+
+            <small>
+                4s:
+                <span id="display_striker_fours">0</span>
+                &nbsp;
+                6s:
+                <span id="display_striker_sixes">0</span>
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
 
 
-        // =====================================================
-        // FIREBASE SDK
-        // =====================================================
+<!-- BOWLER -->
 
-        import {
-            initializeApp
+<div id="bowlerGraphic">
+
+    <div class="player-header">
+        BOWLER
+    </div>
+
+    <div class="bowler-body">
+
+        <div
+            class="bowler-name"
+            id="display_bowler">
+            -
+        </div>
+
+        <div class="bowler-stats">
+
+            <span id="display_bowler_overs">
+                0.0
+            </span>
+            -
+
+            <span id="display_bowler_runs">
+                0
+            </span>
+            -
+
+            <span id="display_bowler_wickets">
+                0
+            </span>
+
+            <small>
+                O - R - W
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- SPONSOR -->
+
+<div id="sponsor">
+
+    <span id="display_sponsor">
+        SPONSOR
+    </span>
+
+</div>
+
+
+<!-- ANNOUNCEMENT -->
+
+<div id="announcement">
+
+    <span id="display_announcement">
+    </span>
+
+</div>
+
+
+<!-- RESULT -->
+
+<div id="resultGraphic">
+
+    <div class="result-title">
+        MATCH RESULT
+    </div>
+
+    <div
+        class="result-text"
+        id="display_result">
+    </div>
+
+</div>
+
+
+<div id="debug">
+    Firebase Connected
+</div>
+
+
+<script type="module">
+
+
+/* =====================================================
+   FIREBASE
+===================================================== */
+
+import {
+    initializeApp
+}
+from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+
+
+import {
+    getDatabase,
+    ref,
+    onValue
+}
+from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+
+const firebaseConfig = {
+
+    apiKey:
+        "AIzaSyAVo8B0n12e13eJJMjsh4U9zWUuoqaLnbK",
+
+    authDomain:
+        "mbtoaj.firebaseapp.com",
+
+    databaseURL:
+        "https://mbtoaj-default-rtdb.firebaseio.com",
+
+    projectId:
+        "mbtoaj",
+
+    storageBucket:
+        "mbtoaj.firebasestorage.app",
+
+    messagingSenderId:
+        "100171222080",
+
+    appId:
+        "1:100171222080:web:b7b90f66affc8561b8e3a5"
+
+};
+
+
+const app =
+    initializeApp(firebaseConfig);
+
+
+const db =
+    getDatabase(app);
+
+
+const liveRef =
+    ref(db,"live_match");
+
+
+/* =====================================================
+   FIREBASE REAL-TIME LISTENER
+===================================================== */
+
+onValue(
+    liveRef,
+    (snapshot)=>{
+
+        const data =
+            snapshot.val();
+
+
+        if(!data){
+
+            hideAllGraphics();
+
+            return;
+
         }
-        from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 
 
-        import {
-            getDatabase,
-            ref,
-            onValue
-        }
-        from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+        updateOverlay(data);
 
+    },
 
+    (error)=>{
 
-        // =====================================================
-        // MBTOAJ FIREBASE PROJECT
-        // =====================================================
+        console.error(
+            "Firebase:",
+            error
+        );
 
-        const firebaseConfig = {
+    }
+);
 
-            apiKey:
-                "AIzaSyAVo8B0n12e13eJJMjsh4U9zWUuoqaLnbK",
 
-            authDomain:
-                "mbtoaj.firebaseapp.com",
+/* =====================================================
+   UPDATE OVERLAY
+===================================================== */
 
-            databaseURL:
-                "https://mbtoaj-default-rtdb.firebaseio.com",
+function updateOverlay(data){
 
-            projectId:
-                "mbtoaj",
 
-            storageBucket:
-                "mbtoaj.firebasestorage.app",
+    /* SCOREBUG */
 
-            messagingSenderId:
-                "100171222080",
+    setText(
+        "display_team",
+        data.team || data.team1 || "TEAM"
+    );
 
-            appId:
-                "1:100171222080:web:b7b90f66affc8561b8e3a5"
 
-        };
+    setText(
+        "display_score",
+        data.score ?? 0
+    );
 
 
+    setText(
+        "display_wickets",
+        data.wickets ?? 0
+    );
 
-        // =====================================================
-        // INITIALIZE FIREBASE
-        // =====================================================
 
-        const app =
-            initializeApp(firebaseConfig);
+    setText(
+        "display_overs",
+        data.overs || "0.0"
+    );
 
 
-        const db =
-            getDatabase(app);
+    setText(
+        "display_match_title",
+        data.matchTitle || "LIVE MATCH"
+    );
 
 
+    setText(
+        "display_tournament",
+        data.tournament || "LIVE CRICKET"
+    );
 
-        // =====================================================
-        // LIVE MATCH LISTENER
-        // =====================================================
 
-        const liveMatchRef =
-            ref(db, "live_match");
+    /* GRAPHIC STATE */
 
+    const graphics =
+        data.graphics || {};
 
-        onValue(
-            liveMatchRef,
-            (snapshot) => {
 
-                const data =
-                    snapshot.val();
+    const scorebug =
+        graphics.scorebug !== false;
 
 
-                if (!data) {
-
-                    return;
-
-                }
-
-
-
-                // TEAM
-
-                document
-                    .getElementById("display_team")
-                    .innerText =
-                    data.team || "TEAM";
-
-
-
-                // SCORE
-
-                document
-                    .getElementById("display_score")
-                    .innerText =
-                    data.score ?? "0";
-
-
-
-                // WICKETS
-
-                document
-                    .getElementById("display_wickets")
-                    .innerText =
-                    data.wickets ?? "0";
-
-
-
-                // OVERS
-
-                document
-                    .getElementById("display_overs")
-                    .innerText =
-                    data.overs || "0.0";
-
-
-
-                // SITUATION
-
-                const situationElement =
-                    document.getElementById(
-                        "display_situation"
-                    );
-
-
-                if (
-                    data.situation &&
-                    data.situation.trim() !== ""
-                ) {
-
-                    situationElement.innerText =
-                        data.situation;
-
-                    situationElement.style.display =
-                        "block";
-
-                }
-
-                else {
-
-                    situationElement.style.display =
-                        "none";
-
-                }
-
-            },
-
-            (error) => {
-
-                console.error(
-                    "Firebase error:",
-                    error
-                );
-
-            }
-
+    document
+        .getElementById("scorebug")
+        .classList.toggle(
+            "hidden",
+            !scorebug
         );
 
 
-    </script>
+    /* LOWER THIRD */
+
+    const lowerThird =
+        document.getElementById(
+            "lowerThird"
+        );
+
+
+    setText(
+        "display_lower",
+        data.lowerThirdText || ""
+    );
+
+
+    lowerThird.classList.toggle(
+        "show",
+        graphics.lowerThird === true &&
+        Boolean(data.lowerThirdText)
+    );
+
+
+    /* BATSMAN */
+
+    setText(
+        "display_striker",
+        data.striker || "-"
+    );
+
+
+    setText(
+        "display_striker_runs",
+        data.strikerRuns ?? 0
+    );
+
+
+    setText(
+        "display_striker_balls",
+        data.strikerBalls ?? 0
+    );
+
+
+    setText(
+        "display_striker_fours",
+        data.strikerFours ?? 0
+    );
+
+
+    setText(
+        "display_striker_sixes",
+        data.strikerSixes ?? 0
+    );
+
+
+    document
+        .getElementById("batsmanGraphic")
+        .classList.toggle(
+            "show",
+            graphics.batsman === true &&
+            Boolean(data.striker)
+        );
+
+
+    /* BOWLER */
+
+    setText(
+        "display_bowler",
+        data.bowler || "-"
+    );
+
+
+    setText(
+        "display_bowler_overs",
+        data.bowlerOvers || "0.0"
+    );
+
+
+    setText(
+        "display_bowler_runs",
+        data.bowlerRuns ?? 0
+    );
+
+
+    setText(
+        "display_bowler_wickets",
+        data.bowlerWickets ?? 0
+    );
+
+
+    document
+        .getElementById("bowlerGraphic")
+        .classList.toggle(
+            "show",
+            graphics.bowlerGraphic === true &&
+            Boolean(data.bowler)
+        );
+
+
+    /* SPONSOR */
+
+    setText(
+        "display_sponsor",
+        data.sponsorText || ""
+    );
+
+
+    document
+        .getElementById("sponsor")
+        .classList.toggle(
+            "show",
+            graphics.sponsor === true &&
+            Boolean(data.sponsorText)
+        );
+
+
+    /* ANNOUNCEMENT */
+
+    const announcementText =
+        data.customText ||
+        data.situation ||
+        "";
+
+
+    setText(
+        "display_announcement",
+        announcementText
+    );
+
+
+    document
+        .getElementById("announcement")
+        .classList.toggle(
+            "show",
+            graphics.lowerThird !== true &&
+            false
+        );
+
+
+    /* RESULT */
+
+    const resultText =
+        data.customText ||
+        data.situation ||
+        "";
+
+
+    setText(
+        "display_result",
+        resultText
+    );
+
+
+    document
+        .getElementById("resultGraphic")
+        .classList.toggle(
+            "show",
+            graphics.result === true &&
+            Boolean(resultText)
+        );
+
+
+    /* MATCH INFO */
+
+    document
+        .getElementById("matchInfo")
+        .classList.toggle(
+            "show",
+            Boolean(data.tournament)
+        );
+
+}
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function setText(id,value){
+
+    const element =
+        document.getElementById(id);
+
+    if(element){
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+function hideAllGraphics(){
+
+    document
+        .getElementById("scorebug")
+        .classList.add("hidden");
+
+    document
+        .getElementById("lowerThird")
+        .classList.remove("show");
+
+    document
+        .getElementById("batsmanGraphic")
+        .classList.remove("show");
+
+    document
+        .getElementById("bowlerGraphic")
+        .classList.remove("show");
+
+    document
+        .getElementById("sponsor")
+        .classList.remove("show");
+
+    document
+        .getElementById("announcement")
+        .classList.remove("show");
+
+    document
+        .getElementById("resultGraphic")
+        .classList.remove("show");
+
+    document
+        .getElementById("matchInfo")
+        .classList.remove("show");
+
+}
+
+
+</script>
 
 </body>
 </html>
