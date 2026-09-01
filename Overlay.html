@@ -3,122 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>M.B. Live Studio - Broadcast Overlay</title>
+
     <style>
-        /* बैकग्राउंड ट्रांसपेरेंट रखना ज़रूरी है ताकि वीडियो पीछे दिख सके */
-        body { 
-            background-color: transparent; 
-            margin: 0; 
-            font-family: 'Arial', sans-serif; 
-            color: white; 
+
+        body {
+            background-color: transparent;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: white;
             overflow: hidden;
         }
-        
-        /* मुख्य स्कोरबोर्ड का डिज़ाइन */
+
         .scoreboard-container {
+
             position: absolute;
+
             bottom: 50px;
             left: 50px;
+
             display: flex;
-            background: linear-gradient(to right, #001f3f, #003366);
+
+            background: linear-gradient(
+                to right,
+                #001f3f,
+                #003366
+            );
+
             border: 2px solid #ffcc00;
+
             border-radius: 10px;
+
             overflow: hidden;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+
+            box-shadow:
+                0 6px 12px rgba(0,0,0,0.6);
         }
-        
+
         .team-name {
+
             background-color: #001f3f;
+
             padding: 10px 20px;
+
             font-size: 32px;
+
             font-weight: 900;
+
             display: flex;
+
             align-items: center;
+
             text-transform: uppercase;
         }
-        
+
         .score-section {
-            background-color: #ffffff;
-            color: #000000;
+
+            background-color: white;
+
+            color: black;
+
             padding: 10px 20px;
+
             font-size: 36px;
+
             font-weight: 900;
+
             display: flex;
+
             align-items: center;
         }
-        
+
         .overs-section {
+
             background-color: #d32f2f;
+
             padding: 10px 20px;
+
             font-size: 24px;
+
             font-weight: bold;
+
             display: flex;
+
             align-items: center;
         }
-        
-        /* सिचुएशन (जैसे Powerplay) का बैनर */
+
         .situation-banner {
+
             position: absolute;
+
             bottom: 18px;
             left: 50px;
+
             background-color: #ffcc00;
+
             color: #000000;
+
             padding: 4px 15px;
+
             font-size: 16px;
+
             font-weight: bold;
+
             border-radius: 4px;
+
             text-transform: uppercase;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            display: none; /* डिफ़ॉल्ट रूप से छिपा रहेगा */
+
+            box-shadow:
+                0 2px 5px rgba(0,0,0,0.5);
+
+            display: none;
         }
+
+        #connection-status {
+
+            position: fixed;
+
+            top: 10px;
+            left: 10px;
+
+            padding: 5px 10px;
+
+            background: rgba(0,0,0,0.7);
+
+            color: white;
+
+            font-size: 12px;
+
+            border-radius: 4px;
+
+            display: none;
+        }
+
     </style>
+
 </head>
+
 <body>
 
-    <div class="scoreboard-container">
-        <div class="team-name" id="display_team">TEAM</div>
-        <div class="score-section">
-            <span id="display_score">0</span><span style="margin: 0 4px;">-</span><span id="display_wickets">0</span>
-        </div>
-        <div class="overs-section">Overs: <span id="display_overs" style="margin-left: 6px;">0.0</span></div>
+
+    <!-- CONNECTION STATUS -->
+
+    <div id="connection-status">
+        Connecting...
     </div>
-    <div class="situation-banner" id="display_situation"></div>
+
+
+    <!-- SCOREBOARD -->
+
+    <div class="scoreboard-container">
+
+        <div
+            class="team-name"
+            id="display_team">
+            TEAM
+        </div>
+
+
+        <div class="score-section">
+
+            <span id="display_score">
+                0
+            </span>
+
+            <span style="margin: 0 4px;">
+                -
+            </span>
+
+            <span id="display_wickets">
+                0
+            </span>
+
+        </div>
+
+
+        <div class="overs-section">
+
+            Overs:
+
+            <span
+                id="display_overs"
+                style="margin-left: 6px;">
+                0.0
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- SITUATION -->
+
+    <div
+        class="situation-banner"
+        id="display_situation">
+    </div>
+
+
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+
+        // =====================================================
+        // FIREBASE SDK
+        // =====================================================
+
+        import {
+            initializeApp
+        }
+        from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+
+
+        import {
+            getDatabase,
+            ref,
+            onValue
+        }
+        from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+
+
+        // =====================================================
+        // MBTOAJ FIREBASE PROJECT
+        // =====================================================
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
-            authDomain: "mb-live-score.firebaseapp.com",
-            databaseURL: "https://mb-live-score-default-rtdb.firebaseio.com",
-            projectId: "mb-live-score",
-            storageBucket: "mb-live-score.firebasestorage.app",
-            messagingSenderId: "263955953168",
-            appId: "1:263955953168:web:728d45ff569fdb0cad7c95"
+
+            apiKey:
+                "AIzaSyAVo8B0n12e13eJJMjsh4U9zWUuoqaLnbK",
+
+            authDomain:
+                "mbtoaj.firebaseapp.com",
+
+            databaseURL:
+                "https://mbtoaj-default-rtdb.firebaseio.com",
+
+            projectId:
+                "mbtoaj",
+
+            storageBucket:
+                "mbtoaj.firebasestorage.app",
+
+            messagingSenderId:
+                "100171222080",
+
+            appId:
+                "1:100171222080:web:b7b90f66affc8561b8e3a5"
+
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        
-        // डेटाबेस से रीयल-टाइम डेटा पढ़ें
-        onValue(ref(db, 'live_match'), (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                document.getElementById('display_team').innerText = data.team || "TEAM";
-                document.getElementById('display_score').innerText = data.score || "0";
-                document.getElementById('display_wickets').innerText = data.wickets || "0";
-                document.getElementById('display_overs').innerText = data.overs || "0.0";
-                
-                const situationElement = document.getElementById('display_situation');
-                if (data.situation && data.situation.trim() !== "") {
-                    situationElement.innerText = data.situation;
-                    situationElement.style.display = "block";
-                } else {
-                    situationElement.style.display = "none";
+
+
+        // =====================================================
+        // INITIALIZE FIREBASE
+        // =====================================================
+
+        const app =
+            initializeApp(firebaseConfig);
+
+
+        const db =
+            getDatabase(app);
+
+
+
+        // =====================================================
+        // LIVE MATCH LISTENER
+        // =====================================================
+
+        const liveMatchRef =
+            ref(db, "live_match");
+
+
+        onValue(
+            liveMatchRef,
+            (snapshot) => {
+
+                const data =
+                    snapshot.val();
+
+
+                if (!data) {
+
+                    return;
+
                 }
+
+
+
+                // TEAM
+
+                document
+                    .getElementById("display_team")
+                    .innerText =
+                    data.team || "TEAM";
+
+
+
+                // SCORE
+
+                document
+                    .getElementById("display_score")
+                    .innerText =
+                    data.score ?? "0";
+
+
+
+                // WICKETS
+
+                document
+                    .getElementById("display_wickets")
+                    .innerText =
+                    data.wickets ?? "0";
+
+
+
+                // OVERS
+
+                document
+                    .getElementById("display_overs")
+                    .innerText =
+                    data.overs || "0.0";
+
+
+
+                // SITUATION
+
+                const situationElement =
+                    document.getElementById(
+                        "display_situation"
+                    );
+
+
+                if (
+                    data.situation &&
+                    data.situation.trim() !== ""
+                ) {
+
+                    situationElement.innerText =
+                        data.situation;
+
+                    situationElement.style.display =
+                        "block";
+
+                }
+
+                else {
+
+                    situationElement.style.display =
+                        "none";
+
+                }
+
+            },
+
+            (error) => {
+
+                console.error(
+                    "Firebase error:",
+                    error
+                );
+
             }
-        });
+
+        );
+
+
     </script>
+
 </body>
 </html>
