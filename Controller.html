@@ -1,205 +1,1188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M.B. Live Studio - Controller</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M.B. Live Studio - Professional Cricket Controller</title>
 
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-            background: #e0e0e0;
-        }
+<style>
+*{box-sizing:border-box}
 
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 400px;
-            margin: auto;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0b1020;
+    color:#fff;
+}
 
-        input {
-            width: 90%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
+.header{
+    background:#111936;
+    padding:15px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    border-bottom:1px solid #2b3765;
+}
 
-        button {
-            width: 95%;
-            padding: 12px;
-            background: #d32f2f;
-            color: white;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
-        }
+.header h1{
+    margin:0;
+    font-size:20px;
+}
 
-        button:active {
-            background: #b71c1c;
-        }
+.header small{
+    color:#8fa0d0;
+}
 
-        #status {
-            margin-top: 15px;
-            text-align: center;
-            font-weight: bold;
-        }
-    </style>
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:15px;
+}
+
+.card{
+    background:#151d38;
+    border:1px solid #29345d;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+.card h2{
+    margin:0 0 15px;
+    font-size:17px;
+    color:#ffd54a;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+}
+
+@media(max-width:600px){
+    .grid{
+        grid-template-columns:1fr;
+    }
+}
+
+label{
+    display:block;
+    font-size:12px;
+    color:#aab6d8;
+    margin-bottom:5px;
+}
+
+input,select,textarea{
+    width:100%;
+    padding:11px;
+    border-radius:7px;
+    border:1px solid #35416d;
+    background:#0d142b;
+    color:#fff;
+    outline:none;
+}
+
+textarea{
+    min-height:80px;
+    resize:vertical;
+}
+
+input:focus,select:focus,textarea:focus{
+    border-color:#ffd54a;
+}
+
+.score-display{
+    text-align:center;
+    padding:18px;
+    background:#0c1328;
+    border-radius:10px;
+    margin-bottom:15px;
+}
+
+.score{
+    font-size:48px;
+    font-weight:900;
+}
+
+.score span{
+    color:#7785ad;
+}
+
+.team{
+    color:#ffd54a;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.overs{
+    color:#aab6d8;
+    margin-top:5px;
+}
+
+.button-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+
+button{
+    border:0;
+    border-radius:7px;
+    padding:12px 8px;
+    font-size:14px;
+    font-weight:bold;
+    cursor:pointer;
+    background:#26345f;
+    color:#fff;
+}
+
+button:active{
+    transform:scale(.97);
+}
+
+.run{
+    background:#176b4d;
+}
+
+.boundary{
+    background:#1d65a8;
+}
+
+.wicket{
+    background:#b52c3b;
+}
+
+.extra{
+    background:#6d4fa3;
+}
+
+.secondary{
+    background:#303b62;
+}
+
+.danger{
+    background:#a51e2d;
+}
+
+.success{
+    background:#147a4e;
+}
+
+.graphic-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#0d142b;
+    padding:11px;
+    margin-bottom:7px;
+    border-radius:7px;
+}
+
+.toggle{
+    min-width:70px;
+    padding:8px;
+}
+
+.toggle.on{
+    background:#168b58;
+}
+
+.toggle.off{
+    background:#5a6178;
+}
+
+.status{
+    position:fixed;
+    bottom:15px;
+    right:15px;
+    background:#168b58;
+    padding:10px 15px;
+    border-radius:8px;
+    font-weight:bold;
+    display:none;
+    z-index:50;
+}
+
+.status.error{
+    background:#b52c3b;
+}
+
+.link-box{
+    word-break:break-all;
+    background:#0d142b;
+    padding:10px;
+    border-radius:7px;
+    color:#8fd3ff;
+    font-size:12px;
+}
+
+.end-match{
+    width:100%;
+    background:#a51e2d;
+    margin-top:5px;
+}
+
+.reset{
+    width:100%;
+    background:#5b6380;
+    margin-top:8px;
+}
+</style>
 </head>
 
 <body>
 
+<div class="header">
+    <h1>🏏 M.B. LIVE STUDIO</h1>
+    <small>Professional Cricket Broadcast Controller</small>
+</div>
+
+<div class="container">
+
+<!-- MATCH SETUP -->
+
 <div class="card">
+<h2>Match Setup</h2>
 
-    <h3 style="text-align: center;">
-        M.B. Live Studio - Controller
-    </h3>
+<div class="grid">
 
-    <label>Batting Team:</label><br>
-    <input type="text" id="teamName" value="TEAM A"><br>
+<div>
+<label>Team 1</label>
+<input id="team1" value="TEAM A">
+</div>
 
-    <label>Runs:</label><br>
-    <input type="number" id="runs" value="0"><br>
+<div>
+<label>Team 2</label>
+<input id="team2" value="TEAM B">
+</div>
 
-    <label>Wickets:</label><br>
-    <input type="number" id="wickets" value="0"><br>
+<div>
+<label>Tournament</label>
+<input id="tournament" value="LIVE CRICKET">
+</div>
 
-    <label>Overs:</label><br>
-    <input type="text" id="overs" value="0.0"><br>
-
-    <label>Situation/Message:</label><br>
-    <input type="text" id="situation" value="Powerplay 1"><br>
-
-    <button id="updateBtn">
-        Update Live Score
-    </button>
-
-    <div id="status">
-        Ready
-    </div>
+<div>
+<label>Match Title</label>
+<input id="matchTitle" value="LIVE MATCH">
+</div>
 
 </div>
 
+<br>
+
+<button class="success" onclick="saveMatchSetup()">
+SAVE MATCH SETUP
+</button>
+</div>
+
+
+<!-- LIVE SCORE -->
+
+<div class="card">
+
+<h2>Live Score</h2>
+
+<div class="score-display">
+
+<div class="team" id="previewTeam">
+TEAM A
+</div>
+
+<div class="score">
+<span id="previewRuns">0</span>
+/
+<span id="previewWickets">0</span>
+</div>
+
+<div class="overs">
+OVERS <span id="previewOvers">0.0</span>
+</div>
+
+</div>
+
+<div class="grid">
+
+<div>
+<label>Runs</label>
+<input type="number" id="runs" value="0">
+</div>
+
+<div>
+<label>Wickets</label>
+<input type="number" id="wickets" value="0">
+</div>
+
+<div>
+<label>Overs</label>
+<input type="text" id="overs" value="0.0">
+</div>
+
+<div>
+<label>Target</label>
+<input type="number" id="target" value="0">
+</div>
+
+</div>
+
+<br>
+
+<label>Quick Score</label>
+
+<div class="button-grid">
+
+<button class="run" onclick="addRun(0)">0</button>
+<button class="run" onclick="addRun(1)">+1</button>
+<button class="run" onclick="addRun(2)">+2</button>
+<button class="run" onclick="addRun(3)">+3</button>
+
+<button class="boundary" onclick="addRun(4)">+4</button>
+<button class="boundary" onclick="addRun(6)">+6</button>
+<button class="extra" onclick="addExtra('WD')">WD</button>
+<button class="extra" onclick="addExtra('NB')">NB</button>
+
+<button class="extra" onclick="addExtra('BYE')">BYE</button>
+<button class="extra" onclick="addExtra('LB')">LB</button>
+<button class="wicket" onclick="addWicket()">WICKET</button>
+<button class="secondary" onclick="undoScore()">UNDO</button>
+
+</div>
+
+<br>
+
+<button class="success" onclick="updateLive()">
+UPDATE LIVE
+</button>
+
+</div>
+
+
+<!-- BATSMEN -->
+
+<div class="card">
+
+<h2>Batsmen</h2>
+
+<div class="grid">
+
+<div>
+<label>Striker</label>
+<input id="striker" placeholder="Batsman name">
+</div>
+
+<div>
+<label>Non-Striker</label>
+<input id="nonStriker" placeholder="Batsman name">
+</div>
+
+<div>
+<label>Striker Runs</label>
+<input type="number" id="strikerRuns" value="0">
+</div>
+
+<div>
+<label>Striker Balls</label>
+<input type="number" id="strikerBalls" value="0">
+</div>
+
+<div>
+<label>Striker 4s</label>
+<input type="number" id="strikerFours" value="0">
+</div>
+
+<div>
+<label>Striker 6s</label>
+<input type="number" id="strikerSixes" value="0">
+</div>
+
+</div>
+
+<br>
+
+<button class="success" onclick="updateLive()">
+UPDATE BATSMEN
+</button>
+
+</div>
+
+
+<!-- BOWLER -->
+
+<div class="card">
+
+<h2>Bowler</h2>
+
+<div class="grid">
+
+<div>
+<label>Bowler Name</label>
+<input id="bowler" placeholder="Bowler name">
+</div>
+
+<div>
+<label>Bowler Overs</label>
+<input id="bowlerOvers" value="0.0">
+</div>
+
+<div>
+<label>Bowler Runs</label>
+<input type="number" id="bowlerRuns" value="0">
+</div>
+
+<div>
+<label>Bowler Wickets</label>
+<input type="number" id="bowlerWickets" value="0">
+</div>
+
+</div>
+
+<br>
+
+<button class="success" onclick="updateLive()">
+UPDATE BOWLER
+</button>
+
+</div>
+
+
+<!-- CURRENT OVER -->
+
+<div class="card">
+
+<h2>Current Over</h2>
+
+<div class="grid">
+
+<div>
+<label>Current Over</label>
+<input id="currentOver" value="">
+</div>
+
+<div>
+<label>Required Runs</label>
+<input id="requiredRuns" value="">
+</div>
+
+<div>
+<label>CRR</label>
+<input id="crr" value="">
+</div>
+
+<div>
+<label>RRR</label>
+<input id="rrr" value="">
+</div>
+
+</div>
+
+<br>
+
+<button class="success" onclick="updateLive()">
+UPDATE OVER INFO
+</button>
+
+</div>
+
+
+<!-- GRAPHICS -->
+
+<div class="card">
+
+<h2>Graphics Control</h2>
+
+<div class="graphic-row">
+<span>Scorebug</span>
+<button id="scorebugBtn" class="toggle on"
+onclick="toggleGraphic('scorebug')">
+ON
+</button>
+</div>
+
+<div class="graphic-row">
+<span>Lower Third</span>
+<button id="lowerThirdBtn" class="toggle off"
+onclick="toggleGraphic('lowerThird')">
+OFF
+</button>
+</div>
+
+<div class="graphic-row">
+<span>Batsman Graphic</span>
+<button id="batsmanBtn" class="toggle off"
+onclick="toggleGraphic('batsman')">
+OFF
+</button>
+</div>
+
+<div class="graphic-row">
+<span>Bowler Graphic</span>
+<button id="bowlerGraphicBtn" class="toggle off"
+onclick="toggleGraphic('bowlerGraphic')">
+OFF
+</button>
+</div>
+
+<div class="graphic-row">
+<span>Sponsor Graphic</span>
+<button id="sponsorBtn" class="toggle off"
+onclick="toggleGraphic('sponsor')">
+OFF
+</button>
+</div>
+
+<div class="graphic-row">
+<span>Result Graphic</span>
+<button id="resultBtn" class="toggle off"
+onclick="toggleGraphic('result')">
+OFF
+</button>
+</div>
+
+</div>
+
+
+<!-- CUSTOM GRAPHICS -->
+
+<div class="card">
+
+<h2>Custom Graphic Content</h2>
+
+<div class="grid">
+
+<div>
+<label>Lower Third Text</label>
+<input id="lowerThirdText" placeholder="Player / Announcement">
+</div>
+
+<div>
+<label>Sponsor Text</label>
+<input id="sponsorText" placeholder="Sponsor name">
+</div>
+
+</div>
+
+<br>
+
+<label>Custom Announcement</label>
+<textarea id="customText"
+placeholder="Enter custom broadcast message"></textarea>
+
+<br><br>
+
+<button class="success" onclick="updateLive()">
+UPDATE GRAPHICS
+</button>
+
+</div>
+
+
+<!-- SITUATION -->
+
+<div class="card">
+
+<h2>Match Situation</h2>
+
+<input id="situation" value="">
+
+<br><br>
+
+<button class="success" onclick="updateLive()">
+UPDATE SITUATION
+</button>
+
+</div>
+
+
+<!-- BROADCAST STATUS -->
+
+<div class="card">
+
+<h2>Broadcast Connection</h2>
+
+<div class="link-box" id="overlayLink"></div>
+
+<br>
+
+<button class="secondary" onclick="copyOverlayLink()">
+COPY OVERLAY LINK
+</button>
+
+</div>
+
+
+<!-- MATCH CONTROL -->
+
+<div class="card">
+
+<h2>Match Control</h2>
+
+<button class="end-match" onclick="endMatch()">
+END LIVE MATCH & CLEAR DATA
+</button>
+
+<button class="reset" onclick="resetController()">
+RESET CONTROLLER
+</button>
+
+</div>
+
+</div>
+
+
+<div id="status" class="status"></div>
+
+
 <script type="module">
 
-    // Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 
-    import {
-        getDatabase,
-        ref,
-        set
-    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+import {
+    getDatabase,
+    ref,
+    set,
+    remove
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
 
-    // =====================================================
-    // MBTOAJ FIREBASE PROJECT
-    // =====================================================
+/* =====================================================
+   MBTOAJ FIREBASE
+===================================================== */
 
-    const firebaseConfig = {
+const firebaseConfig = {
 
-        apiKey: "AIzaSyAVo8B0n12e13eJJMjsh4U9zWUuoqaLnbM",
+    apiKey: "AIzaSyAVo8B0n12e13eJJMjsh4U9zWUuoqaLnbM",
 
-        authDomain: "mbtoaj.firebaseapp.com",
+    authDomain: "mbtoaj.firebaseapp.com",
 
-        databaseURL: "https://mbtoaj-default-rtdb.firebaseio.com",
+    databaseURL: "https://mbtoaj-default-rtdb.firebaseio.com",
 
-        projectId: "mbtoaj",
+    projectId: "mbtoaj",
 
-        storageBucket: "mbtoaj.firebasestorage.app",
+    storageBucket: "mbtoaj.firebasestorage.app",
 
-        messagingSenderId: "100171222080",
+    messagingSenderId: "100171222080",
 
-        appId: "1:100171222080:web:b7b90f66affc8561b8e3a5"
+    appId: "1:100171222080:web:b7b90f66affc8561b8e3a5"
+
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+const liveRef = ref(db,"live_match");
+
+
+/* =====================================================
+   LOCAL STATE
+===================================================== */
+
+let previousRuns = 0;
+
+let graphicState = {
+
+    scorebug: true,
+    lowerThird: false,
+    batsman: false,
+    bowlerGraphic: false,
+    sponsor: false,
+    result: false
+
+};
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function showStatus(message,error=false){
+
+    const el =
+        document.getElementById("status");
+
+    el.textContent = message;
+
+    el.classList.toggle("error",error);
+
+    el.style.display = "block";
+
+    setTimeout(()=>{
+        el.style.display = "none";
+    },1800);
+
+}
+
+
+/* =====================================================
+   COLLECT DATA
+===================================================== */
+
+function collectData(){
+
+    return {
+
+        team1:
+            document.getElementById("team1").value,
+
+        team2:
+            document.getElementById("team2").value,
+
+        tournament:
+            document.getElementById("tournament").value,
+
+        matchTitle:
+            document.getElementById("matchTitle").value,
+
+        team:
+            document.getElementById("team1").value,
+
+        score:
+            Number(document.getElementById("runs").value) || 0,
+
+        wickets:
+            Number(document.getElementById("wickets").value) || 0,
+
+        overs:
+            document.getElementById("overs").value || "0.0",
+
+        target:
+            Number(document.getElementById("target").value) || 0,
+
+        striker:
+            document.getElementById("striker").value,
+
+        nonStriker:
+            document.getElementById("nonStriker").value,
+
+        strikerRuns:
+            Number(document.getElementById("strikerRuns").value) || 0,
+
+        strikerBalls:
+            Number(document.getElementById("strikerBalls").value) || 0,
+
+        strikerFours:
+            Number(document.getElementById("strikerFours").value) || 0,
+
+        strikerSixes:
+            Number(document.getElementById("strikerSixes").value) || 0,
+
+        bowler:
+            document.getElementById("bowler").value,
+
+        bowlerOvers:
+            document.getElementById("bowlerOvers").value || "0.0",
+
+        bowlerRuns:
+            Number(document.getElementById("bowlerRuns").value) || 0,
+
+        bowlerWickets:
+            Number(document.getElementById("bowlerWickets").value) || 0,
+
+        currentOver:
+            document.getElementById("currentOver").value,
+
+        requiredRuns:
+            document.getElementById("requiredRuns").value,
+
+        crr:
+            document.getElementById("crr").value,
+
+        rrr:
+            document.getElementById("rrr").value,
+
+        situation:
+            document.getElementById("situation").value,
+
+        lowerThirdText:
+            document.getElementById("lowerThirdText").value,
+
+        sponsorText:
+            document.getElementById("sponsorText").value,
+
+        customText:
+            document.getElementById("customText").value,
+
+        graphics:
+            graphicState,
+
+        updatedAt:
+            Date.now()
 
     };
 
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-
-    // Initialize Realtime Database
-    const db = getDatabase(app);
+}
 
 
-    // =====================================================
-    // UPDATE LIVE MATCH
-    // =====================================================
+/* =====================================================
+   UPDATE FIREBASE
+===================================================== */
 
-    document
-        .getElementById("updateBtn")
-        .addEventListener("click", async () => {
+async function updateLive(){
 
-            const team = document
-                .getElementById("teamName")
-                .value;
+    try{
 
-            const score = document
-                .getElementById("runs")
-                .value;
+        const data = collectData();
 
-            const wickets = document
-                .getElementById("wickets")
-                .value;
+        await set(liveRef,data);
 
-            const overs = document
-                .getElementById("overs")
-                .value;
+        updatePreview();
 
-            const situation = document
-                .getElementById("situation")
-                .value;
+        showStatus("LIVE DATA UPDATED ✓");
 
+    }
 
-            const liveMatchData = {
+    catch(error){
 
-                team: team,
+        console.error(error);
 
-                score: score,
+        showStatus(
+            "UPDATE ERROR",
+            true
+        );
 
-                wickets: wickets,
+    }
 
-                overs: overs,
-
-                situation: situation,
-
-                updatedAt: Date.now()
-
-            };
+}
 
 
-            try {
+/* =====================================================
+   MATCH SETUP
+===================================================== */
 
-                await set(
-                    ref(db, "live_match"),
-                    liveMatchData
-                );
+window.saveMatchSetup = async function(){
 
-                document
-                    .getElementById("status")
-                    .textContent =
-                    "LIVE DATA UPDATED ✓";
+    await updateLive();
 
-            }
+};
 
-            catch (error) {
 
-                console.error(error);
+/* =====================================================
+   QUICK RUN
+===================================================== */
 
-                document
-                    .getElementById("status")
-                    .textContent =
-                    "ERROR: " + error.message;
+window.addRun = function(value){
 
-            }
+    const input =
+        document.getElementById("runs");
 
-        });
+    const current =
+        Number(input.value) || 0;
+
+    previousRuns = current;
+
+    input.value =
+        current + value;
+
+    updatePreview();
+
+    updateLive();
+
+};
+
+
+/* =====================================================
+   EXTRAS
+===================================================== */
+
+window.addExtra = function(type){
+
+    const input =
+        document.getElementById("runs");
+
+    const current =
+        Number(input.value) || 0;
+
+    previousRuns = current;
+
+    input.value =
+        current + 1;
+
+    document.getElementById("situation")
+        .value = type;
+
+    updatePreview();
+
+    updateLive();
+
+};
+
+
+/* =====================================================
+   WICKET
+===================================================== */
+
+window.addWicket = function(){
+
+    const input =
+        document.getElementById("wickets");
+
+    const current =
+        Number(input.value) || 0;
+
+    input.value =
+        current + 1;
+
+    document.getElementById("situation")
+        .value = "WICKET";
+
+    updateLive();
+
+};
+
+
+/* =====================================================
+   UNDO
+===================================================== */
+
+window.undoScore = function(){
+
+    document.getElementById("runs").value =
+        previousRuns;
+
+    updatePreview();
+
+    updateLive();
+
+};
+
+
+/* =====================================================
+   GRAPHICS
+===================================================== */
+
+window.toggleGraphic = function(name){
+
+    graphicState[name] =
+        !graphicState[name];
+
+    updateGraphicButton(name);
+
+    updateLive();
+
+};
+
+
+function updateGraphicButton(name){
+
+    const map = {
+
+        scorebug:"scorebugBtn",
+
+        lowerThird:"lowerThirdBtn",
+
+        batsman:"batsmanBtn",
+
+        bowlerGraphic:"bowlerGraphicBtn",
+
+        sponsor:"sponsorBtn",
+
+        result:"resultBtn"
+
+    };
+
+    const button =
+        document.getElementById(map[name]);
+
+    if(!button) return;
+
+    const state =
+        graphicState[name];
+
+    button.textContent =
+        state ? "ON" : "OFF";
+
+    button.classList.toggle(
+        "on",
+        state
+    );
+
+    button.classList.toggle(
+        "off",
+        !state
+    );
+
+}
+
+
+/* =====================================================
+   PREVIEW
+===================================================== */
+
+function updatePreview(){
+
+    document.getElementById("previewTeam")
+        .textContent =
+        document.getElementById("team1").value;
+
+    document.getElementById("previewRuns")
+        .textContent =
+        document.getElementById("runs").value;
+
+    document.getElementById("previewWickets")
+        .textContent =
+        document.getElementById("wickets").value;
+
+    document.getElementById("previewOvers")
+        .textContent =
+        document.getElementById("overs").value;
+
+}
+
+
+/* =====================================================
+   OVERLAY LINK
+===================================================== */
+
+const overlayUrl =
+    window.location.origin +
+    window.location.pathname
+        .replace(/Controller\.html$/i,"Overlay.html");
+
+document.getElementById("overlayLink")
+    .textContent = overlayUrl;
+
+
+window.copyOverlayLink = async function(){
+
+    try{
+
+        await navigator.clipboard.writeText(
+            overlayUrl
+        );
+
+        showStatus(
+            "OVERLAY LINK COPIED ✓"
+        );
+
+    }
+
+    catch{
+
+        showStatus(
+            "COPY FAILED",
+            true
+        );
+
+    }
+
+};
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+window.resetController = function(){
+
+    document.getElementById("runs").value = 0;
+
+    document.getElementById("wickets").value = 0;
+
+    document.getElementById("overs").value = "0.0";
+
+    document.getElementById("target").value = 0;
+
+    document.getElementById("striker").value = "";
+
+    document.getElementById("nonStriker").value = "";
+
+    document.getElementById("strikerRuns").value = 0;
+
+    document.getElementById("strikerBalls").value = 0;
+
+    document.getElementById("strikerFours").value = 0;
+
+    document.getElementById("strikerSixes").value = 0;
+
+    document.getElementById("bowler").value = "";
+
+    document.getElementById("bowlerOvers").value = "0.0";
+
+    document.getElementById("bowlerRuns").value = 0;
+
+    document.getElementById("bowlerWickets").value = 0;
+
+    document.getElementById("currentOver").value = "";
+
+    document.getElementById("requiredRuns").value = "";
+
+    document.getElementById("crr").value = "";
+
+    document.getElementById("rrr").value = "";
+
+    document.getElementById("situation").value = "";
+
+    document.getElementById("lowerThirdText").value = "";
+
+    document.getElementById("sponsorText").value = "";
+
+    document.getElementById("customText").value = "";
+
+    updatePreview();
+
+};
+
+
+/* =====================================================
+   END MATCH
+===================================================== */
+
+window.endMatch = async function(){
+
+    const confirmed =
+        confirm(
+            "End live match and permanently clear current live data?"
+        );
+
+    if(!confirmed) return;
+
+    try{
+
+        await remove(liveRef);
+
+        showStatus(
+            "LIVE MATCH ENDED ✓"
+        );
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        showStatus(
+            "CLEAR ERROR",
+            true
+        );
+
+    }
+
+};
+
+
+/* =====================================================
+   INPUT PREVIEW
+===================================================== */
+
+[
+    "team1",
+    "runs",
+    "wickets",
+    "overs"
+].forEach(id=>{
+
+    document.getElementById(id)
+        .addEventListener(
+            "input",
+            updatePreview
+        );
+
+});
+
+
+updatePreview();
 
 </script>
 
