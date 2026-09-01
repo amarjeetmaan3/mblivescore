@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>M.B. Live Studio - Professional Cricket Overlay</title>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width,initial-scale=1.0">
+
+<title>M.B. Live Studio - Broadcast Overlay</title>
 
 <style>
+
 *{
     box-sizing:border-box;
 }
@@ -23,7 +27,7 @@ body{
     background:transparent;
     overflow:hidden;
     font-family:Arial,Helvetica,sans-serif;
-    color:white;
+    color:#fff;
 }
 
 
@@ -40,65 +44,52 @@ body{
 
     display:flex;
 
-    min-height:62px;
-
-    border:2px solid #ffcc00;
-
-    border-radius:10px;
+    border:2px solid #ffd54a;
+    border-radius:9px;
 
     overflow:hidden;
 
     box-shadow:
-        0 5px 15px rgba(0,0,0,.55);
+        0 5px 18px rgba(0,0,0,.65);
 
-    transition:
-        opacity .2s ease,
-        transform .2s ease;
+    transition:.25s;
+
 }
 
-#scorebug.hidden{
-
-    opacity:0;
-
-    pointer-events:none;
-
-    transform:translateY(15px);
+.hidden{
+    opacity:0!important;
+    visibility:hidden;
 }
 
 
 .team-box{
 
-    min-width:190px;
+    min-width:210px;
 
-    padding:8px 18px;
+    padding:9px 17px;
 
-    background:#001f3f;
+    background:#001d3b;
 
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    text-transform:uppercase;
 }
-
 
 .team-name{
 
-    font-size:25px;
+    font-size:27px;
 
     font-weight:900;
-}
 
+    text-transform:uppercase;
+
+}
 
 .match-title{
 
     font-size:10px;
 
+    color:#b9c7df;
+
     margin-top:3px;
 
-    color:#b8c9e8;
 }
 
 
@@ -108,37 +99,35 @@ body{
 
     color:#000;
 
-    min-width:125px;
-
-    padding:6px 15px;
+    min-width:130px;
 
     display:flex;
 
-    align-items:center;
-
     justify-content:center;
 
-    font-size:34px;
+    align-items:center;
+
+    font-size:37px;
 
     font-weight:900;
+
 }
 
+.score-box span{
+    display:inline-block;
+}
 
-.score-box .separator{
-
+.separator{
+    color:#777;
     margin:0 5px;
-
-    color:#555;
 }
 
 
 .overs-box{
 
-    background:#d32f2f;
+    min-width:125px;
 
-    min-width:120px;
-
-    padding:0 14px;
+    background:#c62838;
 
     display:flex;
 
@@ -148,146 +137,127 @@ body{
 
     justify-content:center;
 
-    font-weight:bold;
 }
-
 
 .overs-label{
-
     font-size:10px;
-
-    opacity:.85;
 }
 
-
 .overs-value{
-
-    font-size:22px;
+    font-size:23px;
+    font-weight:900;
 }
 
 
 /* =====================================================
-   LOWER THIRD
+   CURRENT OVER
 ===================================================== */
 
-#lowerThird{
+#currentOver{
 
     position:absolute;
 
     left:50px;
-    bottom:135px;
+    bottom:118px;
 
-    min-width:360px;
+    display:flex;
 
-    max-width:650px;
-
-    background:linear-gradient(
-        90deg,
-        #001f3f,
-        #003d73
-    );
-
-    border-left:6px solid #ffcc00;
-
-    padding:12px 20px;
-
-    border-radius:5px;
-
-    box-shadow:
-        0 5px 15px rgba(0,0,0,.5);
+    gap:5px;
 
     opacity:0;
 
-    transform:translateX(-30px);
+    transition:.2s;
 
-    transition:
-        opacity .25s ease,
-        transform .25s ease;
 }
 
-
-#lowerThird.show{
-
+#currentOver.show{
     opacity:1;
-
-    transform:translateX(0);
 }
 
+.over-ball{
 
-.lower-title{
+    min-width:31px;
 
-    font-size:12px;
+    padding:6px 8px;
 
-    color:#ffcc00;
+    text-align:center;
+
+    border-radius:4px;
+
+    background:#14294c;
 
     font-weight:bold;
 
-    text-transform:uppercase;
+    font-size:13px;
+
 }
 
+.over-four,
+.over-six{
+    background:#1768a7;
+}
 
-.lower-text{
+.over-wicket{
+    background:#b52c3c;
+}
 
-    font-size:25px;
-
-    font-weight:900;
-
-    margin-top:3px;
+.over-extra{
+    background:#67489d;
 }
 
 
 /* =====================================================
-   BATSMAN GRAPHIC
+   BATSMAN
 ===================================================== */
 
-#batsmanGraphic{
+#batsman{
 
     position:absolute;
 
     left:50px;
-    bottom:220px;
+    bottom:175px;
 
-    width:420px;
+    width:440px;
 
-    background:#071a32;
+    background:#061b35;
 
-    border:2px solid #ffcc00;
+    border-left:5px solid #ffd54a;
 
-    border-radius:8px;
+    border-radius:6px;
 
     overflow:hidden;
 
     opacity:0;
 
-    transform:translateX(-30px);
+    transform:translateX(-25px);
 
     transition:.25s;
+
 }
 
-
-#batsmanGraphic.show{
+#batsman.show{
 
     opacity:1;
 
     transform:translateX(0);
+
 }
 
+.graphic-header{
 
-.player-header{
+    padding:6px 12px;
 
-    background:#003d73;
+    background:#003c70;
 
-    padding:7px 12px;
+    color:#ffd54a;
 
-    font-size:12px;
+    font-size:11px;
 
     font-weight:bold;
 
-    text-transform:uppercase;
 }
 
-
-.player-body{
+.player-row{
 
     display:flex;
 
@@ -295,17 +265,17 @@ body{
 
     justify-content:space-between;
 
-    padding:12px;
-}
+    padding:11px 13px;
 
+}
 
 .player-name{
 
     font-size:23px;
 
     font-weight:900;
-}
 
+}
 
 .player-stats{
 
@@ -314,92 +284,151 @@ body{
     font-size:18px;
 
     font-weight:bold;
-}
 
+}
 
 .player-stats small{
 
     display:block;
 
-    color:#aab9d4;
+    color:#a8b6d2;
 
     font-size:10px;
+
 }
 
 
 /* =====================================================
-   BOWLER GRAPHIC
+   BOWLER
 ===================================================== */
 
-#bowlerGraphic{
+#bowler{
 
     position:absolute;
 
     right:50px;
+    bottom:50px;
 
-    bottom:135px;
+    width:390px;
 
-    width:380px;
+    background:#061b35;
 
-    background:#071a32;
+    border-right:5px solid #ffd54a;
 
-    border:2px solid #ffcc00;
-
-    border-radius:8px;
+    border-radius:6px;
 
     overflow:hidden;
 
     opacity:0;
 
-    transform:translateX(30px);
+    transform:translateX(25px);
 
     transition:.25s;
+
 }
 
-
-#bowlerGraphic.show{
+#bowler.show{
 
     opacity:1;
 
     transform:translateX(0);
+
 }
 
-
-.bowler-body{
-
-    padding:12px;
+.bowler-row{
 
     display:flex;
 
     justify-content:space-between;
 
     align-items:center;
-}
 
+    padding:12px;
+
+}
 
 .bowler-name{
 
     font-size:22px;
 
     font-weight:900;
-}
 
+}
 
 .bowler-stats{
 
+    font-weight:bold;
+
     text-align:right;
 
-    font-weight:bold;
 }
-
 
 .bowler-stats small{
 
     display:block;
 
-    color:#aab9d4;
+    font-size:10px;
+
+    color:#a8b6d2;
+
+}
+
+
+/* =====================================================
+   LOWER THIRD
+===================================================== */
+
+#lower{
+
+    position:absolute;
+
+    left:50px;
+    bottom:260px;
+
+    min-width:400px;
+
+    max-width:650px;
+
+    background:#06203e;
+
+    border-left:6px solid #ffd54a;
+
+    padding:12px 18px;
+
+    border-radius:5px;
+
+    opacity:0;
+
+    transform:translateX(-30px);
+
+    transition:.25s;
+
+}
+
+#lower.show{
+
+    opacity:1;
+
+    transform:translateX(0);
+
+}
+
+.lower-label{
+
+    color:#ffd54a;
 
     font-size:10px;
+
+    font-weight:bold;
+
+}
+
+.lower-text{
+
+    font-size:25px;
+
+    font-weight:900;
+
 }
 
 
@@ -411,17 +440,17 @@ body{
 
     position:absolute;
 
-    top:30px;
+    top:25px;
 
-    right:30px;
+    right:25px;
 
-    padding:10px 18px;
+    background:rgba(0,0,0,.78);
 
-    background:rgba(0,0,0,.75);
-
-    border:1px solid #ffcc00;
+    border:1px solid #ffd54a;
 
     border-radius:5px;
+
+    padding:9px 16px;
 
     font-size:15px;
 
@@ -430,11 +459,10 @@ body{
     opacity:0;
 
     transition:.25s;
+
 }
 
-
 #sponsor.show{
-
     opacity:1;
 }
 
@@ -448,10 +476,11 @@ body{
     position:absolute;
 
     left:50%;
+    top:42%;
 
-    top:40%;
-
-    transform:translate(-50%,-50%) scale(.9);
+    transform:
+        translate(-50%,-50%)
+        scale(.9);
 
     min-width:450px;
 
@@ -459,25 +488,26 @@ body{
 
     text-align:center;
 
-    background:rgba(0,31,63,.96);
+    background:rgba(0,29,59,.97);
 
-    border:3px solid #ffcc00;
+    border:3px solid #ffd54a;
 
     border-radius:10px;
 
-    padding:18px 30px;
+    padding:18px 28px;
 
     font-size:30px;
 
     font-weight:900;
 
-    box-shadow:0 8px 30px rgba(0,0,0,.65);
+    box-shadow:
+        0 8px 35px rgba(0,0,0,.7);
 
     opacity:0;
 
     transition:.25s;
-}
 
+}
 
 #announcement.show{
 
@@ -486,6 +516,7 @@ body{
     transform:
         translate(-50%,-50%)
         scale(1);
+
 }
 
 
@@ -493,13 +524,12 @@ body{
    RESULT
 ===================================================== */
 
-#resultGraphic{
+#result{
 
     position:absolute;
 
     left:50%;
-
-    top:35%;
+    top:38%;
 
     transform:translate(-50%,-50%);
 
@@ -507,37 +537,33 @@ body{
 
     text-align:center;
 
-    background:rgba(0,31,63,.97);
+    background:rgba(0,29,59,.98);
 
-    border:3px solid #ffcc00;
+    border:3px solid #ffd54a;
 
-    border-radius:12px;
+    border-radius:11px;
 
     padding:25px 35px;
-
-    box-shadow:0 10px 35px rgba(0,0,0,.7);
 
     opacity:0;
 
     transition:.25s;
+
 }
 
-
-#resultGraphic.show{
-
+#result.show{
     opacity:1;
 }
 
+.result-label{
 
-.result-title{
+    color:#ffd54a;
 
-    color:#ffcc00;
-
-    font-size:16px;
+    font-size:14px;
 
     font-weight:bold;
-}
 
+}
 
 .result-text{
 
@@ -546,11 +572,12 @@ body{
     font-weight:900;
 
     margin-top:8px;
+
 }
 
 
 /* =====================================================
-   MATCH INFO
+   MATCH TITLE
 ===================================================== */
 
 #matchInfo{
@@ -558,14 +585,13 @@ body{
     position:absolute;
 
     top:25px;
-
     left:50%;
 
     transform:translateX(-50%);
 
     background:rgba(0,0,0,.65);
 
-    padding:6px 15px;
+    padding:6px 14px;
 
     border-radius:4px;
 
@@ -575,9 +601,7 @@ body{
 
 }
 
-
 #matchInfo.show{
-
     opacity:1;
 }
 
@@ -593,90 +617,68 @@ body{
         left:15px;
         bottom:25px;
 
-        transform:scale(.75);
+        transform:scale(.72);
 
         transform-origin:left bottom;
+
     }
 
-    #lowerThird{
+    #currentOver{
 
         left:15px;
-        bottom:105px;
-
-        min-width:300px;
-
-        transform-origin:left bottom;
-    }
-
-    #batsmanGraphic{
-
-        left:15px;
-        bottom:175px;
+        bottom:88px;
 
         transform:scale(.8);
 
         transform-origin:left bottom;
+
     }
 
-    #bowlerGraphic{
+    #batsman{
+
+        left:15px;
+        bottom:125px;
+
+        transform:scale(.72);
+
+        transform-origin:left bottom;
+
+    }
+
+    #bowler{
 
         right:15px;
-        bottom:105px;
+        bottom:25px;
 
-        transform:scale(.75);
+        transform:scale(.68);
 
         transform-origin:right bottom;
+
     }
 
-}
-
-
-/* =====================================================
-   DEBUG MESSAGE
-===================================================== */
-
-#debug{
-
-    position:fixed;
-
-    top:5px;
-    left:5px;
-
-    padding:4px 8px;
-
-    background:rgba(0,0,0,.65);
-
-    color:#9cffbd;
-
-    font-size:10px;
-
-    border-radius:3px;
-
-    display:none;
 }
 
 </style>
 </head>
 
-
 <body>
 
 
-<!-- SCOREBUG -->
+<!-- =====================================================
+     SCOREBUG
+===================================================== -->
 
 <div id="scorebug">
 
     <div class="team-box">
 
-        <div
-            class="team-name"
-            id="display_team">
+        <div id="teamName"
+             class="team-name">
             TEAM
         </div>
 
-        <div
-            class="match-title"
-            id="display_match_title">
+        <div id="matchTitle"
+             class="match-title">
             LIVE MATCH
         </div>
 
@@ -685,17 +687,11 @@ body{
 
     <div class="score-box">
 
-        <span id="display_score">
-            0
-        </span>
+        <span id="runs">0</span>
 
-        <span class="separator">
-            /
-        </span>
+        <span class="separator">/</span>
 
-        <span id="display_wickets">
-            0
-        </span>
+        <span id="wickets">0</span>
 
     </div>
 
@@ -706,9 +702,8 @@ body{
             OVERS
         </div>
 
-        <div
-            class="overs-value"
-            id="display_overs">
+        <div id="overs"
+             class="overs-value">
             0.0
         </div>
 
@@ -717,64 +712,69 @@ body{
 </div>
 
 
-<!-- MATCH INFO -->
+<!-- =====================================================
+     MATCH INFO
+===================================================== -->
 
 <div id="matchInfo">
-    <span id="display_tournament">
+
+    <span id="tournament">
         LIVE CRICKET
     </span>
-</div>
-
-
-<!-- LOWER THIRD -->
-
-<div id="lowerThird">
-
-    <div class="lower-title">
-        LIVE UPDATE
-    </div>
-
-    <div
-        class="lower-text"
-        id="display_lower">
-    </div>
 
 </div>
 
 
-<!-- BATSMAN -->
+<!-- =====================================================
+     CURRENT OVER
+===================================================== -->
 
-<div id="batsmanGraphic">
+<div id="currentOver"></div>
 
-    <div class="player-header">
+
+<!-- =====================================================
+     BATSMAN
+===================================================== -->
+
+<div id="batsman">
+
+    <div class="graphic-header">
         BATSMAN
     </div>
 
-    <div class="player-body">
+    <div class="player-row">
 
-        <div
-            class="player-name"
-            id="display_striker">
-            -
+        <div>
+
+            <div id="striker"
+                 class="player-name">
+                -
+            </div>
+
         </div>
 
         <div class="player-stats">
 
-            <span id="display_striker_runs">
+            <span id="strikerRuns">
                 0
             </span>
+
             (
-            <span id="display_striker_balls">
+            <span id="strikerBalls">
                 0
             </span>
             )
 
             <small>
+
                 4s:
-                <span id="display_striker_fours">0</span>
+                <span id="strikerFours">0</span>
+
                 &nbsp;
+
                 6s:
-                <span id="display_striker_sixes">0</span>
+                <span id="strikerSixes">0</span>
+
             </small>
 
         </div>
@@ -784,35 +784,38 @@ body{
 </div>
 
 
-<!-- BOWLER -->
+<!-- =====================================================
+     BOWLER
+===================================================== -->
 
-<div id="bowlerGraphic">
+<div id="bowler">
 
-    <div class="player-header">
+    <div class="graphic-header">
         BOWLER
     </div>
 
-    <div class="bowler-body">
+    <div class="bowler-row">
 
-        <div
-            class="bowler-name"
-            id="display_bowler">
+        <div id="bowlerName"
+             class="bowler-name">
             -
         </div>
 
         <div class="bowler-stats">
 
-            <span id="display_bowler_overs">
+            <span id="bowlerOvers">
                 0.0
             </span>
+
             -
 
-            <span id="display_bowler_runs">
+            <span id="bowlerRuns">
                 0
             </span>
+
             -
 
-            <span id="display_bowler_wickets">
+            <span id="bowlerWickets">
                 0
             </span>
 
@@ -827,45 +830,61 @@ body{
 </div>
 
 
-<!-- SPONSOR -->
+<!-- =====================================================
+     LOWER THIRD
+===================================================== -->
+
+<div id="lower">
+
+    <div class="lower-label">
+        LIVE UPDATE
+    </div>
+
+    <div id="lowerText"
+         class="lower-text">
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SPONSOR
+===================================================== -->
 
 <div id="sponsor">
 
-    <span id="display_sponsor">
-        SPONSOR
+    <span id="sponsorText">
     </span>
 
 </div>
 
 
-<!-- ANNOUNCEMENT -->
+<!-- =====================================================
+     ANNOUNCEMENT
+===================================================== -->
 
 <div id="announcement">
 
-    <span id="display_announcement">
+    <span id="announcementText">
     </span>
 
 </div>
 
 
-<!-- RESULT -->
+<!-- =====================================================
+     RESULT
+===================================================== -->
 
-<div id="resultGraphic">
+<div id="result">
 
-    <div class="result-title">
+    <div class="result-label">
         MATCH RESULT
     </div>
 
-    <div
-        class="result-text"
-        id="display_result">
+    <div id="resultText"
+         class="result-text">
     </div>
 
-</div>
-
-
-<div id="debug">
-    Firebase Connected
 </div>
 
 
@@ -890,28 +909,30 @@ import {
 from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
 
+/* EXACT SAME CONFIG AS CONTROLLER */
+
 const firebaseConfig = {
 
     apiKey:
-        "AIzaSyAVo8B0n12e13eJJMjsh4U9zWUuoqaLnbK",
+    "AIzaSyAVo8B0n12e13eJJMjsh4U9zWUuoqaLnbM",
 
     authDomain:
-        "mbtoaj.firebaseapp.com",
+    "mbtoaj.firebaseapp.com",
 
     databaseURL:
-        "https://mbtoaj-default-rtdb.firebaseio.com",
+    "https://mbtoaj-default-rtdb.firebaseio.com",
 
     projectId:
-        "mbtoaj",
+    "mbtoaj",
 
     storageBucket:
-        "mbtoaj.firebasestorage.app",
+    "mbtoaj.firebasestorage.app",
 
     messagingSenderId:
-        "100171222080",
+    "100171222080",
 
     appId:
-        "1:100171222080:web:b7b90f66affc8561b8e3a5"
+    "1:100171222080:web:b7b90f66affc8561b8e3a5"
 
 };
 
@@ -919,44 +940,40 @@ const firebaseConfig = {
 const app =
     initializeApp(firebaseConfig);
 
-
 const db =
     getDatabase(app);
 
-
-const liveRef =
-    ref(db,"live_match");
+const matchRef =
+    ref(db,"current_match");
 
 
 /* =====================================================
-   FIREBASE REAL-TIME LISTENER
+   REAL-TIME LISTENER
 ===================================================== */
 
 onValue(
-    liveRef,
-    (snapshot)=>{
+    matchRef,
+    snapshot=>{
 
-        const data =
+        const match =
             snapshot.val();
 
+        if(!match){
 
-        if(!data){
-
-            hideAllGraphics();
+            hideEverything();
 
             return;
 
         }
 
-
-        updateOverlay(data);
+        render(match);
 
     },
 
-    (error)=>{
+    error=>{
 
         console.error(
-            "Firebase:",
+            "Firebase Overlay Error:",
             error
         );
 
@@ -965,236 +982,381 @@ onValue(
 
 
 /* =====================================================
-   UPDATE OVERLAY
+   RENDER
 ===================================================== */
 
-function updateOverlay(data){
+function render(match){
+
+    const inn =
+        match.innings[
+            match.currentInnings
+        ];
+
+
+    const batting =
+        match.teams[
+            inn.battingTeam
+        ];
+
+
+    const batsmen =
+        batting.players || [];
+
+
+    const bowling =
+        match.teams[
+            inn.bowlingTeam
+        ];
+
+
+    const bowlers =
+        bowling.players || [];
+
+
+    const striker =
+        batsmen[
+            inn.striker
+        ];
+
+
+    const bowler =
+        bowlers[
+            inn.bowler
+        ];
 
 
     /* SCOREBUG */
 
     setText(
-        "display_team",
-        data.team || data.team1 || "TEAM"
+        "teamName",
+        batting.name
+    );
+
+    setText(
+        "runs",
+        inn.runs
+    );
+
+    setText(
+        "wickets",
+        inn.wickets
+    );
+
+    setText(
+        "overs",
+        ballsToOvers(
+            inn.legalBalls
+        )
     );
 
 
     setText(
-        "display_score",
-        data.score ?? 0
+        "matchTitle",
+        match.matchName ||
+        "LIVE MATCH"
     );
 
 
     setText(
-        "display_wickets",
-        data.wickets ?? 0
+        "tournament",
+        match.tournament ||
+        "LIVE CRICKET"
     );
 
 
-    setText(
-        "display_overs",
-        data.overs || "0.0"
+    toggle(
+        "scorebug",
+        match.graphics.scorebug
     );
 
 
-    setText(
-        "display_match_title",
-        data.matchTitle || "LIVE MATCH"
-    );
+    /* CURRENT OVER */
 
-
-    setText(
-        "display_tournament",
-        data.tournament || "LIVE CRICKET"
-    );
-
-
-    /* GRAPHIC STATE */
-
-    const graphics =
-        data.graphics || {};
-
-
-    const scorebug =
-        graphics.scorebug !== false;
-
-
-    document
-        .getElementById("scorebug")
-        .classList.toggle(
-            "hidden",
-            !scorebug
-        );
-
-
-    /* LOWER THIRD */
-
-    const lowerThird =
-        document.getElementById(
-            "lowerThird"
-        );
-
-
-    setText(
-        "display_lower",
-        data.lowerThirdText || ""
-    );
-
-
-    lowerThird.classList.toggle(
-        "show",
-        graphics.lowerThird === true &&
-        Boolean(data.lowerThirdText)
-    );
+    renderCurrentOver(inn);
 
 
     /* BATSMAN */
 
-    setText(
-        "display_striker",
-        data.striker || "-"
-    );
+    if(striker){
 
-
-    setText(
-        "display_striker_runs",
-        data.strikerRuns ?? 0
-    );
-
-
-    setText(
-        "display_striker_balls",
-        data.strikerBalls ?? 0
-    );
-
-
-    setText(
-        "display_striker_fours",
-        data.strikerFours ?? 0
-    );
-
-
-    setText(
-        "display_striker_sixes",
-        data.strikerSixes ?? 0
-    );
-
-
-    document
-        .getElementById("batsmanGraphic")
-        .classList.toggle(
-            "show",
-            graphics.batsman === true &&
-            Boolean(data.striker)
+        setText(
+            "striker",
+            striker.name
         );
+
+        setText(
+            "strikerRuns",
+            striker.runs
+        );
+
+        setText(
+            "strikerBalls",
+            striker.balls
+        );
+
+        setText(
+            "strikerFours",
+            striker.fours
+        );
+
+        setText(
+            "strikerSixes",
+            striker.sixes
+        );
+
+    }
+
+
+    toggle(
+        "batsman",
+        match.graphics.batsman &&
+        Boolean(striker)
+    );
 
 
     /* BOWLER */
 
-    setText(
-        "display_bowler",
-        data.bowler || "-"
-    );
+    if(bowler){
 
-
-    setText(
-        "display_bowler_overs",
-        data.bowlerOvers || "0.0"
-    );
-
-
-    setText(
-        "display_bowler_runs",
-        data.bowlerRuns ?? 0
-    );
-
-
-    setText(
-        "display_bowler_wickets",
-        data.bowlerWickets ?? 0
-    );
-
-
-    document
-        .getElementById("bowlerGraphic")
-        .classList.toggle(
-            "show",
-            graphics.bowlerGraphic === true &&
-            Boolean(data.bowler)
+        setText(
+            "bowlerName",
+            bowler.name
         );
+
+        setText(
+            "bowlerOvers",
+            ballsToOvers(
+                bowler.legalBalls
+            )
+        );
+
+        setText(
+            "bowlerRuns",
+            bowler.conceded
+        );
+
+        setText(
+            "bowlerWickets",
+            bowler.wickets
+        );
+
+    }
+
+
+    toggle(
+        "bowler",
+        match.graphics.bowler &&
+        Boolean(bowler)
+    );
+
+
+    /* LOWER THIRD */
+
+    setText(
+        "lowerText",
+        match.situation ||
+        match.customText ||
+        ""
+    );
+
+
+    toggle(
+        "lower",
+        match.graphics.lower &&
+        Boolean(
+            match.situation ||
+            match.customText
+        )
+    );
 
 
     /* SPONSOR */
 
     setText(
-        "display_sponsor",
-        data.sponsorText || ""
+        "sponsorText",
+        match.sponsorText ||
+        ""
     );
 
 
-    document
-        .getElementById("sponsor")
-        .classList.toggle(
-            "show",
-            graphics.sponsor === true &&
-            Boolean(data.sponsorText)
-        );
+    toggle(
+        "sponsor",
+        match.graphics.sponsor &&
+        Boolean(match.sponsorText)
+    );
 
 
     /* ANNOUNCEMENT */
 
-    const announcementText =
-        data.customText ||
-        data.situation ||
-        "";
-
-
     setText(
-        "display_announcement",
-        announcementText
+        "announcementText",
+        match.customText ||
+        match.situation ||
+        ""
     );
 
 
-    document
-        .getElementById("announcement")
-        .classList.toggle(
-            "show",
-            graphics.lowerThird !== true &&
-            false
-        );
+    toggle(
+        "announcement",
+        match.graphics.announcement &&
+        Boolean(
+            match.customText ||
+            match.situation
+        )
+    );
 
 
     /* RESULT */
 
-    const resultText =
-        data.customText ||
-        data.situation ||
-        "";
-
-
     setText(
-        "display_result",
-        resultText
+        "resultText",
+        match.customText ||
+        match.situation ||
+        ""
+    );
+
+
+    toggle(
+        "result",
+        match.graphics.result &&
+        Boolean(
+            match.customText ||
+            match.situation
+        )
     );
 
 
     document
-        .getElementById("resultGraphic")
-        .classList.toggle(
-            "show",
-            graphics.result === true &&
-            Boolean(resultText)
-        );
-
-
-    /* MATCH INFO */
-
-    document
         .getElementById("matchInfo")
-        .classList.toggle(
-            "show",
-            Boolean(data.tournament)
+        .classList.add("show");
+
+}
+
+
+/* =====================================================
+   CURRENT OVER
+===================================================== */
+
+function renderCurrentOver(inn){
+
+    const container =
+        document.getElementById(
+            "currentOver"
         );
+
+
+    if(!inn.balls ||
+       !inn.balls.length){
+
+        container.classList.remove("show");
+
+        return;
+
+    }
+
+
+    const start =
+        Math.floor(
+            Math.max(
+                0,
+                inn.legalBalls-1
+            ) / 6
+        ) * 6;
+
+
+    const balls =
+        inn.balls.slice(start);
+
+
+    container.innerHTML =
+        balls.map(b=>{
+
+            let cls =
+                "over-ball";
+
+            if(
+                b.type==="wicket"
+            )
+                cls+=" over-wicket";
+
+            else if(
+                b.type==="wide" ||
+                b.type==="noball" ||
+                b.type==="extra"
+            )
+                cls+=" over-extra";
+
+            else if(
+                b.runs===4 ||
+                b.runs===6
+            )
+                cls+=" over-four";
+
+
+            return `
+                <div class="${cls}">
+                    ${escapeHtml(b.label)}
+                </div>
+            `;
+
+        }).join("");
+
+
+    container.classList.add("show");
+
+}
+
+
+/* =====================================================
+   TOGGLE
+===================================================== */
+
+function toggle(id,state){
+
+    const el =
+        document.getElementById(id);
+
+    if(!el) return;
+
+    el.classList.toggle(
+        "show",
+        state === true
+    );
+
+    el.classList.toggle(
+        "hidden",
+        state !== true
+    );
+
+}
+
+
+/* =====================================================
+   HIDE
+===================================================== */
+
+function hideEverything(){
+
+    [
+        "scorebug",
+        "currentOver",
+        "batsman",
+        "bowler",
+        "lower",
+        "sponsor",
+        "announcement",
+        "result",
+        "matchInfo"
+
+    ].forEach(id=>{
+
+        const el =
+            document.getElementById(id);
+
+        if(el)
+            el.classList.add("hidden");
+
+    });
 
 }
 
@@ -1205,55 +1367,40 @@ function updateOverlay(data){
 
 function setText(id,value){
 
-    const element =
+    const el =
         document.getElementById(id);
 
-    if(element){
-
-        element.textContent =
-            value;
-
-    }
+    if(el)
+        el.textContent =
+            value ?? "";
 
 }
 
 
-function hideAllGraphics(){
+function ballsToOvers(balls){
 
-    document
-        .getElementById("scorebug")
-        .classList.add("hidden");
+    balls =
+        Number(balls || 0);
 
-    document
-        .getElementById("lowerThird")
-        .classList.remove("show");
-
-    document
-        .getElementById("batsmanGraphic")
-        .classList.remove("show");
-
-    document
-        .getElementById("bowlerGraphic")
-        .classList.remove("show");
-
-    document
-        .getElementById("sponsor")
-        .classList.remove("show");
-
-    document
-        .getElementById("announcement")
-        .classList.remove("show");
-
-    document
-        .getElementById("resultGraphic")
-        .classList.remove("show");
-
-    document
-        .getElementById("matchInfo")
-        .classList.remove("show");
+    return (
+        Math.floor(balls/6) +
+        "." +
+        (balls%6)
+    );
 
 }
 
+
+function escapeHtml(value){
+
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
 
 </script>
 
