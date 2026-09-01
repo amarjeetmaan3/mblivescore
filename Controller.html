@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M.B. Live Studio - Controller</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #e0e0e0; }
+        .card { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        input { width: 90%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 95%; padding: 12px; background: #d32f2f; color: white; border: none; font-size: 16px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        button:active { background: #b71c1c; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h3 style="text-align: center;">M.B. Live Studio - Controller</h3>
+    <label>Batting Team:</label><br>
+    <input type="text" id="teamName" value="TEAM A"><br>
+    
+    <label>Runs:</label><br>
+    <input type="number" id="runs" value="0"><br>
+    
+    <label>Wickets:</label><br>
+    <input type="number" id="wickets" value="0"><br>
+    
+    <label>Overs:</label><br>
+    <input type="text" id="overs" value="0.0"><br>
+    
+    <label>Situation/Message:</label><br>
+    <input type="text" id="situation" value="Powerplay 1"><br>
+    
+    <button id="updateBtn">Update Live Score</button>
+</div>
 
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
+        authDomain: "mb-live-score.firebaseapp.com",
+        databaseURL: "https://mb-live-score-default-rtdb.firebaseio.com",
+        projectId: "mb-live-score",
+        storageBucket: "mb-live-score.firebasestorage.app",
+        messagingSenderId: "263955953168",
+        appId: "1:263955953168:web:728d45ff569fdb0cad7c95"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    document.getElementById('updateBtn').addEventListener('click', () => {
+        set(ref(db, 'live_match'), {
+            team: document.getElementById('teamName').value,
+            score: document.getElementById('runs').value,
+            wickets: document.getElementById('wickets').value,
+            overs: document.getElementById('overs').value,
+            situation: document.getElementById('situation').value
+        }).then(() => {
+            alert("स्कोर सफलतापूर्वक अपडेट हो गया!");
+        }).catch((error) => {
+            alert("कोई एरर आई है: " + error);
+        });
+    });
+</script>
+</body>
+</html>
