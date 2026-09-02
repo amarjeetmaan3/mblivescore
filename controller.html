@@ -3,25 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>MB Live Score — Controller</title>
+<title>M.B. Live Studio — Controller</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#101216;color:#eee;font:12px Arial,sans-serif}
-button,input,select{font:inherit}button{border:0;border-radius:4px;background:#272b32;color:#fff;min-height:30px;padding:4px 7px;cursor:pointer}
-button:active{transform:scale(.97)}button.primary{background:#087f5b}button.danger{background:#b42318}button.warn{background:#9a6700}
+button,input,select,textarea{font:inherit}button{border:0;border-radius:4px;background:#272b32;color:#fff;min-height:30px;padding:4px 7px;cursor:pointer}
+button:active{transform:scale(.97)}button.primary{background:#087f5b}button.danger{background:#b42318}
 .wrap{max-width:620px;margin:auto;padding:6px}.top{display:flex;gap:4px;align-items:center;justify-content:space-between;margin-bottom:5px}
 h1{font-size:15px;margin:0}.muted{color:#9da3ad}.bar{display:flex;gap:4px;flex-wrap:wrap}
 .panel{background:#181b20;border:1px solid #292e36;border-radius:6px;padding:6px;margin-bottom:5px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
-input,select{width:100%;background:#0e1013;border:1px solid #343943;color:#fff;border-radius:4px;padding:6px;height:30px}
+input,select,textarea{width:100%;background:#0e1013;border:1px solid #343943;color:#fff;border-radius:4px;padding:6px;}
+input{height:30px} textarea{height:100px}
 label{font-size:10px;color:#aeb4be;display:block;margin:2px 0}.scoreline{display:flex;align-items:center;gap:7px}
 .score{font-size:25px;font-weight:700;letter-spacing:-1px;line-height:1}.overs{font-size:18px;font-weight:700}.small{font-size:10px}.bat{display:flex;justify-content:space-between;gap:4px;padding:3px 0;border-bottom:1px solid #272b31}.on{color:#7ee2b8;font-weight:bold}
 .runs{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}.runs button{font-size:15px;font-weight:700;min-height:34px}
-.extras{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.extras button{font-weight:700}
+.extras{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.extras button{font-weight:700}
 .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.actions button{min-height:28px}
-.status{font-size:10px;color:#8fd3ff;min-height:13px}.hidden{display:none!important}
-.setup{max-width:560px;margin:20px auto}.players{display:grid;grid-template-columns:repeat(2,1fr);gap:3px}
-.dismiss{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.dismiss button{min-height:28px}
-@media(max-width:380px){.wrap{padding:3px}.panel{padding:4px}.score{font-size:22px}.runs button{min-height:31px}.extras button{min-height:28px}}
+.status{font-size:10px;color:#8fd3ff;min-height:13px}
+.setup{max-width:560px;margin:20px auto}.dismiss{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.dismiss button{min-height:28px}
 </style>
 </head>
 <body>
@@ -49,155 +48,169 @@ let state = null;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const appEl = document.getElementById("app");
 
-function emptySetup() {
-  appEl.innerHTML = `<div class="setup panel"><h1>New Match</h1><div class="grid">
-  <div><label>Tournament</label><input id="tour"></div><div><label>Match Day</label><input id="day"></div><div><label>Overs</label><input id="maxOvers" type="number" value="20" min="1"></div>
-  </div><div class="grid2"><div><label>Team A</label><input id="teamA"></div><div><label>Team B</label><input id="teamB"></div></div>
-  <label>Team A Players (one per line)</label><textarea id="pa" style="width:100%;height:110px;background:#0e1013;color:#fff;border:1px solid #343943;border-radius:4px;padding:6px"></textarea>
-  <label>Team B Players (one per line)</label><textarea id="pb" style="width:100%;height:110px;background:#0e1013;color:#fff;border:1px solid #343943;border-radius:4px;padding:6px"></textarea>
-  <button class="primary" style="width:100%;margin-top:5px" id="create">CREATE MATCH</button>
+function renderSetup() {
+  appEl.innerHTML = `
+  <div class="setup panel">
+    <h1>M.B. Live Studio - Match Setup</h1>
+    <div class="grid">
+      <div><label>Tournament</label><input id="tour" value="Live Tournament"></div>
+      <div><label>Match Day</label><input id="day" value="Day 1"></div>
+      <div><label>Overs</label><input id="maxOvers" type="number" value="20" min="1"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Team A</label><input id="teamA" value="Team A"></div>
+      <div><label>Team B</label><input id="teamB" value="Team B"></div>
+    </div>
+    <label>Team A Players (comma separated)</label>
+    <textarea id="pa">Player 1, Player 2, Player 3, Player 4, Player 5</textarea>
+    <label>Team B Players (comma separated)</label>
+    <textarea id="pb">Player A, Player B, Player C, Player D, Player E</textarea>
+    <button class="primary" style="width:100%;margin-top:5px" id="createMatchBtn">CREATE MATCH</button>
   </div>`;
-  document.getElementById("create").onclick = createMatch;
 }
 
-function freshMatch(d) {
-  const a = d.pa, b = d.pb;
-  return {
-    version: 2, id: Date.now(),
-    meta: {tournament: d.tournament, matchDay: d.matchDay, maxOvers: d.maxOvers, teamA: d.teamA, teamB: d.teamB},
-    inningsNo: 1, innings: [newInnings(a, b), newInnings(b, a)],
-    status: "LIVE", graphic: {score: true, lowerThird: true},
-    ballHistory: []
-  };
+function renderMatch() {
+  const i = state.innings[state.inningsNo - 1];
+  const m = state.meta;
+  const battingTeam = state.inningsNo === 1 ? m.teamA : m.teamB;
+  
+  appEl.innerHTML = `
+  <div class="wrap">
+    <div class="top">
+      <h1>M.B. Live Studio</h1>
+      <div class="bar"><button id="undoBtn">↶ UNDO</button><button class="danger" id="endMatchBtn">END MATCH</button></div>
+    </div>
+    
+    <div class="panel">
+      <div class="small muted">${esc(m.tournament)} • ${esc(m.matchDay)} • ${m.maxOvers} OV</div>
+      <div class="scoreline">
+        <b>${esc(battingTeam)}</b><span class="score">${i.runs}-${i.wickets}</span>
+        <span class="overs">(${i.overNo}.${i.legalBalls})</span><span class="status">${i.finished ? "FINISHED" : "LIVE"}</span>
+      </div>
+      <div class="small">Extras: WD ${i.extras.wide} | NB ${i.extras.noBall} | B ${i.extras.bye} | LB ${i.extras.legBye}</div>
+    </div>
+    
+    <div class="panel">
+      <div class="bat ${i.striker >= 0 ? "on" : ""}">${i.striker >= 0 ? esc(i.batting[i.striker].name) : "—"} <b>${i.striker >= 0 ? i.batting[i.striker].runs : ""}</b></div>
+      <div class="bat">${i.nonStriker >= 0 ? esc(i.batting[i.nonStriker].name) : "—"} <b>${i.nonStriker >= 0 ? i.batting[i.nonStriker].runs : ""}</b></div>
+      <div class="small" style="margin-top:4px; border-top:1px solid #272b31; padding-top:4px;">Bowler: ${esc(i.bowling[i.bowler]?.name || "—")} • ${i.bowling[i.bowler]?.overs || 0}.${i.bowling[i.bowler]?.balls % 6 || 0}</div>
+    </div>
+    
+    <div class="panel"><label>Runs</label>
+      <div class="runs"><button data-run="0">0</button><button data-run="1">1</button><button data-run="2">2</button><button data-run="3">3</button><button data-run="4">4</button><button data-run="6">6</button></div>
+    </div>
+    
+    <div class="panel"><label>Extras</label>
+      <div class="extras"><button data-ex="WD">Wide</button><button data-ex="NB">No Ball</button><button data-ex="B">Bye</button><button data-ex="LB">Leg Bye</button></div>
+    </div>
+    
+    <div class="panel"><label>Wickets</label>
+      <div class="dismiss"><button data-w="Bowled">Bowled</button><button data-w="Caught">Caught</button><button data-w="LBW">LBW</button><button data-w="Run Out">Run Out</button><button data-w="Stumped">Stumped</button><button data-w="Hit Wicket">Hit Wicket</button></div>
+    </div>
+    
+    <div class="panel"><label>Match Actions</label>
+      <div class="actions"><button id="swapBtn">Swap Batters</button><button id="bowlBtn">Change Bowler</button><button id="nextInnBtn">Start Innings 2</button><button id="graphicBtn">Toggle Graphic</button></div>
+    </div>
+  </div>`;
 }
 
+onValue(root, snap => {
+  state = snap.val();
+  if (!state) renderSetup();
+  else renderMatch();
+});
+
+// Logic Helpers
 function newInnings(players, opponents) {
   return {
     batting: players.map((name, i) => ({id: "p"+i, name, runs: 0, balls: 0, out: false, dismissal: ""})),
     bowling: opponents.map((name, i) => ({id: "b"+i, name, overs: 0, runs: 0, wickets: 0, balls: 0})),
     striker: 0, nonStriker: 1, nextBatter: 2, bowler: 0, runs: 0, wickets: 0, legalBalls: 0,
-    extras: {wide: 0, noBall: 0, bye: 0, legBye: 0, penalty: 0}, overNo: 0, target: null, freeHit: false, finished: false
+    extras: {wide: 0, noBall: 0, bye: 0, legBye: 0}, overNo: 0, target: null, finished: false
   };
 }
-
-async function createMatch() {
-  const names = s => s.split(/\n|,/).map(x => x.trim()).filter(Boolean);
-  const d = {
-    tournament: document.getElementById('tour').value.trim(),
-    matchDay: document.getElementById('day').value.trim(),
-    maxOvers: Math.max(1, +document.getElementById('maxOvers').value || 20),
-    teamA: document.getElementById('teamA').value.trim(),
-    teamB: document.getElementById('teamB').value.trim(),
-    pa: names(document.getElementById('pa').value),
-    pb: names(document.getElementById('pb').value)
-  };
-  if(!d.teamA || !d.teamB || d.pa.length < 2 || d.pb.length < 2) {
-    alert("Team names and at least 2 players per team are required.");
-    return;
-  }
-  await set(root, freshMatch(d));
-  alert("Match created.");
-}
-
 function current() { return state.innings[state.inningsNo - 1]; }
 function save() { return set(root, state); }
 function addHistory() {
   state.ballHistory = state.ballHistory || [];
   state.ballHistory.push(JSON.stringify(state));
-  if(state.ballHistory.length > 60) state.ballHistory.shift();
+  if(state.ballHistory.length > 50) state.ballHistory.shift();
 }
-
 function rotate(i) { [i.striker, i.nonStriker] = [i.nonStriker, i.striker]; }
 function endOver(i) { i.overNo++; i.legalBalls = 0; rotate(i); i.bowler = (i.bowler + 1) % i.bowling.length; }
-
-function finishCheck() {
-  const i = current(), max = state.meta.maxOvers;
+function finishCheck(i) {
   if(i.target && i.runs >= i.target) { i.finished = true; state.status = "WON"; return; }
-  if(i.wickets >= i.batting.length - 1 || i.overNo >= max) { i.finished = true; }
+  if(i.wickets >= i.batting.length - 1 || i.overNo >= state.meta.maxOvers) { i.finished = true; }
 }
+function legalBall(i) { i.legalBalls++; if(i.bowler != null) i.bowling[i.bowler].balls++; if(i.legalBalls >= 6) endOver(i); }
 
-function legalBall(i) {
-  i.legalBalls++;
-  if(i.bowler != null) i.bowling[i.bowler].balls++;
-  if(i.legalBalls >= 6) endOver(i);
-}
-
-function batterRun(i, r) {
-  const b = i.batting[i.striker];
-  b.runs += r; b.balls++; i.runs += r; i.bowling[i.bowler].runs += r;
-  if(r % 2) rotate(i);
-  legalBall(i); finishCheck();
-}
-
-async function run(r) {
-  const i = current(); if(i.finished) return;
-  addHistory(); batterRun(i, r); await save();
-}
-
-async function extra(type, total = 1) {
-  const i = current(); if(i.finished) return;
-  addHistory();
-  total = Math.max(1, Math.floor(total));
-  if(type === "WD") { i.runs += total; i.extras.wide += total; i.bowling[i.bowler].runs += total; if((total - 1) % 2) rotate(i); }
-  if(type === "NB") { i.runs += total; i.extras.noBall += 1; i.bowling[i.bowler].runs += total; if(total > 1) { let bat = total - 1; i.batting[i.striker].runs += bat; i.batting[i.striker].balls++; if(bat % 2) rotate(i); } }
-  if(type === "B") { i.runs += total; i.extras.bye += total; i.batting[i.striker].balls++; if(total % 2) rotate(i); legalBall(i); }
-  if(type === "LB") { i.runs += total; i.extras.legBye += total; i.batting[i.striker].balls++; if(total % 2) rotate(i); legalBall(i); }
-  finishCheck(); await save();
-}
-
-async function wicket(type) {
-  const i = current(); if(i.finished) return;
-  addHistory();
-  const b = i.batting[i.striker]; b.out = true; b.dismissal = type; b.balls++; i.wickets++;
-  i.striker = i.nextBatter; i.nextBatter++;
-  if(i.nextBatter >= i.batting.length) i.striker = -1;
-  legalBall(i); finishCheck(); await save();
-}
-
-async function undo() {
-  if(!state.ballHistory?.length) return;
-  const old = JSON.parse(state.ballHistory.pop());
-  old.ballHistory = state.ballHistory;
-  state = old;
-  await save();
-}
-
-async function newMatch() { if(confirm("Replace current match with a new match?")) { await remove(root); emptySetup(); } }
-async function endMatch() { if(confirm("End and clear current match?")) { await remove(root); emptySetup(); } }
-
-function render() {
-  const i = current(), m = state.meta, a = state.inningsNo === 1 ? m.teamA : m.teamB;
-  appEl.innerHTML = `<div class="wrap">
-  <div class="top"><h1>MB LIVE SCORE</h1><div class="bar"><button id="undoBtn">↶</button><button id="newBtn">NEW</button><button class="danger" id="endBtn">END</button></div></div>
-  <div class="panel"><div class="small muted">${esc(m.tournament)} • ${esc(m.matchDay)} • ${m.maxOvers} OV</div><div class="scoreline"><b>${esc(a)}</b><span class="score">${i.runs}-${i.wickets}</span><span class="overs">(${i.overNo}.${i.legalBalls})</span><span class="status">${i.finished ? "FINISHED" : "LIVE"}</span></div><div class="small">Extras W ${i.extras.wide} NB ${i.extras.noBall} B ${i.extras.bye} LB ${i.extras.legBye}</div></div>
-  <div class="panel"><div class="bat ${i.striker >= 0 ? "on" : ""}">${i.striker >= 0 ? esc(i.batting[i.striker].name) : "—"} <b>${i.striker >= 0 ? i.batting[i.striker].runs : ""}</b></div><div class="bat">${i.nonStriker >= 0 ? esc(i.batting[i.nonStriker].name) : "—"} <b>${i.nonStriker >= 0 ? i.batting[i.nonStriker].runs : ""}</b></div><div class="small">Bowler: ${esc(i.bowling[i.bowler]?.name || "—")} • ${i.bowling[i.bowler]?.overs || 0}.${i.bowling[i.bowler]?.balls % 6 || 0}</div></div>
-  <div class="panel"><div class="runs">${[0, 1, 2, 3, 4, 6].map(n => `<button data-run="${n}">${n}</button>`).join("")}</div></div>
-  <div class="panel"><div class="extras"><button data-ex="WD">WD</button><button data-ex="NB">NB</button><button data-ex="B">B</button><button data-ex="LB">LB</button></div></div>
-  <div class="panel"><div class="dismiss">${["Bowled", "Caught", "LBW", "Run Out", "Stumped", "Hit Wicket", "Obstruct", "Hit Twice"].map(x => `<button data-w="${x}">${x}</button>`).join("")}</div></div>
-  <div class="panel"><div class="actions"><button id="swapBtn">SWAP</button><button id="bowlBtn">BOWLER</button><button id="nextInningsBtn">INN 2</button><button id="graphicBtn">GRAPHIC</button></div></div>
-  <div class="panel small muted">${esc(m.teamA)} vs ${esc(m.teamB)} • Current innings ${state.inningsNo}/2 • Next batter: ${esc(i.batting[i.nextBatter]?.name || "—")}</div>
-  </div>`;
+// Global Event Delegate (Prevents Button Freezing)
+document.body.addEventListener('click', async (e) => {
+  const tgt = e.target;
   
-  document.querySelectorAll("[data-run]").forEach(b => b.onclick = () => run(+b.dataset.run));
-  document.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { let x = prompt(b.dataset.ex + " total runs?", "1"); if(x) extra(b.dataset.ex, +x); });
-  document.querySelectorAll("[data-w]").forEach(b => b.onclick = () => wicket(b.dataset.w));
+  if (tgt.id === 'createMatchBtn') {
+    const names = s => s.split(/\n|,/).map(x => x.trim()).filter(Boolean);
+    const d = {
+      tournament: document.getElementById('tour').value.trim(), matchDay: document.getElementById('day').value.trim(),
+      maxOvers: Math.max(1, +document.getElementById('maxOvers').value || 20),
+      teamA: document.getElementById('teamA').value.trim(), teamB: document.getElementById('teamB').value.trim(),
+      pa: names(document.getElementById('pa').value), pb: names(document.getElementById('pb').value)
+    };
+    if(!d.teamA || !d.teamB || d.pa.length < 2 || d.pb.length < 2) return alert("Please fill team names and at least 2 players each.");
+    
+    await set(root, {
+      version: 3, id: Date.now(), meta: {tournament: d.tournament, matchDay: d.matchDay, maxOvers: d.maxOvers, teamA: d.teamA, teamB: d.teamB},
+      inningsNo: 1, innings: [newInnings(d.pa, d.pb), newInnings(d.pb, d.pa)], status: "LIVE", graphic: {score: true, lowerThird: true}, ballHistory: []
+    });
+    return;
+  }
+
+  if (!state) return;
+  const i = current();
+
+  if (tgt.hasAttribute('data-run')) {
+    if(i.finished) return; addHistory();
+    const r = Number(tgt.getAttribute('data-run'));
+    i.batting[i.striker].runs += r; i.batting[i.striker].balls++; i.runs += r; i.bowling[i.bowler].runs += r;
+    if(r % 2) rotate(i);
+    legalBall(i); finishCheck(i); await save();
+  }
   
-  document.getElementById("undoBtn").onclick = undo;
-  document.getElementById("newBtn").onclick = newMatch;
-  document.getElementById("endBtn").onclick = endMatch;
-  document.getElementById("nextInningsBtn").onclick = async () => {
-    if(state.inningsNo !== 1 || !current().finished) { alert("Innings 1 must finish first."); return; }
+  if (tgt.hasAttribute('data-ex')) {
+    if(i.finished) return; const type = tgt.getAttribute('data-ex');
+    const total = parseInt(prompt(type + " total runs?", "1"));
+    if (!total || isNaN(total)) return;
+    addHistory();
+    if(type === "WD") { i.runs += total; i.extras.wide += total; i.bowling[i.bowler].runs += total; if((total - 1) % 2) rotate(i); }
+    if(type === "NB") { i.runs += total; i.extras.noBall += 1; i.bowling[i.bowler].runs += total; if(total > 1) { let bat = total - 1; i.batting[i.striker].runs += bat; i.batting[i.striker].balls++; if(bat % 2) rotate(i); } }
+    if(type === "B")  { i.runs += total; i.extras.bye += total; i.batting[i.striker].balls++; if(total % 2) rotate(i); legalBall(i); }
+    if(type === "LB") { i.runs += total; i.extras.legBye += total; i.batting[i.striker].balls++; if(total % 2) rotate(i); legalBall(i); }
+    finishCheck(i); await save();
+  }
+
+  if (tgt.hasAttribute('data-w')) {
+    if(i.finished) return; addHistory();
+    i.batting[i.striker].out = true; i.batting[i.striker].dismissal = tgt.getAttribute('data-w'); i.batting[i.striker].balls++;
+    i.wickets++; i.striker = i.nextBatter; i.nextBatter++;
+    if(i.nextBatter > i.batting.length) i.striker = -1;
+    legalBall(i); finishCheck(i); await save();
+  }
+
+  if (tgt.id === 'undoBtn') {
+    if(!state.ballHistory?.length) return;
+    const old = JSON.parse(state.ballHistory.pop()); old.ballHistory = state.ballHistory; state = old; await save();
+  }
+  if (tgt.id === 'endMatchBtn') if(confirm("End current match?")) await remove(root);
+  if (tgt.id === 'swapBtn') { addHistory(); rotate(i); await save(); }
+  if (tgt.id === 'bowlBtn') {
+    let n = prompt("Bowler index (1-" + i.bowling.length + ")", String(i.bowler + 1));
+    let x = Number(n) - 1; if(x >= 0 && x < i.bowling.length) { addHistory(); i.bowler = x; await save(); }
+  }
+  if (tgt.id === 'nextInnBtn') {
+    if(state.inningsNo !== 1 || !i.finished) return alert("Innings 1 must finish first.");
     addHistory(); state.inningsNo = 2; state.innings[1].target = state.innings[0].runs + 1; state.status = "LIVE"; await save();
-  };
-  document.getElementById("swapBtn").onclick = async () => { addHistory(); rotate(i); await save(); };
-  document.getElementById("bowlBtn").onclick = async () => { let n = prompt("Bowler index (1-" + i.bowling.length + ")", String(i.bowler + 1)); let x = +n - 1; if(x >= 0 && x < i.bowling.length) { addHistory(); i.bowler = x; await save(); } };
-  document.getElementById("graphicBtn").onclick = async () => { state.graphic.score = !state.graphic.score; await save(); };
-}
-
-onValue(root, snap => {
-  state = snap.val();
-  if(!state) emptySetup();
-  else render();
+  }
+  if (tgt.id === 'graphicBtn') { state.graphic.score = !state.graphic.score; await save(); }
 });
 </script>
 </body>
