@@ -2,50 +2,1751 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MB Live Score — Overlay</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MB Live Score — Broadcast Overlay</title>
+
 <style>
-html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:Arial,sans-serif;color:#fff}
-#score{position:absolute;left:40px;top:40px;display:none;font-weight:800;text-shadow:0 2px 4px #000}
-#team{font-size:22px}.main{font-size:42px;line-height:1}.ov{font-size:20px;margin-left:8px}
-#info{position:absolute;left:40px;top:115px;font-size:16px;text-shadow:0 2px 4px #000;display:none}
-#lower{position:absolute;left:40px;bottom:50px;display:none;text-shadow:0 2px 4px #000}
-#lower .name{font-size:24px;font-weight:700}#lower .sub{font-size:14px}
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:transparent;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#fff;
+}
+
+body{
+  pointer-events:none;
+}
+
+#overlay{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+}
+
+/* =====================================================
+   SCOREBUG
+===================================================== */
+
+.scorebug{
+  position:absolute;
+  left:50%;
+  top:24px;
+  transform:translateX(-50%);
+  width:min(760px,92vw);
+  height:58px;
+
+  display:flex;
+  align-items:stretch;
+
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));
+
+  opacity:0;
+  transform-origin:center top;
+  transition:opacity .25s ease,transform .25s ease;
+}
+
+.scorebug.show{
+  opacity:1;
+  transform:translateX(-50%);
+}
+
+.team{
+  display:flex;
+  align-items:center;
+  padding:0 15px;
+  background:rgba(8,12,18,.96);
+  min-width:180px;
+}
+
+.team.left{
+  justify-content:flex-start;
+  border-radius:7px 0 0 7px;
+}
+
+.team.right{
+  justify-content:flex-end;
+  border-radius:0 7px 7px 0;
+}
+
+.team-name{
+  font-size:15px;
+  font-weight:800;
+  letter-spacing:.3px;
+  white-space:nowrap;
+}
+
+.score-main{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:190px;
+  background:#087f5b;
+  padding:0 12px;
+}
+
+.score-value{
+  font-size:27px;
+  font-weight:900;
+  letter-spacing:-1px;
+}
+
+.overs-value{
+  font-size:14px;
+  font-weight:700;
+  margin-left:9px;
+  opacity:.95;
+}
+
+.match-info{
+  position:absolute;
+  left:0;
+  top:-19px;
+  font-size:10px;
+  font-weight:700;
+  color:rgba(255,255,255,.85);
+  letter-spacing:.4px;
+}
+
+/* =====================================================
+   TARGET / RRR STRIP
+===================================================== */
+
+.target-strip{
+  position:absolute;
+  top:82px;
+  left:50%;
+  transform:translateX(-50%);
+  min-width:380px;
+  padding:7px 16px;
+
+  background:rgba(8,12,18,.94);
+  border-radius:0 0 6px 6px;
+
+  text-align:center;
+
+  opacity:0;
+  transition:opacity .25s;
+}
+
+.target-strip.show{
+  opacity:1;
+}
+
+.target-main{
+  font-size:13px;
+  font-weight:800;
+}
+
+.target-secondary{
+  margin-top:2px;
+  font-size:10px;
+  color:#b8c0cb;
+}
+
+/* =====================================================
+   BATTER LOWER THIRD
+===================================================== */
+
+.lower-third{
+  position:absolute;
+  left:45px;
+  bottom:92px;
+  width:360px;
+
+  opacity:0;
+  transform:translateX(-30px);
+
+  transition:opacity .25s,transform .25s;
+}
+
+.lower-third.show{
+  opacity:1;
+  transform:translateX(0);
+}
+
+.lt-top{
+  height:30px;
+  display:flex;
+  align-items:center;
+
+  background:#087f5b;
+  padding:0 12px;
+
+  font-size:11px;
+  font-weight:800;
+}
+
+.lt-body{
+  min-height:55px;
+  padding:7px 12px;
+
+  background:rgba(7,11,16,.95);
+
+  border-left:4px solid #087f5b;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.lt-name{
+  font-size:17px;
+  font-weight:900;
+}
+
+.lt-score{
+  text-align:right;
+}
+
+.lt-runs{
+  font-size:21px;
+  font-weight:900;
+}
+
+.lt-balls{
+  font-size:10px;
+  color:#aeb5bf;
+}
+
+/* =====================================================
+   BOWLER LOWER THIRD
+===================================================== */
+
+.bowler-card{
+  position:absolute;
+  right:45px;
+  bottom:92px;
+  width:320px;
+
+  opacity:0;
+  transform:translateX(30px);
+
+  transition:opacity .25s,transform .25s;
+}
+
+.bowler-card.show{
+  opacity:1;
+  transform:translateX(0);
+}
+
+.bowler-top{
+  height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  background:#101923;
+  padding:0 12px;
+
+  font-size:10px;
+  font-weight:bold;
+}
+
+.bowler-body{
+  min-height:55px;
+  padding:7px 12px;
+
+  background:rgba(7,11,16,.95);
+
+  border-right:4px solid #087f5b;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.bowler-name{
+  font-size:15px;
+  font-weight:900;
+}
+
+.bowler-figures{
+  font-size:19px;
+  font-weight:900;
+}
+
+/* =====================================================
+   EVENT GRAPHIC
+===================================================== */
+
+.event{
+  position:absolute;
+  left:50%;
+  top:40%;
+  transform:translate(-50%,-50%) scale(.9);
+
+  min-width:340px;
+
+  text-align:center;
+
+  opacity:0;
+
+  transition:opacity .2s,transform .25s;
+}
+
+.event.show{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
+}
+
+.event-label{
+  display:inline-block;
+
+  padding:8px 24px;
+
+  background:#087f5b;
+
+  border-radius:4px 4px 0 0;
+
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+
+.event-main{
+  padding:15px 25px;
+
+  background:rgba(5,9,13,.96);
+
+  border-left:4px solid #087f5b;
+  border-right:4px solid #087f5b;
+
+  font-size:32px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+.event-sub{
+  padding:7px;
+
+  background:#11161c;
+
+  border-radius:0 0 4px 4px;
+
+  font-size:11px;
+  color:#c6ccd4;
+}
+
+/* =====================================================
+   PARTNERSHIP
+===================================================== */
+
+.partnership{
+  position:absolute;
+  left:50%;
+  bottom:42px;
+
+  transform:translateX(-50%);
+
+  min-width:350px;
+
+  background:rgba(7,11,16,.96);
+
+  border-radius:5px;
+
+  opacity:0;
+  transition:opacity .25s;
+}
+
+.partnership.show{
+  opacity:1;
+}
+
+.part-head{
+  background:#087f5b;
+  padding:6px 12px;
+  text-align:center;
+
+  font-size:10px;
+  font-weight:900;
+}
+
+.part-body{
+  display:flex;
+  justify-content:center;
+  gap:25px;
+
+  padding:9px 18px;
+}
+
+.part-score{
+  font-size:21px;
+  font-weight:900;
+}
+
+.part-meta{
+  font-size:10px;
+  color:#adb4bd;
+}
+
+/* =====================================================
+   INNINGS BREAK
+===================================================== */
+
+.innings-break{
+  position:absolute;
+  inset:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:rgba(3,7,11,.78);
+
+  opacity:0;
+  transition:opacity .3s;
+}
+
+.innings-break.show{
+  opacity:1;
+}
+
+.break-box{
+  width:min(620px,90vw);
+
+  background:#0d1319;
+
+  border-radius:8px;
+
+  overflow:hidden;
+
+  box-shadow:0 15px 50px rgba(0,0,0,.55);
+}
+
+.break-title{
+  padding:12px;
+
+  text-align:center;
+
+  background:#087f5b;
+
+  font-size:18px;
+  font-weight:900;
+}
+
+.break-score{
+  padding:20px;
+
+  text-align:center;
+
+  font-size:38px;
+  font-weight:900;
+}
+
+.break-info{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+
+  border-top:1px solid #29313a;
+}
+
+.break-info div{
+  padding:12px;
+  text-align:center;
+
+  border-right:1px solid #29313a;
+}
+
+.break-info b{
+  display:block;
+  font-size:15px;
+}
+
+.break-info span{
+  font-size:9px;
+  color:#aab2bc;
+}
+
+/* =====================================================
+   RESULT
+===================================================== */
+
+.result{
+  position:absolute;
+  inset:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:rgba(2,5,8,.82);
+
+  opacity:0;
+
+  transition:opacity .3s;
+}
+
+.result.show{
+  opacity:1;
+}
+
+.result-box{
+  width:min(680px,90vw);
+
+  background:#0d1319;
+
+  border-radius:8px;
+
+  overflow:hidden;
+
+  text-align:center;
+}
+
+.result-title{
+  padding:12px;
+
+  background:#087f5b;
+
+  font-size:14px;
+  font-weight:900;
+}
+
+.result-team{
+  padding:18px 15px 4px;
+
+  font-size:28px;
+  font-weight:900;
+}
+
+.result-text{
+  padding:4px 15px 20px;
+
+  font-size:15px;
+  color:#c8cfd8;
+}
+
+/* =====================================================
+   COMMENTARY
+===================================================== */
+
+.commentary{
+  position:absolute;
+  left:35px;
+  bottom:30px;
+
+  max-width:470px;
+
+  background:rgba(5,9,13,.92);
+
+  border-left:3px solid #087f5b;
+
+  padding:7px 10px;
+
+  opacity:0;
+  transition:opacity .2s;
+}
+
+.commentary.show{
+  opacity:1;
+}
+
+.commentary-title{
+  font-size:9px;
+  color:#75ddb3;
+  font-weight:bold;
+}
+
+.commentary-text{
+  margin-top:2px;
+  font-size:12px;
+  font-weight:700;
+}
+
+/* =====================================================
+   POWERPLAY
+===================================================== */
+
+.powerplay{
+  position:absolute;
+  top:100px;
+  right:35px;
+
+  padding:6px 12px;
+
+  background:#087f5b;
+
+  border-radius:4px;
+
+  font-size:10px;
+  font-weight:900;
+
+  opacity:0;
+}
+
+.powerplay.show{
+  opacity:1;
+}
+
+/* =====================================================
+   MOBILE / SMALL OUTPUT
+===================================================== */
+
+@media(max-width:700px){
+
+  .scorebug{
+    width:96vw;
+    height:48px;
+    top:12px;
+  }
+
+  .team{
+    min-width:0;
+    flex:1;
+    padding:0 8px;
+  }
+
+  .team-name{
+    font-size:11px;
+  }
+
+  .score-main{
+    min-width:135px;
+  }
+
+  .score-value{
+    font-size:21px;
+  }
+
+  .overs-value{
+    font-size:11px;
+  }
+
+  .target-strip{
+    top:59px;
+    min-width:280px;
+  }
+
+  .lower-third{
+    left:12px;
+    bottom:60px;
+    width:300px;
+  }
+
+  .bowler-card{
+    right:12px;
+    bottom:60px;
+    width:270px;
+  }
+
+}
+
+/* =====================================================
+   CLEAN TRANSPARENT OUTPUT
+===================================================== */
+
+.debug{
+  position:fixed;
+  left:5px;
+  bottom:5px;
+  padding:3px 6px;
+  font-size:8px;
+  background:rgba(0,0,0,.5);
+  color:#8e98a5;
+  display:none;
+}
+
 </style>
 </head>
+
 <body>
-<div id="score"><span id="team"></span> <span class="main" id="runs">0-0</span><span class="ov" id="overs">(0.0)</span></div>
-<div id="info"></div>
-<div id="lower"><div class="name" id="striker"></div><div class="sub" id="bats"></div></div>
+
+<div id="overlay">
+
+  <!-- SCOREBUG -->
+
+  <div id="scorebug" class="scorebug">
+
+    <div class="match-info" id="matchInfo"></div>
+
+    <div class="team left">
+      <span id="teamAName" class="team-name">TEAM A</span>
+    </div>
+
+    <div class="score-main">
+      <span id="scoreValue" class="score-value">0/0</span>
+      <span id="oversValue" class="overs-value">(0.0)</span>
+    </div>
+
+    <div class="team right">
+      <span id="teamBName" class="team-name">TEAM B</span>
+    </div>
+
+  </div>
+
+
+  <!-- TARGET -->
+
+  <div id="targetStrip" class="target-strip">
+
+    <div id="targetMain" class="target-main"></div>
+
+    <div id="targetSecondary" class="target-secondary"></div>
+
+  </div>
+
+
+  <!-- BATTER -->
+
+  <div id="lowerThird" class="lower-third">
+
+    <div class="lt-top">
+      BATTING
+    </div>
+
+    <div class="lt-body">
+
+      <div id="batterName" class="lt-name">
+        —
+      </div>
+
+      <div class="lt-score">
+
+        <div id="batterRuns" class="lt-runs">
+          0
+        </div>
+
+        <div id="batterBalls" class="lt-balls">
+          0 BALLS
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- BOWLER -->
+
+  <div id="bowlerCard" class="bowler-card">
+
+    <div class="bowler-top">
+
+      <span>BOWLING</span>
+
+      <span id="bowlerOvers">
+        0.0
+      </span>
+
+    </div>
+
+    <div class="bowler-body">
+
+      <div id="bowlerName" class="bowler-name">
+        —
+      </div>
+
+      <div id="bowlerFigures" class="bowler-figures">
+        0/0
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- EVENT -->
+
+  <div id="event" class="event">
+
+    <div id="eventLabel" class="event-label">
+      MB LIVE
+    </div>
+
+    <div id="eventMain" class="event-main">
+      EVENT
+    </div>
+
+    <div id="eventSub" class="event-sub">
+      MB LIVE SCORE
+    </div>
+
+  </div>
+
+
+  <!-- PARTNERSHIP -->
+
+  <div id="partnership" class="partnership">
+
+    <div class="part-head">
+      CURRENT PARTNERSHIP
+    </div>
+
+    <div class="part-body">
+
+      <div>
+        <div id="partRuns" class="part-score">
+          0
+        </div>
+
+        <div class="part-meta">
+          RUNS
+        </div>
+      </div>
+
+      <div>
+        <div id="partBalls" class="part-score">
+          0
+        </div>
+
+        <div class="part-meta">
+          BALLS
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- POWERPLAY -->
+
+  <div id="powerplay" class="powerplay">
+    POWERPLAY
+  </div>
+
+
+  <!-- COMMENTARY -->
+
+  <div id="commentary" class="commentary">
+
+    <div class="commentary-title">
+      LIVE COMMENTARY
+    </div>
+
+    <div id="commentaryText" class="commentary-text">
+      —
+    </div>
+
+  </div>
+
+
+  <!-- INNINGS BREAK -->
+
+  <div id="inningsBreak" class="innings-break">
+
+    <div class="break-box">
+
+      <div class="break-title">
+        INNINGS BREAK
+      </div>
+
+      <div id="breakScore" class="break-score">
+        0/0
+      </div>
+
+      <div class="break-info">
+
+        <div>
+          <b id="breakOvers">0.0</b>
+          <span>OVERS</span>
+        </div>
+
+        <div>
+          <b id="breakExtras">0</b>
+          <span>EXTRAS</span>
+        </div>
+
+        <div>
+          <b id="breakRR">0.00</b>
+          <span>RUN RATE</span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- RESULT -->
+
+  <div id="result" class="result">
+
+    <div class="result-box">
+
+      <div class="result-title">
+        MATCH RESULT
+      </div>
+
+      <div id="resultTeam" class="result-team">
+        —
+      </div>
+
+      <div id="resultText" class="result-text">
+        —
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import {getDatabase,ref,onValue} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+
+/* =====================================================
+   FIREBASE
+===================================================== */
+
 const firebaseConfig={
- apiKey:"AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
- authDomain:"mb-live-score.firebaseapp.com",
- databaseURL:"https://mb-live-score-default-rtdb.firebaseio.com",
- projectId:"mb-live-score",
- storageBucket:"mb-live-score.firebasestorage.app",
- messagingSenderId:"263955953168",
- appId:"1:263955953168:web:728d45ff569fdb0cad7c95"
+  apiKey:"AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
+  authDomain:"mb-live-score.firebaseapp.com",
+  databaseURL:"https://mb-live-score-default-rtdb.firebaseio.com",
+  projectId:"mb-live-score",
+  storageBucket:"mb-live-score.firebasestorage.app",
+  messagingSenderId:"263955953168",
+  appId:"1:263955953168:web:728d45ff569fdb0cad7c95"
 };
-const app=initializeApp(firebaseConfig),db=getDatabase(app);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-onValue(ref(db,"current_match"),snap=>{
- const s=snap.val(); if(!s){document.getElementById("score").style.display="none";document.getElementById("info").style.display="none";document.getElementById("lower").style.display="none";return}
- const i=s.innings[s.inningsNo-1], team=s.inningsNo===1?s.meta.teamA:s.meta.teamB;
- const showScore=s.graphic?.score!==false,showLower=s.graphic?.lowerThird!==false;
- document.getElementById("score").style.display=showScore?"block":"none";
- document.getElementById("team").textContent=team||"";
- document.getElementById("runs").textContent=`${i.runs}-${i.wickets}`;
- document.getElementById("overs").textContent=`(${i.overNo}.${i.legalBalls})`;
- document.getElementById("info").style.display=showScore?"block":"none";
- document.getElementById("info").textContent=`${s.meta.tournament||""} • ${s.meta.teamA||""} vs ${s.meta.teamB||""}`;
- document.getElementById("lower").style.display=showLower?"block":"none";
- const b=i.striker>=0?i.batting[i.striker]:null;
- document.getElementById("striker").textContent=b?b.name:"";
- document.getElementById("bats").textContent=b?`${b.runs} runs • ${b.balls} balls`:"";
-});
+
+const app=initializeApp(firebaseConfig);
+
+const db=getDatabase(app);
+
+const matchRef=ref(
+  db,
+  "current_match"
+);
+
+
+/* =====================================================
+   DOM
+===================================================== */
+
+const $=id=>
+  document.getElementById(id);
+
+
+/* =====================================================
+   TIMERS
+===================================================== */
+
+let eventTimer=null;
+let lowerTimer=null;
+let bowlerTimer=null;
+let partnershipTimer=null;
+let breakTimer=null;
+let resultTimer=null;
+let commentaryTimer=null;
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function show(el){
+  el.classList.add("show");
+}
+
+function hide(el){
+  el.classList.remove("show");
+}
+
+function setText(id,text){
+  $(id).textContent=text;
+}
+
+function number(x){
+  return Number(x)||0;
+}
+
+function oversFromBalls(balls){
+
+  balls=number(balls);
+
+  return (
+    Math.floor(balls/6)+
+    "."+
+    (balls%6)
+  );
+}
+
+function runRate(runs,balls){
+
+  if(!balls)return "0.00";
+
+  return (
+    runs/(balls/6)
+  ).toFixed(2);
+}
+
+function extrasTotal(i){
+
+  if(!i?.extras)return 0;
+
+  return (
+    number(i.extras.wide)+
+    number(i.extras.noBall)+
+    number(i.extras.bye)+
+    number(i.extras.legBye)+
+    number(i.extras.penalty)
+  );
+}
+
+
+/* =====================================================
+   MAIN SCOREBUG
+===================================================== */
+
+function updateScorebug(state,i){
+
+  const g=state.graphics||{};
+
+  if(g.master===false || g.scorebug===false){
+
+    hide($("scorebug"));
+
+    return;
+  }
+
+  setText(
+    "teamAName",
+    state.meta.teamA||"TEAM A"
+  );
+
+  setText(
+    "teamBName",
+    state.meta.teamB||"TEAM B"
+  );
+
+  setText(
+    "scoreValue",
+    `${i.runs||0}/${i.wickets||0}`
+  );
+
+  setText(
+    "oversValue",
+    `(${i.overNo||0}.${i.legalBalls||0})`
+  );
+
+  setText(
+    "matchInfo",
+    `${state.meta.tournament||""} • ${state.meta.matchDay||""} • ${state.meta.maxOvers||20} OV`
+  );
+
+  show($("scorebug"));
+}
+
+
+/* =====================================================
+   TARGET / RRR
+===================================================== */
+
+function updateTarget(state,i){
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.target===false ||
+    state.inningsNo!==2 ||
+    i.target==null
+  ){
+
+    hide($("targetStrip"));
+
+    return;
+  }
+
+  const target=number(i.target);
+
+  const need=Math.max(
+    0,
+    target-number(i.runs)
+  );
+
+  const ballsUsed=
+    number(i.overNo)*6+
+    number(i.legalBalls);
+
+  const totalBalls=
+    number(state.meta.maxOvers)*6;
+
+  const ballsLeft=
+    Math.max(
+      0,
+      totalBalls-ballsUsed
+    );
+
+  let rrr="0.00";
+
+  if(ballsLeft>0){
+    rrr=(
+      need/(ballsLeft/6)
+    ).toFixed(2);
+  }
+
+  setText(
+    "targetMain",
+    `TARGET ${target}  •  NEED ${need}`
+  );
+
+  setText(
+    "targetSecondary",
+    `BALLS ${ballsLeft}  •  REQUIRED RUN RATE ${rrr}`
+  );
+
+  show($("targetStrip"));
+}
+
+
+/* =====================================================
+   BATTER
+===================================================== */
+
+function updateBatter(state,i){
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.lowerThird===false ||
+    i.striker==null ||
+    i.striker<0
+  ){
+
+    hide($("lowerThird"));
+
+    return;
+  }
+
+  const b=i.batting?.[i.striker];
+
+  if(!b){
+    hide($("lowerThird"));
+    return;
+  }
+
+  setText(
+    "batterName",
+    b.name||"—"
+  );
+
+  setText(
+    "batterRuns",
+    `${number(b.runs)}${b.out?"":"*"}`
+  );
+
+  setText(
+    "batterBalls",
+    `${number(b.balls)} BALLS • ${number(b.fours)}x4 • ${number(b.sixes)}x6`
+  );
+
+  show($("lowerThird"));
+}
+
+
+/* =====================================================
+   BOWLER
+===================================================== */
+
+function updateBowler(state,i){
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.bowling===false
+  ){
+
+    hide($("bowlerCard"));
+
+    return;
+  }
+
+  const b=i.bowling?.[i.bowler];
+
+  if(!b){
+    hide($("bowlerCard"));
+    return;
+  }
+
+  setText(
+    "bowlerName",
+    b.name||"—"
+  );
+
+  setText(
+    "bowlerOvers",
+    oversFromBalls(b.balls)
+  );
+
+  setText(
+    "bowlerFigures",
+    `${number(b.wickets)}/${number(b.runs)}`
+  );
+
+  show($("bowlerCard"));
+}
+
+
+/* =====================================================
+   PARTNERSHIP
+===================================================== */
+
+function updatePartnership(state,i){
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.partnership===false
+  ){
+
+    hide($("partnership"));
+
+    return;
+  }
+
+  /*
+     Prototype calculation:
+     current partnership is reconstructed
+     from total runs and completed wicket
+     information.
+  */
+
+  let runs=0;
+
+  if(
+    Array.isArray(i.fallOfWickets) &&
+    i.fallOfWickets.length
+  ){
+
+    const last=
+      i.fallOfWickets[
+        i.fallOfWickets.length-1
+      ];
+
+    runs=
+      Math.max(
+        0,
+        number(i.runs)-number(last.score)
+      );
+
+  }else{
+
+    runs=number(i.runs);
+
+  }
+
+  setText(
+    "partRuns",
+    runs
+  );
+
+  setText(
+    "partBalls",
+    number(i.legalBalls)+
+    number(i.overNo)*6
+  );
+
+  show($("partnership"));
+}
+
+
+/* =====================================================
+   POWERPLAY
+===================================================== */
+
+function updatePowerplay(state,i){
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.powerplay===false ||
+    !i.powerplay?.enabled
+  ){
+
+    hide($("powerplay"));
+
+    return;
+  }
+
+  if(
+    number(i.overNo)<
+    number(i.powerplay.overs)
+  ){
+
+    show($("powerplay"));
+
+  }else{
+
+    hide($("powerplay"));
+
+  }
+}
+
+
+/* =====================================================
+   COMMENTARY
+===================================================== */
+
+function updateCommentary(state){
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.commentary===false ||
+    !state.lastEvent?.text
+  ){
+
+    hide($("commentary"));
+
+    return;
+  }
+
+  setText(
+    "commentaryText",
+    state.lastEvent.text
+  );
+
+  show($("commentary"));
+
+  clearTimeout(commentaryTimer);
+
+  commentaryTimer=setTimeout(()=>{
+    hide($("commentary"));
+  },4500);
+}
+
+
+/* =====================================================
+   EVENT GRAPHICS
+===================================================== */
+
+function eventData(state,i){
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    !g.activeEvent
+  ){
+
+    hide($("event"));
+
+    return;
+  }
+
+  const event=
+    String(g.activeEvent)
+      .toUpperCase();
+
+  let label="MB LIVE";
+  let main=event;
+  let sub="";
+
+  switch(event){
+
+    case"FOUR":
+      label="BOUNDARY";
+      main="FOUR";
+      sub=`${i.batting?.[i.striker]?.name||""}`;
+      break;
+
+    case"SIX":
+      label="MAXIMUM";
+      main="SIX";
+      sub=`${i.batting?.[i.striker]?.name||""}`;
+      break;
+
+    case"WICKET":
+      label="WICKET";
+      main="WICKET";
+      sub="A wicket has fallen";
+      break;
+
+    case"FIFTY":
+      label="MILESTONE";
+      main="FIFTY";
+      break;
+
+    case"HUNDRED":
+      label="MILESTONE";
+      main="HUNDRED";
+      break;
+
+    case"PARTNERSHIP":
+      label="PARTNERSHIP";
+      main="PARTNERSHIP";
+      break;
+
+    case"SCORECARD":
+      label="MATCH";
+      main="SCORECARD";
+      break;
+
+    case"RESULT":
+      label="MATCH";
+      main="RESULT";
+      break;
+
+    case"MILESTONE":
+      label="MILESTONE";
+      main=g.eventText||"MILESTONE";
+      break;
+
+    default:
+      main=g.eventText||event;
+  }
+
+  setText(
+    "eventLabel",
+    label
+  );
+
+  setText(
+    "eventMain",
+    main
+  );
+
+  setText(
+    "eventSub",
+    sub||"MB LIVE SCORE"
+  );
+
+  show($("event"));
+
+  clearTimeout(eventTimer);
+
+  eventTimer=setTimeout(()=>{
+    hide($("event"));
+  },5000);
+}
+
+
+/* =====================================================
+   INNINGS BREAK
+===================================================== */
+
+function updateInningsBreak(state,i){
+
+  if(
+    !i.finished ||
+    state.inningsNo!==1
+  ){
+
+    hide($("inningsBreak"));
+
+    return;
+  }
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.inningsBreak===false
+  ){
+
+    hide($("inningsBreak"));
+
+    return;
+  }
+
+  setText(
+    "breakScore",
+    `${i.runs}/${i.wickets}`
+  );
+
+  setText(
+    "breakOvers",
+    `${i.overNo}.${i.legalBalls}`
+  );
+
+  setText(
+    "breakExtras",
+    extrasTotal(i)
+  );
+
+  setText(
+    "breakRR",
+    runRate(
+      i.runs,
+      i.overNo*6+i.legalBalls
+    )
+  );
+
+  show($("inningsBreak"));
+
+  clearTimeout(breakTimer);
+
+  breakTimer=setTimeout(()=>{
+    hide($("inningsBreak"));
+  },8000);
+}
+
+
+/* =====================================================
+   RESULT
+===================================================== */
+
+function updateResult(state){
+
+  if(state.status!=="WON"){
+    hide($("result"));
+    return;
+  }
+
+  const g=state.graphics||{};
+
+  if(
+    g.master===false ||
+    g.result===false
+  ){
+
+    hide($("result"));
+
+    return;
+  }
+
+  setText(
+    "resultTeam",
+    state.meta[
+      state.inningsNo===1
+        ?"teamA"
+        :"teamB"
+    ]||"WINNER"
+  );
+
+  setText(
+    "resultText",
+    state.result||"MATCH COMPLETE"
+  );
+
+  show($("result"));
+}
+
+
+/* =====================================================
+   AUTO BOUNDARY DETECTION
+===================================================== */
+
+let lastHistoryLength=0;
+
+function detectAutomaticEvent(state,i){
+
+  const g=state.graphics||{};
+
+  if(
+    !g.auto ||
+    g.master===false
+  )return;
+
+  const history=state.ballHistory||[];
+
+  if(
+    history.length<=lastHistoryLength
+  ){
+
+    lastHistoryLength=
+      history.length;
+
+    return;
+  }
+
+  const latest=
+    history[history.length-1];
+
+  lastHistoryLength=
+    history.length;
+
+  const text=
+    String(latest?.text||"")
+      .toUpperCase();
+
+  if(text==="4"){
+    g.activeEvent="FOUR";
+    renderEventFromState(state,i);
+    return;
+  }
+
+  if(text==="6"){
+    g.activeEvent="SIX";
+    renderEventFromState(state,i);
+    return;
+  }
+
+  if(text==="W"){
+    g.activeEvent="WICKET";
+    renderEventFromState(state,i);
+    return;
+  }
+
+}
+
+
+/* =====================================================
+   EVENT RENDER WITHOUT FIREBASE WRITE
+===================================================== */
+
+function renderEventFromState(state,i){
+
+  const g=state.graphics||{};
+
+  if(!g.activeEvent)return;
+
+  const event=
+    String(g.activeEvent)
+      .toUpperCase();
+
+  let label="MB LIVE";
+  let main=event;
+  let sub="";
+
+  if(event==="FOUR"){
+    label="BOUNDARY";
+    main="FOUR";
+  }
+
+  if(event==="SIX"){
+    label="MAXIMUM";
+    main="SIX";
+  }
+
+  if(event==="WICKET"){
+    label="WICKET";
+    main="WICKET";
+  }
+
+  if(event==="MILESTONE"){
+    label="MILESTONE";
+    main=g.eventText||"MILESTONE";
+  }
+
+  setText("eventLabel",label);
+  setText("eventMain",main);
+  setText("eventSub",sub||"MB LIVE SCORE");
+
+  show($("event"));
+
+  clearTimeout(eventTimer);
+
+  eventTimer=setTimeout(()=>{
+    hide($("event"));
+  },4500);
+}
+
+
+/* =====================================================
+   MAIN RENDER
+===================================================== */
+
+function render(state){
+
+  if(!state?.meta?.teamA)return;
+
+  const innings=
+    state.innings?.[
+      number(state.inningsNo)-1
+    ];
+
+  if(!innings)return;
+
+  updateScorebug(
+    state,
+    innings
+  );
+
+  updateTarget(
+    state,
+    innings
+  );
+
+  updateBatter(
+    state,
+    innings
+  );
+
+  updateBowler(
+    state,
+    innings
+  );
+
+  updatePartnership(
+    state,
+    innings
+  );
+
+  updatePowerplay(
+    state,
+    innings
+  );
+
+  updateCommentary(
+    state
+  );
+
+  eventData(
+    state,
+    innings
+  );
+
+  updateInningsBreak(
+    state,
+    innings
+  );
+
+  updateResult(
+    state
+  );
+
+  detectAutomaticEvent(
+    state,
+    innings
+  );
+}
+
+
+/* =====================================================
+   FIREBASE LISTENER
+===================================================== */
+
+onValue(
+  matchRef,
+  snapshot=>{
+
+    const state=
+      snapshot.val();
+
+    if(!state){
+
+      hide($("scorebug"));
+      hide($("targetStrip"));
+      hide($("lowerThird"));
+      hide($("bowlerCard"));
+      hide($("event"));
+      hide($("partnership"));
+      hide($("commentary"));
+      hide($("inningsBreak"));
+      hide($("result"));
+
+      return;
+    }
+
+    render(state);
+  }
+);
+
 </script>
+
 </body>
 </html>
