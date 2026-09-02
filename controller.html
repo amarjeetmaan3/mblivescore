@@ -31,117 +31,174 @@ label{font-size:10px;color:#aeb4be;display:block;margin:2px 0}.scoreline{display
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {getDatabase,ref,onValue,set,remove} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
-const firebaseConfig={
- apiKey:"AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
- authDomain:"mb-live-score.firebaseapp.com",
- databaseURL:"https://mb-live-score-default-rtdb.firebaseio.com",
- projectId:"mb-live-score",
- storageBucket:"mb-live-score.firebasestorage.app",
- messagingSenderId:"263955953168",
- appId:"1:263955953168:web:728d45ff569fdb0cad7c95"
+const firebaseConfig = {
+  apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
+  authDomain: "mb-live-score.firebaseapp.com",
+  databaseURL: "https://mb-live-score-default-rtdb.firebaseio.com",
+  projectId: "mb-live-score",
+  storageBucket: "mb-live-score.firebasestorage.app",
+  messagingSenderId: "263955953168",
+  appId: "1:263955953168:web:728d45ff569fdb0cad7c95"
 };
-const app=initializeApp(firebaseConfig),db=getDatabase(app),root=ref(db,"current_match");
-let state=null,unsub=null;
 
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const appEl=document.getElementById("app");
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const root = ref(db, "current_match");
+let state = null;
 
-function emptySetup(){
- appEl.innerHTML=`<div class="setup panel"><h1>New Match</h1><div class="grid">
- <div><label>Tournament</label><input id="tour"></div><div><label>Match Day</label><input id="day"></div><div><label>Overs</label><input id="maxOvers" type="number" value="20" min="1"></div>
- </div><div class="grid2"><div><label>Team A</label><input id="teamA"></div><div><label>Team B</label><input id="teamB"></div></div>
- <label>Team A Players (one per line)</label><textarea id="pa" style="width:100%;height:110px;background:#0e1013;color:#fff;border:1px solid #343943;border-radius:4px;padding:6px"></textarea>
- <label>Team B Players (one per line)</label><textarea id="pb" style="width:100%;height:110px;background:#0e1013;color:#fff;border:1px solid #343943;border-radius:4px;padding:6px"></textarea>
- <button class="primary" style="width:100%;margin-top:5px" id="create">CREATE MATCH</button>
- </div>`;
- document.getElementById("create").onclick=createMatch;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const appEl = document.getElementById("app");
+
+function emptySetup() {
+  appEl.innerHTML = `<div class="setup panel"><h1>New Match</h1><div class="grid">
+  <div><label>Tournament</label><input id="tour"></div><div><label>Match Day</label><input id="day"></div><div><label>Overs</label><input id="maxOvers" type="number" value="20" min="1"></div>
+  </div><div class="grid2"><div><label>Team A</label><input id="teamA"></div><div><label>Team B</label><input id="teamB"></div></div>
+  <label>Team A Players (one per line)</label><textarea id="pa" style="width:100%;height:110px;background:#0e1013;color:#fff;border:1px solid #343943;border-radius:4px;padding:6px"></textarea>
+  <label>Team B Players (one per line)</label><textarea id="pb" style="width:100%;height:110px;background:#0e1013;color:#fff;border:1px solid #343943;border-radius:4px;padding:6px"></textarea>
+  <button class="primary" style="width:100%;margin-top:5px" id="create">CREATE MATCH</button>
+  </div>`;
+  document.getElementById("create").onclick = createMatch;
 }
 
-function freshMatch(d){
- const a=d.pa,b=d.pb;
- return {version:2,id:Date.now(),meta:{tournament:d.tournament,matchDay:d.matchDay,maxOvers:d.maxOvers,teamA:d.teamA,teamB:d.teamB},
-  inningsNo:1,innings:[newInnings(a,b),newInnings(b,a)],status:"LIVE",graphic:{score:true,lowerThird:true},
-  ballHistory:[]};
+function freshMatch(d) {
+  const a = d.pa, b = d.pb;
+  return {
+    version: 2, id: Date.now(),
+    meta: {tournament: d.tournament, matchDay: d.matchDay, maxOvers: d.maxOvers, teamA: d.teamA, teamB: d.teamB},
+    inningsNo: 1, innings: [newInnings(a, b), newInnings(b, a)],
+    status: "LIVE", graphic: {score: true, lowerThird: true},
+    ballHistory: []
+  };
 }
 
-function newInnings(players,opponents){return {batting:players.map((name,i)=>({id:"p"+i,name, runs:0,balls:0,out:false,dismissal:""})),bowling:opponents.map((name,i)=>({id:"b"+i,name,overs:0,runs:0,wickets:0,balls:0})),striker:0,nonStriker:1,nextBatter:2,bowler:0,runs:0,wickets:0,legalBalls:0,extras:{wide:0,noBall:0,bye:0,legBye:0,penalty:0},overNo:0,target:null,freeHit:false,finished:false};}
-
-async function createMatch(){
- const names=s=>s.split(/\n|,/).map(x=>x.trim()).filter(Boolean);
- const d={tournament:document.getElementById('tour').value.trim(),matchDay:document.getElementById('day').value.trim(),maxOvers:Math.max(1,+document.getElementById('maxOvers').value||20),teamA:document.getElementById('teamA').value.trim(),teamB:document.getElementById('teamB').value.trim(),pa:names(document.getElementById('pa').value),pb:names(document.getElementById('pb').value)};
- if(!d.teamA||!d.teamB||d.pa.length<2||d.pb.length<2){alert("Team names and at least 2 players per team are required.");return}
- await set(root,freshMatch(d)); alert("Match created.");
+function newInnings(players, opponents) {
+  return {
+    batting: players.map((name, i) => ({id: "p"+i, name, runs: 0, balls: 0, out: false, dismissal: ""})),
+    bowling: opponents.map((name, i) => ({id: "b"+i, name, overs: 0, runs: 0, wickets: 0, balls: 0})),
+    striker: 0, nonStriker: 1, nextBatter: 2, bowler: 0, runs: 0, wickets: 0, legalBalls: 0,
+    extras: {wide: 0, noBall: 0, bye: 0, legBye: 0, penalty: 0}, overNo: 0, target: null, freeHit: false, finished: false
+  };
 }
 
-function current(){return state.innings[state.inningsNo-1]}
-function save(){return set(root,state)}
-function addHistory(){state.ballHistory=state.ballHistory||[];state.ballHistory.push(JSON.stringify(state));if(state.ballHistory.length>60)state.ballHistory.shift()}
-function rotate(i){[i.striker,i.nonStriker]=[i.nonStriker,i.striker]}
-function endOver(i){i.overNo++;i.legalBalls=0;rotate(i);i.bowler=(i.bowler+1)%i.bowling.length}
-function finishCheck(){
- const i=current(), max=state.meta.maxOvers;
- if(i.target && i.runs>=i.target){i.finished=true;state.status="WON";return}
- if(i.wickets>=i.batting.length-1 || i.overNo>=max){i.finished=true}
-}
-function legalBall(i){i.legalBalls++; if(i.bowler!=null)i.bowling[i.bowler].balls++; if(i.legalBalls>=6)endOver(i)}
-function batterRun(i,r){
- const b=i.batting[i.striker]; b.runs+=r;b.balls++;i.runs+=r;i.bowling[i.bowler].runs+=r;
- if(r%2)rotate(i); legalBall(i); finishCheck();
-}
-async function run(r){const i=current();if(i.finished)return;addHistory();batterRun(i,r);await save()}
-async function extra(type,total=1){
- const i=current();if(i.finished)return;addHistory();
- total=Math.max(1,Math.floor(total));
- if(type==="WD"){i.runs+=total;i.extras.wide+=total;i.bowling[i.bowler].runs+=total;if((total-1)%2)rotate(i);}
- if(type==="NB"){i.runs+=total;i.extras.noBall+=1;i.bowling[i.bowler].runs+=total;if(total>1){let bat=total-1;i.batting[i.striker].runs+=bat;i.batting[i.striker].balls++;if(bat%2)rotate(i)}}
- if(type==="B"){i.runs+=total;i.extras.bye+=total;i.batting[i.striker].balls++;if(total%2)rotate(i);legalBall(i)}
- if(type==="LB"){i.runs+=total;i.extras.legBye+=total;i.batting[i.striker].balls++;if(total%2)rotate(i);legalBall(i)}
- finishCheck();await save()
-}
-async function wicket(type){
- const i=current();if(i.finished)return;addHistory();
- const b=i.batting[i.striker];b.out=true;b.dismissal=type;b.balls++;i.wickets++;
- i.striker=i.nextBatter;i.nextBatter++;
- if(i.nextBatter>=i.batting.length)i.striker=-1;
- legalBall(i);finishCheck();await save();
-}
-async function undo(){if(!state.ballHistory?.length)return;const old=JSON.parse(state.ballHistory.pop());old.ballHistory=state.ballHistory;state=old;await save()}
-async function newMatch(){if(confirm("Replace current match with a new match?")){await remove(root);emptySetup()}}
-async function endMatch(){if(confirm("End and clear current match?")){await remove(root);emptySetup()}}
-
-function render(){
- const i=current(),m=state.meta, a=state.inningsNo===1?m.teamA:m.teamB;
- appEl.innerHTML=`<div class="wrap">
- <div class="top"><h1>MB LIVE SCORE</h1><div class="bar"><button id="undoBtn">↶</button><button id="newBtn">NEW</button><button class="danger" id="endBtn">END</button></div></div>
- <div class="panel"><div class="small muted">${esc(m.tournament)} • ${esc(m.matchDay)} • ${m.maxOvers} OV</div><div class="scoreline"><b>${esc(a)}</b><span class="score">${i.runs}-${i.wickets}</span><span class="overs">(${i.overNo}.${i.legalBalls})</span><span class="status">${i.finished?"FINISHED":"LIVE"}</span></div><div class="small">Extras W ${i.extras.wide} NB ${i.extras.noBall} B ${i.extras.bye} LB ${i.extras.legBye}</div></div>
- <div class="panel"><div class="bat ${i.striker>=0?"on":""}">${i.striker>=0?esc(i.batting[i.striker].name):"—"} <b>${i.striker>=0?i.batting[i.striker].runs:""}</b></div><div class="bat">${i.nonStriker>=0?esc(i.batting[i.nonStriker].name):"—"} <b>${i.nonStriker>=0?i.batting[i.nonStriker].runs:""}</b></div><div class="small">Bowler: ${esc(i.bowling[i.bowler]?.name||"—")} • ${i.bowling[i.bowler]?.overs||0}.${i.bowling[i.bowler]?.balls%6||0}</div></div>
- <div class="panel"><div class="runs">${[0,1,2,3,4,6].map(n=>`<button data-run="${n}">${n}</button>`).join("")}</div></div>
- <div class="panel"><div class="extras"><button data-ex="WD">WD</button><button data-ex="NB">NB</button><button data-ex="B">B</button><button data-ex="LB">LB</button><button id="pen">PEN</button></div></div>
- <div class="panel"><div class="dismiss">${["Bowled","Caught","LBW","Run Out","Stumped","Hit Wicket","Obstruct","Hit Twice"].map(x=>`<button data-w="${x}">${x}</button>`).join("")}</div></div>
- <div class="panel"><div class="actions"><button id="swapBtn">SWAP</button><button id="bowlBtn">BOWLER</button><button id="nextInningsBtn">INN 2</button><button id="graphicBtn">GRAPHIC</button></div></div>
- <div class="panel small muted">${esc(m.teamA)} vs ${esc(m.teamB)} • Current innings ${state.inningsNo}/2 • Next batter: ${esc(i.batting[i.nextBatter]?.name||"—")}</div>
- </div>`;
- 
- document.querySelectorAll("[data-run]").forEach(b=>b.onclick=()=>run(+b.dataset.run));
- document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{let x=prompt(b.dataset.ex+" total runs?","1");if(x)extra(b.dataset.ex,+x)});
- document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>wicket(b.dataset.w));
- 
- document.getElementById("undoBtn").onclick=undo;
- document.getElementById("newBtn").onclick=newMatch;
- document.getElementById("endBtn").onclick=endMatch;
- document.getElementById("nextInningsBtn").onclick=async()=>{
-   if(state.inningsNo!==1 || !current().finished){alert("Innings 1 must finish first.");return}
-   addHistory(); state.inningsNo=2; state.innings[1].target=state.innings[0].runs+1; state.status="LIVE"; await save();
- };
- document.getElementById("swapBtn").onclick=async()=>{addHistory();rotate(i);await save()};
- document.getElementById("bowlBtn").onclick=async()=>{let n=prompt("Bowler index (1-"+i.bowling.length+")",String(i.bowler+1));let x=+n-1;if(x>=0&&x<i.bowling.length){addHistory();i.bowler=x;await save()}};
- document.getElementById("graphicBtn").onclick=async()=>{state.graphic.score=!state.graphic.score;await save()};
+async function createMatch() {
+  const names = s => s.split(/\n|,/).map(x => x.trim()).filter(Boolean);
+  const d = {
+    tournament: document.getElementById('tour').value.trim(),
+    matchDay: document.getElementById('day').value.trim(),
+    maxOvers: Math.max(1, +document.getElementById('maxOvers').value || 20),
+    teamA: document.getElementById('teamA').value.trim(),
+    teamB: document.getElementById('teamB').value.trim(),
+    pa: names(document.getElementById('pa').value),
+    pb: names(document.getElementById('pb').value)
+  };
+  if(!d.teamA || !d.teamB || d.pa.length < 2 || d.pb.length < 2) {
+    alert("Team names and at least 2 players per team are required.");
+    return;
+  }
+  await set(root, freshMatch(d));
+  alert("Match created.");
 }
 
-onValue(root,snap=>{
- state=snap.val();
- if(!state) emptySetup();
- else render();
+function current() { return state.innings[state.inningsNo - 1]; }
+function save() { return set(root, state); }
+function addHistory() {
+  state.ballHistory = state.ballHistory || [];
+  state.ballHistory.push(JSON.stringify(state));
+  if(state.ballHistory.length > 60) state.ballHistory.shift();
+}
+
+function rotate(i) { [i.striker, i.nonStriker] = [i.nonStriker, i.striker]; }
+function endOver(i) { i.overNo++; i.legalBalls = 0; rotate(i); i.bowler = (i.bowler + 1) % i.bowling.length; }
+
+function finishCheck() {
+  const i = current(), max = state.meta.maxOvers;
+  if(i.target && i.runs >= i.target) { i.finished = true; state.status = "WON"; return; }
+  if(i.wickets >= i.batting.length - 1 || i.overNo >= max) { i.finished = true; }
+}
+
+function legalBall(i) {
+  i.legalBalls++;
+  if(i.bowler != null) i.bowling[i.bowler].balls++;
+  if(i.legalBalls >= 6) endOver(i);
+}
+
+function batterRun(i, r) {
+  const b = i.batting[i.striker];
+  b.runs += r; b.balls++; i.runs += r; i.bowling[i.bowler].runs += r;
+  if(r % 2) rotate(i);
+  legalBall(i); finishCheck();
+}
+
+async function run(r) {
+  const i = current(); if(i.finished) return;
+  addHistory(); batterRun(i, r); await save();
+}
+
+async function extra(type, total = 1) {
+  const i = current(); if(i.finished) return;
+  addHistory();
+  total = Math.max(1, Math.floor(total));
+  if(type === "WD") { i.runs += total; i.extras.wide += total; i.bowling[i.bowler].runs += total; if((total - 1) % 2) rotate(i); }
+  if(type === "NB") { i.runs += total; i.extras.noBall += 1; i.bowling[i.bowler].runs += total; if(total > 1) { let bat = total - 1; i.batting[i.striker].runs += bat; i.batting[i.striker].balls++; if(bat % 2) rotate(i); } }
+  if(type === "B") { i.runs += total; i.extras.bye += total; i.batting[i.striker].balls++; if(total % 2) rotate(i); legalBall(i); }
+  if(type === "LB") { i.runs += total; i.extras.legBye += total; i.batting[i.striker].balls++; if(total % 2) rotate(i); legalBall(i); }
+  finishCheck(); await save();
+}
+
+async function wicket(type) {
+  const i = current(); if(i.finished) return;
+  addHistory();
+  const b = i.batting[i.striker]; b.out = true; b.dismissal = type; b.balls++; i.wickets++;
+  i.striker = i.nextBatter; i.nextBatter++;
+  if(i.nextBatter >= i.batting.length) i.striker = -1;
+  legalBall(i); finishCheck(); await save();
+}
+
+async function undo() {
+  if(!state.ballHistory?.length) return;
+  const old = JSON.parse(state.ballHistory.pop());
+  old.ballHistory = state.ballHistory;
+  state = old;
+  await save();
+}
+
+async function newMatch() { if(confirm("Replace current match with a new match?")) { await remove(root); emptySetup(); } }
+async function endMatch() { if(confirm("End and clear current match?")) { await remove(root); emptySetup(); } }
+
+function render() {
+  const i = current(), m = state.meta, a = state.inningsNo === 1 ? m.teamA : m.teamB;
+  appEl.innerHTML = `<div class="wrap">
+  <div class="top"><h1>MB LIVE SCORE</h1><div class="bar"><button id="undoBtn">↶</button><button id="newBtn">NEW</button><button class="danger" id="endBtn">END</button></div></div>
+  <div class="panel"><div class="small muted">${esc(m.tournament)} • ${esc(m.matchDay)} • ${m.maxOvers} OV</div><div class="scoreline"><b>${esc(a)}</b><span class="score">${i.runs}-${i.wickets}</span><span class="overs">(${i.overNo}.${i.legalBalls})</span><span class="status">${i.finished ? "FINISHED" : "LIVE"}</span></div><div class="small">Extras W ${i.extras.wide} NB ${i.extras.noBall} B ${i.extras.bye} LB ${i.extras.legBye}</div></div>
+  <div class="panel"><div class="bat ${i.striker >= 0 ? "on" : ""}">${i.striker >= 0 ? esc(i.batting[i.striker].name) : "—"} <b>${i.striker >= 0 ? i.batting[i.striker].runs : ""}</b></div><div class="bat">${i.nonStriker >= 0 ? esc(i.batting[i.nonStriker].name) : "—"} <b>${i.nonStriker >= 0 ? i.batting[i.nonStriker].runs : ""}</b></div><div class="small">Bowler: ${esc(i.bowling[i.bowler]?.name || "—")} • ${i.bowling[i.bowler]?.overs || 0}.${i.bowling[i.bowler]?.balls % 6 || 0}</div></div>
+  <div class="panel"><div class="runs">${[0, 1, 2, 3, 4, 6].map(n => `<button data-run="${n}">${n}</button>`).join("")}</div></div>
+  <div class="panel"><div class="extras"><button data-ex="WD">WD</button><button data-ex="NB">NB</button><button data-ex="B">B</button><button data-ex="LB">LB</button></div></div>
+  <div class="panel"><div class="dismiss">${["Bowled", "Caught", "LBW", "Run Out", "Stumped", "Hit Wicket", "Obstruct", "Hit Twice"].map(x => `<button data-w="${x}">${x}</button>`).join("")}</div></div>
+  <div class="panel"><div class="actions"><button id="swapBtn">SWAP</button><button id="bowlBtn">BOWLER</button><button id="nextInningsBtn">INN 2</button><button id="graphicBtn">GRAPHIC</button></div></div>
+  <div class="panel small muted">${esc(m.teamA)} vs ${esc(m.teamB)} • Current innings ${state.inningsNo}/2 • Next batter: ${esc(i.batting[i.nextBatter]?.name || "—")}</div>
+  </div>`;
+  
+  document.querySelectorAll("[data-run]").forEach(b => b.onclick = () => run(+b.dataset.run));
+  document.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { let x = prompt(b.dataset.ex + " total runs?", "1"); if(x) extra(b.dataset.ex, +x); });
+  document.querySelectorAll("[data-w]").forEach(b => b.onclick = () => wicket(b.dataset.w));
+  
+  document.getElementById("undoBtn").onclick = undo;
+  document.getElementById("newBtn").onclick = newMatch;
+  document.getElementById("endBtn").onclick = endMatch;
+  document.getElementById("nextInningsBtn").onclick = async () => {
+    if(state.inningsNo !== 1 || !current().finished) { alert("Innings 1 must finish first."); return; }
+    addHistory(); state.inningsNo = 2; state.innings[1].target = state.innings[0].runs + 1; state.status = "LIVE"; await save();
+  };
+  document.getElementById("swapBtn").onclick = async () => { addHistory(); rotate(i); await save(); };
+  document.getElementById("bowlBtn").onclick = async () => { let n = prompt("Bowler index (1-" + i.bowling.length + ")", String(i.bowler + 1)); let x = +n - 1; if(x >= 0 && x < i.bowling.length) { addHistory(); i.bowler = x; await save(); } };
+  document.getElementById("graphicBtn").onclick = async () => { state.graphic.score = !state.graphic.score; await save(); };
+}
+
+onValue(root, snap => {
+  state = snap.val();
+  if(!state) emptySetup();
+  else render();
 });
 </script>
-</body></html>
+</body>
+</html>
