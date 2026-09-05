@@ -13,122 +13,123 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html,body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; font-family: 'Rajdhani', sans-serif; color: var(--ink); }
-
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
   .mark { font-family: 'Orbitron', sans-serif; }
 
   /* ================= MAIN SCOREBUG ================= */
   .scorebug {
     position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: stretch; min-width: 760px;
-    opacity: 0; transition: opacity .35s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65));
+    display: flex; flex-direction: column; align-items: stretch; min-width: 800px;
+    opacity: 0; transition: opacity .35s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
   }
   .scorebug.show { opacity: 1; }
 
   .brand-bar {
-    align-self: flex-start; margin-left: 22px;
-    background: var(--gold); color: var(--navy-deep);
-    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 11px;
-    padding: 4px 16px; letter-spacing: 3px; border-radius: 5px 5px 0 0;
+    align-self: flex-start; margin-left: 22px; background: var(--gold); color: var(--navy-deep);
+    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 11px; padding: 4px 16px; letter-spacing: 3px; border-radius: 5px 5px 0 0;
   }
 
   .main-strip {
-    display: flex; align-items: stretch;
-    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
     border: 1px solid var(--line); border-radius: 8px; overflow: hidden; height: 96px;
   }
 
   .team-block {
-    background: var(--gold); color: var(--navy-deep);
-    font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 1px;
-    padding: 0 22px; display: flex; align-items: center; border-right: 3px solid var(--crimson);
-    min-width: 130px; justify-content: center; text-align: center;
+    background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 1px;
+    padding: 0 22px; display: flex; align-items: center; border-right: 3px solid var(--crimson); min-width: 130px; justify-content: center;
   }
 
-  .score-block { display: flex; align-items: baseline; padding: 0 22px; border-right: 1px solid var(--line); }
-  .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 54px; line-height: 1; }
-  .score-block .overs { font-size: 16px; font-weight: 700; color: var(--muted); margin-left: 10px; }
+  .score-block { display: flex; align-items: center; padding: 0 22px; border-right: 1px solid var(--line); }
+  .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 58px; line-height: 0.9; transform: translateY(4px); }
+  .score-block .overs { font-size: 16px; font-weight: 700; color: var(--muted); margin-left: 10px; align-self: center; }
 
   .rate-block { display:flex; flex-direction:column; justify-content:center; padding: 0 18px; border-right: 1px solid var(--line); gap: 2px; }
   .rate-block .label { font-size: 10px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
-  .rate-block .value { font-size: 20px; font-weight: 700; }
+  .rate-block .value { font-size: 18px; font-weight: 700; line-height: 1; }
 
   .batters-block { display:flex; flex-direction:column; justify-content:center; padding: 0 18px; border-right: 1px solid var(--line); gap: 4px; min-width: 190px; }
   .batter-row { display:flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
   .batter-row.on-strike { color: var(--gold-2); }
   .batter-row .fig { color: var(--muted); font-size: 12px; margin-left: 8px; }
 
-  .bowler-block { display:flex; flex-direction:column; justify-content:center; padding: 0 18px; gap: 2px; min-width: 150px; }
-  .bowler-block .label { font-size: 10px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
-  .bowler-block .name { font-size: 14px; font-weight: 700; }
-  .bowler-block .fig { font-size: 12px; color: var(--muted); }
+  .bowler-block { display:flex; flex-direction:column; justify-content:center; padding: 0 14px; min-width: 220px; }
+  .bowler-info { display:flex; align-items:baseline; gap: 8px; margin-bottom: 4px; }
+  .bowler-info .label { font-size: 10px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
+  .bowler-info .name { font-size: 14px; font-weight: 700; }
+  .bowler-info .fig { font-size: 12px; color: var(--muted); margin-left: auto; }
+  
+  .over-track { display: flex; flex-wrap: wrap; gap: 4px; max-width: 200px; }
+  .ball-pill { min-width: 20px; height: 20px; padding: 0 2px; border-radius: 50%; background: var(--navy-3); color: var(--ink); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
 
-  .over-track { display: flex; align-items: center; padding: 0 14px; gap: 4px; border-left: 1px solid var(--line); }
-  .ball-pill { min-width: 22px; height: 22px; padding: 0 3px; border-radius: 50%; background: var(--navy-3); color: var(--ink); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
-
-  /* ================= BOTTOM STRIP ================= */
   .bottom-strip {
     background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-2) 100%); color: #fff;
     font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
-    padding: 7px 26px; border-radius: 0 0 6px 6px; text-align: center;
-    opacity: 0; transition: opacity .3s;
+    padding: 7px 26px; border-radius: 0 0 6px 6px; text-align: center; opacity: 0; transition: opacity .3s;
   }
   .bottom-strip.show { opacity: 1; }
 
-  /* ================= PARTNERSHIP PANEL ================= */
-  .partnership-panel {
-    position: absolute; top: 44px; right: 44px; width: 300px;
-    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
-    border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px;
-    opacity: 0; transform: translateX(20px); transition: all .35s ease;
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
+  /* ================= CENTER GRAPHICS (16:9 MIDDLE) ================= */
+  .center-panel {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
+    border: 2px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
+    opacity: 0; pointer-events: none; transition: all .4s ease; z-index: 5;
+    display: flex; flex-direction: column; overflow: hidden;
   }
-  .partnership-panel.show { opacity: 1; transform: translateX(0); }
-  .panel-title { font-size: 10px; letter-spacing: 2px; color: var(--gold); font-weight: 700; margin-bottom: 8px; }
-  .partnership-num { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: var(--gold-2); }
-  .partnership-sub { font-size: 12px; color: var(--muted); }
+  .center-panel.show { opacity: 1; pointer-events: auto; }
+  .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 16px; letter-spacing: 3px; padding: 8px; }
 
-  /* ================= TARGET / COMPARISON PANEL ================= */
-  .target-panel {
-    position: absolute; top: 44px; left: 44px; width: 320px;
-    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
-    border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px;
-    opacity: 0; transform: translateX(-20px); transition: all .35s ease;
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
-  }
-  .target-panel.show { opacity: 1; transform: translateX(0); }
-  .target-row { display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-  .target-row .k { font-size: 12px; color: var(--muted); }
-  .target-row .v { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--ink); }
-  .target-row .v.accent { color: var(--gold-2); }
-  .compare-line { display:flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+  /* 1. Full Partnership */
+  #graphic-part { width: 600px; }
+  .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 20px 30px; }
+  .part-player { text-align: center; flex: 1; }
+  .part-name { font-size: 20px; font-weight: 700; color: var(--ink); }
+  .part-contrib { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--muted); margin-top: 5px; }
+  .part-center { text-align: center; flex: 1.5; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 64px; color: var(--gold-2); line-height: 1; }
+  .part-balls { font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
 
-  /* ================= POPUP EVENTS ================= */
+  /* 2. Batting Scorecard */
+  #graphic-bat { width: 750px; }
+  .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
+  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 12px; padding: 8px 15px; letter-spacing: 1px; }
+  .sc-table td { padding: 8px 15px; border-bottom: 1px solid rgba(212,175,55,0.15); font-size: 15px; font-weight: 600; }
+  .sc-table tr:last-child td { border-bottom: none; }
+  .sc-status { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .sc-notout { color: var(--gold-2); font-weight: 700; }
+  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 12px 20px; font-weight: 700; font-size: 16px; border-top: 2px solid var(--gold); }
+
+  /* 3. Bowling Scorecard */
+  #graphic-bowl { width: 750px; }
+  .sc-table.bowl th { text-align: center; }
+  .sc-table.bowl td { text-align: center; }
+  .sc-table.bowl td:first-child, .sc-table.bowl th:first-child { text-align: left; }
+  .fow-strip { background: var(--navy-deep); padding: 10px 15px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
+
+  /* 4. Projected Score */
+  #graphic-proj { width: 500px; text-align: center; padding-bottom: 15px; }
+  .proj-row { display: flex; justify-content: space-between; padding: 10px 40px; border-bottom: 1px solid var(--line); font-size: 18px; font-weight: 700; }
+  .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 22px; }
+
+  /* 5. Fall of Wickets */
+  #graphic-fow { width: 500px; }
+  .fow-list { padding: 10px 20px; max-height: 250px; overflow: hidden; }
+  .fow-item { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px dotted var(--line); font-size: 16px; font-weight: 600; }
+
+  /* Popups */
   .popup-event {
     position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
     background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
-    padding: 22px 70px; border: 3px solid var(--gold); border-radius: 14px;
-    text-align: center; opacity: 0; transition: all .35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    filter: drop-shadow(0 18px 34px rgba(0,0,0,0.7));
+    padding: 22px 70px; border: 3px solid var(--gold); border-radius: 14px; text-align: center; opacity: 0; transition: all .35s; filter: drop-shadow(0 18px 34px rgba(0,0,0,0.7)); z-index: 20;
   }
   .popup-event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 96px; line-height: 0.9; color: #fff; letter-spacing: 2px; }
   .pop-sub { font-size: 13px; letter-spacing: 3px; color: var(--gold-2); margin-top: 6px; font-weight: 700; }
-
-  /* ================= MILESTONE BANNER ================= */
-  .milestone-banner {
-    position: absolute; top: 22%; left: 50%; transform: translate(-50%, -30px);
-    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-2) 100%); color: var(--navy-deep);
-    padding: 14px 50px; border-radius: 6px; text-align: center;
-    opacity: 0; transition: all .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    filter: drop-shadow(0 10px 22px rgba(0,0,0,0.6));
-  }
-  .milestone-banner.show { opacity: 1; transform: translate(-50%, 0); }
-  .milestone-text { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 1px; }
 </style>
 </head>
 <body>
 
+<!-- MAIN SCOREBUG -->
 <div class="scorebug" id="scorebug">
   <div class="brand-bar">M.B. LIVE STUDIO</div>
   <div class="main-strip">
@@ -140,219 +141,239 @@
     <div class="rate-block">
       <div class="label">CRR</div>
       <div class="value" id="ovCrr">0.00</div>
-    </div>
-    <div class="rate-block" id="ovRrrBlock" style="display:none;">
-      <div class="label">RRR</div>
-      <div class="value" id="ovRrr">0.00</div>
+      <div id="ovProjWrap" style="display:none; margin-top:4px;">
+        <div class="label">PROJ</div>
+        <div class="value" id="ovProj" style="color:var(--gold-2); font-size:14px;">0</div>
+      </div>
+      <div id="ovRrrWrap" style="display:none; margin-top:4px;">
+        <div class="label">REQ</div>
+        <div class="value" id="ovRrr" style="color:var(--crimson-2); font-size:14px;">0.00</div>
+      </div>
     </div>
     <div class="batters-block">
       <div class="batter-row" id="ovStrikerRow"><span id="ovStrikerName">—</span><span class="fig" id="ovStrikerFig"></span></div>
       <div class="batter-row" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span><span class="fig" id="ovNonStrikerFig"></span></div>
     </div>
     <div class="bowler-block">
-      <div class="label">BOWLER</div>
-      <div class="name" id="ovBowlerName">—</div>
-      <div class="fig" id="ovBowlerFig">0-0-0-0</div>
+      <div class="bowler-info">
+        <span class="label">BOWLER</span>
+        <span class="name" id="ovBowlerName">—</span>
+        <span class="fig" id="ovBowlerFig">0-0-0-0</span>
+      </div>
+      <div class="over-track" id="ovBalls"></div>
     </div>
-    <div class="over-track" id="ovBalls"></div>
   </div>
   <div class="bottom-strip" id="bottomStrip"></div>
 </div>
 
-<div class="partnership-panel" id="partnershipPanel">
-  <div class="panel-title">CURRENT PARTNERSHIP</div>
-  <div class="partnership-num num" id="partRuns">0</div>
-  <div class="partnership-sub" id="partSub">off 0 balls</div>
+<!-- 1. FULL PARTNERSHIP -->
+<div class="center-panel" id="graphic-part">
+  <div class="center-title" id="partTitle">PARTNERSHIP</div>
+  <div class="part-flex">
+    <div class="part-player">
+      <div class="part-name" id="partP1Name">—</div>
+      <div class="part-contrib" id="partP1Score">0 (0)</div>
+    </div>
+    <div class="part-center">
+      <div class="part-total" id="partTotalRuns">0</div>
+      <div class="part-balls">OFF <span id="partTotalBalls">0</span> BALLS</div>
+    </div>
+    <div class="part-player">
+      <div class="part-name" id="partP2Name">—</div>
+      <div class="part-contrib" id="partP2Score">0 (0)</div>
+    </div>
+  </div>
 </div>
 
-<div class="target-panel" id="targetPanel">
-  <div class="panel-title" id="tgtPanelTitle">TARGET</div>
-  <div class="target-row"><span class="k" id="tgtRow1Label">To Win</span><span class="v accent" id="tgtTarget">—</span></div>
-  <div class="target-row"><span class="k" id="tgtRow2Label">Need</span><span class="v" id="tgtNeed">—</span></div>
-  <div class="target-row" id="tgtRow3"><span class="k">From</span><span class="v" id="tgtBalls">—</span></div>
-  <div class="compare-line" id="tgtCompareLine"><span id="tgtCompare">—</span></div>
+<!-- 2. BATTING SCORECARD -->
+<div class="center-panel" id="graphic-bat">
+  <div class="center-title" id="batTitle">BATTING SCORECARD</div>
+  <table class="sc-table">
+    <thead><tr><th>BATTER</th><th></th><th>R</th><th>B</th><th>4s</th><th>6s</th></tr></thead>
+    <tbody id="batTableBody"></tbody>
+  </table>
+  <div class="sc-footer">
+    <div id="batExtras">Extras: 0</div>
+    <div id="batTotal">Total: 0/0 (0.0 Overs)</div>
+  </div>
 </div>
 
-<div class="partnership-panel" id="fowPanel" style="top:auto; bottom:170px; right:44px;">
-  <div class="panel-title">FALL OF WICKETS</div>
-  <div id="fowLines" style="font-size:13px; line-height:1.6; color:var(--ink);"></div>
+<!-- 3. BOWLING SCORECARD -->
+<div class="center-panel" id="graphic-bowl">
+  <div class="center-title" id="bowlTitle">BOWLING SCORECARD</div>
+  <table class="sc-table bowl">
+    <thead><tr><th>BOWLER</th><th>O</th><th>M</th><th>R</th><th>W</th><th>DOTS</th><th>ECON</th></tr></thead>
+    <tbody id="bowlTableBody"></tbody>
+  </table>
+  <div class="fow-strip" id="bowlFowStrip">Fall of Wickets: —</div>
 </div>
 
-<div class="target-panel" id="recentPanel" style="top:auto; bottom:170px; left:44px;">
-  <div class="panel-title">LAST BALLS</div>
-  <div style="display:flex; gap:5px; flex-wrap:wrap;" id="recentBalls"></div>
+<!-- 4. PROJECTED SCORE -->
+<div class="center-panel" id="graphic-proj">
+  <div class="center-title">PROJECTED SCORE</div>
+  <div class="proj-row highlight">
+    <span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span>
+    <span id="projCrrTotal" class="num" style="font-size:28px;">0</span>
+  </div>
+  <div class="proj-row"><span>Run Rate <span id="projR1L">8.0</span></span><span id="projR1T" class="num">0</span></div>
+  <div class="proj-row"><span>Run Rate <span id="projR2L">10.0</span></span><span id="projR2T" class="num">0</span></div>
+  <div class="proj-row"><span>Run Rate <span id="projR3L">12.0</span></span><span id="projR3T" class="num">0</span></div>
 </div>
 
+<!-- 5. FALL OF WICKETS -->
+<div class="center-panel" id="graphic-fow">
+  <div class="center-title">FALL OF WICKETS</div>
+  <div class="fow-list" id="fowListBody"></div>
+</div>
+
+<!-- POPUPS -->
 <div class="popup-event" id="popupEvent">
   <div class="pop-title num" id="popTitle">WICKET</div>
   <div class="pop-sub" id="popSub"></div>
-</div>
-
-<div class="milestone-banner" id="milestoneBanner">
-  <div class="milestone-text mark" id="milestoneText">FIFTY!</div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
   authDomain: "mb-live-score.firebaseapp.com",
   databaseURL: "https://mb-live-score-default-rtdb.firebaseio.com",
   projectId: "mb-live-score"
-};
-const app = initializeApp(firebaseConfig);
+});
 const db = getDatabase(app);
 
-let lastEventKey = null;
-let lastMilestoneKey = null;
-
-function fmtFig(bs) {
-  if(!bs) return "0.0-0-0-0";
-  const overs = `${Math.floor(bs.balls/6)}.${bs.balls%6}`;
-  return `${overs}-${bs.runs}-${bs.wickets}`;
-}
+function fmtOvers(balls) { return `${Math.floor(balls/6)}.${balls%6}`; }
 
 onValue(ref(db, "current_match"), snap => {
   const state = snap.val();
-  const bug = document.getElementById('scorebug');
-  if(!state) { bug.classList.remove('show'); document.getElementById('partnershipPanel').classList.remove('show'); document.getElementById('targetPanel').classList.remove('show'); return; }
+  if(!state) { document.querySelectorAll('.scorebug, .center-panel').forEach(el => el.classList.remove('show')); return; }
 
   const g = state.graphics || {};
-  const tBat = state.meta.batTeam, tBowl = state.meta.bowlTeam;
-  const battingTeamName = tBat === 'A' ? state.meta.tA : state.meta.tB;
+  const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
+  const batTeamName = tBat === 'A' ? state.meta.tA : state.meta.tB;
 
-  // Main scorebug
+  // 0. MAIN SCOREBUG
+  const bug = document.getElementById('scorebug');
   if(g.scorebug) bug.classList.add('show'); else bug.classList.remove('show');
-
-  document.getElementById('ovTeam').innerText = battingTeamName;
+  
+  document.getElementById('ovTeam').innerText = batTeamName;
   document.getElementById('ovScore').innerText = `${state.score}/${state.wickets}`;
-  document.getElementById('ovOvers').innerText = `(${Math.floor(state.legalBalls/6)}.${state.legalBalls%6})`;
-  document.getElementById('ovCrr').innerText = state.legalBalls > 0 ? ((state.score / state.legalBalls) * 6).toFixed(2) : "0.00";
+  document.getElementById('ovOvers').innerText = `(${fmtOvers(state.legalBalls)})`;
+  
+  const crr = state.legalBalls > 0 ? ((state.score / state.legalBalls) * 6).toFixed(2) : "0.00";
+  document.getElementById('ovCrr').innerText = crr;
 
-  // Required run rate (2nd innings)
-  const rrrBlock = document.getElementById('ovRrrBlock');
-  if(state.innings === 2 && state.target != null) {
-    const ballsLeft = (state.meta.maxOvers * 6) - state.legalBalls;
-    const runsNeeded = state.target - state.score;
-    rrrBlock.style.display = 'flex';
-    document.getElementById('ovRrr').innerText = ballsLeft > 0 ? Math.max(0, (runsNeeded / ballsLeft) * 6).toFixed(2) : "—";
+  const projWrap = document.getElementById('ovProjWrap');
+  const rrrWrap = document.getElementById('ovRrrWrap');
+  if(state.innings === 1) {
+      projWrap.style.display = 'block'; rrrWrap.style.display = 'none';
+      const oversLeft = state.meta.maxOvers - (state.legalBalls / 6);
+      document.getElementById('ovProj').innerText = Math.round(state.score + (crr * oversLeft));
   } else {
-    rrrBlock.style.display = 'none';
+      projWrap.style.display = 'none'; rrrWrap.style.display = 'block';
+      const ballsLeft = (state.meta.maxOvers * 6) - state.legalBalls;
+      document.getElementById('ovRrr').innerText = ballsLeft > 0 ? Math.max(0, ((state.target - state.score) / ballsLeft) * 6).toFixed(2) : "—";
   }
 
-  // Batters
   const striker = (state.squads[tBat] || []).find(p => p.id === state.striker);
   const nonStriker = (state.squads[tBat] || []).find(p => p.id === state.nonStriker);
-  if(striker) {
-    document.getElementById('ovStrikerName').innerText = `${striker.name}*`;
-    document.getElementById('ovStrikerFig').innerText = `${striker.runs}(${striker.balls})`;
-  }
-  if(nonStriker) {
-    document.getElementById('ovNonStrikerName').innerText = nonStriker.name;
-    document.getElementById('ovNonStrikerFig').innerText = `${nonStriker.runs}(${nonStriker.balls})`;
-  }
+  if(striker) { document.getElementById('ovStrikerName').innerText = `${striker.name}*`; document.getElementById('ovStrikerFig').innerText = `${striker.runs}(${striker.balls})`; }
+  if(nonStriker) { document.getElementById('ovNonStrikerName').innerText = nonStriker.name; document.getElementById('ovNonStrikerFig').innerText = `${nonStriker.runs}(${nonStriker.balls})`; }
 
-  // Bowler
   const bowler = (state.squads[tBowl] || []).find(p => p.id === state.bowler);
-  const bStats = (state.bowlerStats || {})[state.bowler];
+  const bs = (state.bowlerStats || {})[state.bowler] || {balls:0, runs:0, wickets:0};
   document.getElementById('ovBowlerName').innerText = bowler ? bowler.name : "—";
-  document.getElementById('ovBowlerFig').innerText = fmtFig(bStats);
+  document.getElementById('ovBowlerFig').innerText = `${fmtOvers(bs.balls)}-${bs.runs}-${bs.wickets}`;
 
-  // Over balls
-  const ballsContainer = document.getElementById('ovBalls');
-  ballsContainer.innerHTML = (state.overBalls || []).map(b => {
-    let color = "var(--navy-3)";
-    if(b === 4) color = "var(--gold)";
-    if(b === 6) color = "var(--crimson)";
-    if(b === "W") color = "var(--crimson-2)";
-    return `<div class="ball-pill" style="background:${color}">${b}</div>`;
+  // Max 10 balls logic for timeline
+  const recent10 = (state.overBalls || []).slice(-10);
+  document.getElementById('ovBalls').innerHTML = recent10.map(b => {
+    let color = "var(--navy-3)", text = b;
+    if(b === 4 || b === '4') color = "var(--gold)";
+    else if(b === 6 || b === '6') color = "var(--crimson)";
+    else if(typeof b === 'string' && b.includes('W')) color = "var(--crimson-2)";
+    else if(typeof b === 'string') { color = "#5b4413"; text = b.replace('+0',''); } // Extras
+    return `<div class="ball-pill" style="background:${color}">${text}</div>`;
   }).join('');
 
-  // Bottom strip
+  // Info Strip
   const bStrip = document.getElementById('bottomStrip');
-  if(g.bottomStrip) { bStrip.classList.add('show'); bStrip.innerText = g.dynamicText || "M.B. LIVE STUDIO"; }
+  if(g.bottomStrip && g.dynamicText) { bStrip.classList.add('show'); bStrip.innerText = g.dynamicText; }
   else bStrip.classList.remove('show');
 
-  // Partnership panel
-  const partPanel = document.getElementById('partnershipPanel');
-  if(g.partnership && state.partnership) {
-    partPanel.classList.add('show');
-    document.getElementById('partRuns').innerText = state.partnership.runs;
-    document.getElementById('partSub').innerText = `off ${state.partnership.balls} balls`;
-  } else partPanel.classList.remove('show');
+  // Center Panels Toggle Logic
+  const panels = ['part', 'bat', 'bowl', 'proj', 'fow'];
+  panels.forEach(p => {
+    const el = document.getElementById(`graphic-${p}`);
+    if(g.centerGraphic === p) el.classList.add('show'); else el.classList.remove('show');
+  });
 
-  // Target panel (2nd innings) or Projected Score panel (1st innings) — same slot, context-aware
-  const tgtPanel = document.getElementById('targetPanel');
-  if(g.target && state.innings === 2 && state.target != null) {
-    tgtPanel.classList.add('show');
-    const ballsLeft = (state.meta.maxOvers * 6) - state.legalBalls;
-    const runsNeeded = Math.max(0, state.target - state.score);
-    document.getElementById('tgtPanelTitle').innerText = "TARGET";
-    document.getElementById('tgtRow1Label').innerText = "To Win";
-    document.getElementById('tgtRow2Label').innerText = "Need";
-    document.getElementById('tgtRow3').style.display = 'flex';
-    document.getElementById('tgtCompareLine').style.display = 'flex';
-    document.getElementById('tgtTarget').innerText = state.target;
-    document.getElementById('tgtNeed').innerText = `${runsNeeded} runs`;
-    document.getElementById('tgtBalls').innerText = `${ballsLeft} balls`;
-    if(state.firstInnings) {
-      document.getElementById('tgtCompare').innerText = `1st Inns: ${state.firstInnings.team === 'A' ? state.meta.tA : state.meta.tB} ${state.firstInnings.score}/${state.firstInnings.wickets}`;
-    }
-  } else if(g.target && state.innings === 1 && state.legalBalls > 0) {
-    tgtPanel.classList.add('show');
-    const oversLeft = state.meta.maxOvers - (state.legalBalls / 6);
-    const crr = (state.score / state.legalBalls) * 6;
-    const projected = Math.round(state.score + (crr * oversLeft));
-    document.getElementById('tgtPanelTitle').innerText = "PROJECTED SCORE";
-    document.getElementById('tgtRow1Label').innerText = "Proj. Total";
-    document.getElementById('tgtRow2Label').innerText = "Run Rate";
-    document.getElementById('tgtTarget').innerText = projected;
-    document.getElementById('tgtNeed').innerText = crr.toFixed(2);
-    document.getElementById('tgtRow3').style.display = 'none';
-    document.getElementById('tgtCompareLine').style.display = 'none';
-  } else tgtPanel.classList.remove('show');
+  // 1. Full Partnership Data
+  if(g.centerGraphic === 'part' && state.partnership) {
+    document.getElementById('partTitle').innerText = `${state.wickets + 1}${['st','nd','rd'][state.wickets]||'th'} WICKET PARTNERSHIP`;
+    document.getElementById('partTotalRuns').innerText = state.partnership.runs;
+    document.getElementById('partTotalBalls').innerText = state.partnership.balls;
+    if(striker) { document.getElementById('partP1Name').innerText = striker.name; document.getElementById('partP1Score').innerText = `${state.partnership.p1Runs || 0} (${state.partnership.p1Balls || 0})`; }
+    if(nonStriker) { document.getElementById('partP2Name').innerText = nonStriker.name; document.getElementById('partP2Score').innerText = `${state.partnership.p2Runs || 0} (${state.partnership.p2Balls || 0})`; }
+  }
 
-  // Fall of wickets panel
-  const fowPanel = document.getElementById('fowPanel');
-  if(g.fow && state.fow && state.fow.length > 0) {
-    fowPanel.classList.add('show');
-    document.getElementById('fowLines').innerHTML = state.fow.slice(-6).map(f => `${f.wktNo}-${f.score} (${f.overs})`).join(' &nbsp;|&nbsp; ');
-  } else fowPanel.classList.remove('show');
-
-  // Recent balls panel
-  const recentPanel = document.getElementById('recentPanel');
-  if(g.recentBalls && state.ballLog && state.ballLog.length > 0) {
-    recentPanel.classList.add('show');
-    document.getElementById('recentBalls').innerHTML = state.ballLog.map(b => {
-      let color = "var(--navy-3)";
-      if(b.label === '4') color = "var(--gold)";
-      if(b.label === '6') color = "var(--crimson)";
-      if(b.label === 'W') color = "var(--crimson-2)";
-      return `<div class="ball-pill" style="background:${color}">${b.label}</div>`;
+  // 2. Batting Scorecard Data
+  if(g.centerGraphic === 'bat') {
+    document.getElementById('batTitle').innerText = `${batTeamName} BATTING`;
+    document.getElementById('batTableBody').innerHTML = (state.squads[tBat]||[]).map(p => {
+      let status = '<span class="sc-status">Yet to bat</span>', style="";
+      if(p.id === state.striker || p.id === state.nonStriker) { status = '<span class="sc-notout">Not Out</span>'; style="background:rgba(255,255,255,0.05);"; }
+      else if(p.isOut) status = `<span class="sc-status">${p.dismissalInfo || 'Out'}</span>`;
+      else if(p.balls > 0 || p.runs > 0) status = '<span class="sc-status">Retired</span>';
+      return `<tr style="${style}"><td>${p.name}</td><td>${status}</td><td>${p.runs}</td><td>${p.balls}</td><td>${p.fours}</td><td>${p.sixes}</td></tr>`;
     }).join('');
-  } else recentPanel.classList.remove('show');
+    document.getElementById('batTotal').innerText = `Total: ${state.score}/${state.wickets} (${fmtOvers(state.legalBalls)} Ov)`;
+    document.getElementById('batExtras').innerText = `Extras: ${state.extras || 0}`;
+  }
 
-  // Event popup (FOUR/SIX/WICKET)
+  // 3. Bowling Scorecard Data
+  if(g.centerGraphic === 'bowl') {
+    document.getElementById('bowlTitle').innerText = `${tBowl === 'A' ? state.meta.tA : state.meta.tB} BOWLING`;
+    const bStats = state.bowlerStats || {};
+    document.getElementById('bowlTableBody').innerHTML = (state.squads[tBowl]||[]).filter(p => bStats[p.id]).map(p => {
+      const s = bStats[p.id];
+      const econ = s.balls > 0 ? ((s.runs / s.balls) * 6).toFixed(1) : "0.0";
+      return `<tr><td>${p.name}</td><td>${fmtOvers(s.balls)}</td><td>${s.maidens||0}</td><td>${s.runs}</td><td style="color:var(--gold-2); font-weight:700;">${s.wickets}</td><td>${s.dots||0}</td><td>${econ}</td></tr>`;
+    }).join('');
+    const fowText = (state.fow||[]).map(f => `${f.wktNo}-${f.score}`).join(', ');
+    document.getElementById('bowlFowStrip').innerText = `Fall of Wickets: ${fowText || 'None'}`;
+  }
+
+  // 4. Projected Score Data
+  if(g.centerGraphic === 'proj' && state.innings === 1) {
+    const oversLeft = state.meta.maxOvers - (state.legalBalls / 6);
+    document.getElementById('projCrrLabel').innerText = crr;
+    document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crr * oversLeft));
+    let base = Math.floor(parseFloat(crr)); if(base%2!==0) base+=1; if(base < parseFloat(crr)) base+=2; // Start from next even number
+    [1,2,3].forEach(i => {
+      let r = base + (i-1)*2;
+      document.getElementById(`projR${i}L`).innerText = r.toFixed(1);
+      document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft));
+    });
+  }
+
+  // 5. FoW List Data
+  if(g.centerGraphic === 'fow') {
+    document.getElementById('fowListBody').innerHTML = (state.fow||[]).map(f => 
+      `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score}</span></div>`
+    ).join('');
+  }
+
+  // Popups
   const pop = document.getElementById('popupEvent');
   if(g.activeEvent) {
     document.getElementById('popTitle').innerText = g.activeEvent === "WICKET" ? "OUT!" : g.activeEvent;
-    document.getElementById('popSub').innerText = g.activeEvent === "WICKET" ? (striker ? `${striker.name}` : "") : battingTeamName;
+    document.getElementById('popSub').innerText = g.activeEvent === "WICKET" ? (striker ? striker.name : "") : batTeamName;
     pop.style.borderColor = g.activeEvent === "WICKET" ? "var(--crimson)" : "var(--gold)";
     pop.classList.add('show');
-  } else {
-    pop.classList.remove('show');
-  }
-
-  // Milestone banner (50s/100s/5-wicket haul)
-  const mBanner = document.getElementById('milestoneBanner');
-  if(g.milestoneEvent) {
-    document.getElementById('milestoneText').innerText = g.milestoneEvent;
-    mBanner.classList.add('show');
-  } else {
-    mBanner.classList.remove('show');
-  }
+  } else pop.classList.remove('show');
 });
 </script>
 </body>
