@@ -111,20 +111,9 @@
   .fow-list { padding: 10px 25px; max-height: 300px; overflow: hidden; }
   .fow-item { display: flex; justify-content: space-between; padding: 6px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 600; }
 
-  /* OVER BAR CHART */
-  #graphic-chart { width: 800px; padding-bottom: 15px; }
-  .chart-wrapper { display: flex; align-items: flex-end; justify-content: center; gap: 14px; height: 200px; padding: 25px 20px 0 20px; border-bottom: 2px solid var(--line); margin: 0 20px 10px; }
-  .bar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 28px; }
-  .bar-val { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--ink); z-index: 2; }
-  .bar-w-layer { color: var(--crimson-2); font-size: 14px; font-weight: 900; margin-bottom: 2px; line-height: 1; z-index: 2; }
-  .bar { width: 100%; background: var(--gold); border-radius: 4px 4px 0 0; transition: height .5s ease; min-height: 2px; }
-  .bar.current { background: var(--crimson-2); }
-  .bar-lbl { font-size: 14px; font-weight: 700; color: var(--muted); margin-top: 6px; }
-
-  /* WORM GRAPH */
-  #graphic-worm { width: 800px; }
+  #graphic-chart { width: 750px; }
+  #graphic-worm { width: 750px; }
   
-  /* Popups */
   .popup-event {
     position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
     background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
@@ -201,11 +190,23 @@
 </div>
 
 <div class="center-panel" id="graphic-proj">
-  <div class="center-title">PROJECTED SCORE</div>
-  <div class="proj-row highlight"><span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span><span id="projCrrTotal" class="num" style="font-size:32px;">0</span></div>
-  <div class="proj-row"><span>Run Rate <span id="projR1L">8.0</span></span><span id="projR1T" class="num">0</span></div>
-  <div class="proj-row"><span>Run Rate <span id="projR2L">10.0</span></span><span id="projR2T" class="num">0</span></div>
-  <div class="proj-row"><span>Run Rate <span id="projR3L">12.0</span></span><span id="projR3T" class="num">0</span></div>
+  <div class="center-title" id="projTitle">PROJECTED SCORE</div>
+  <!-- 1ST INNINGS: Projected Score -->
+  <div id="projInns1">
+      <div class="proj-row highlight"><span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span><span id="projCrrTotal" class="num" style="font-size:32px;">0</span></div>
+      <div class="proj-row"><span>Run Rate <span id="projR1L">8.0</span></span><span id="projR1T" class="num">0</span></div>
+      <div class="proj-row"><span>Run Rate <span id="projR2L">10.0</span></span><span id="projR2T" class="num">0</span></div>
+      <div class="proj-row"><span>Run Rate <span id="projR3L">12.0</span></span><span id="projR3T" class="num">0</span></div>
+  </div>
+  <!-- 2ND INNINGS: Match Equation -->
+  <div id="projInns2" style="display:none; text-align:center; padding: 25px 20px;">
+      <div id="projNeed" style="font-size:42px; font-weight:900; font-family:'Bebas Neue',sans-serif; color:var(--gold-2); margin-bottom:15px; letter-spacing:1px; line-height:1;">NEED 0 RUNS FROM 0 BALLS</div>
+      <div style="display:flex; justify-content: space-around; font-size:22px; font-weight:700;">
+          <div>Target: <span id="projTargetVal" class="num" style="font-size:28px;">0</span></div>
+          <div>CRR: <span id="projCrrInns2" class="num" style="font-size:28px;">0.00</span></div>
+          <div>RRR: <span id="projRrrInns2" class="num" style="font-size:28px; color:var(--crimson-2);">0.00</span></div>
+      </div>
+  </div>
 </div>
 
 <div class="center-panel" id="graphic-fow">
@@ -215,13 +216,15 @@
 
 <div class="center-panel" id="graphic-chart">
   <div class="center-title">RUNS PER OVER</div>
-  <div class="chart-wrapper" id="chartWrapper"></div>
+  <div style="padding: 20px;">
+      <svg id="chartSvg" width="700" height="230"></svg>
+  </div>
 </div>
 
 <div class="center-panel" id="graphic-worm">
   <div class="center-title">WORM GRAPH (CUMULATIVE SCORE)</div>
-  <div style="padding: 15px 30px; position: relative;">
-     <svg id="wormSvg" width="740" height="250" viewBox="0 -10 740 260"></svg>
+  <div style="padding: 20px;">
+     <svg id="wormSvg" width="700" height="230"></svg>
   </div>
   <div id="wormLegend" style="display:flex; justify-content:center; gap:30px; padding-bottom:15px; font-weight:700; font-size:16px;"></div>
 </div>
@@ -338,16 +341,40 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('bowlFowStrip').innerText = `Fall of Wickets: ${fowText || 'None'}`;
   }
 
-  if(g.centerGraphic === 'proj' && state.innings === 1) {
-    const oversLeft = state.meta.maxOvers - (state.legalBalls / 6);
-    document.getElementById('projCrrLabel').innerText = crr;
-    document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crr * oversLeft));
-    let base = Math.floor(parseFloat(crr)); if(base%2!==0) base+=1; if(base < parseFloat(crr)) base+=2; 
-    [1,2,3].forEach(i => {
-      let r = base + (i-1)*2;
-      document.getElementById(`projR${i}L`).innerText = r.toFixed(1);
-      document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft));
-    });
+  if(g.centerGraphic === 'proj') {
+      if (state.innings === 1) {
+          document.getElementById('projInns1').style.display = 'block';
+          document.getElementById('projInns2').style.display = 'none';
+          document.getElementById('projTitle').innerText = 'PROJECTED SCORE';
+          
+          const oversLeft = state.meta.maxOvers - (state.legalBalls / 6);
+          let crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
+          document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2);
+          document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
+          
+          // BUG FIX: Set minimum base to 6, and explicitly increment by 2 so rates are never the same.
+          let base = Math.max(6, Math.floor(crrNum));
+          if(base % 2 !== 0) base -= 1; // Make it an even number (6, 8, 10, etc.)
+          
+          [1,2,3].forEach(i => {
+              let r = base + (i-1)*2; 
+              document.getElementById(`projR${i}L`).innerText = r.toFixed(1);
+              document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft));
+          });
+      } else {
+          document.getElementById('projInns1').style.display = 'none';
+          document.getElementById('projInns2').style.display = 'block';
+          document.getElementById('projTitle').innerText = 'MATCH EQUATION';
+          
+          const needed = Math.max(0, state.target - state.score);
+          const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls);
+          const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0;
+          
+          document.getElementById('projNeed').innerText = `${batTeamName} NEED ${needed} RUNS FROM ${ballsLeft} BALLS`;
+          document.getElementById('projTargetVal').innerText = state.target || 0;
+          document.getElementById('projCrrInns2').innerText = crr;
+          document.getElementById('projRrrInns2').innerText = rrr.toFixed(2);
+      }
   }
 
   if(g.centerGraphic === 'fow') {
@@ -356,49 +383,82 @@ onValue(ref(db, "current_match"), snap => {
     ).join('');
   }
 
-  // 6. Over Bar Chart (WITH WICKETS 'W' STACKED ON BAR)
+  // 6. SVG BAR CHART (Runs per over)
   if(g.centerGraphic === 'chart') {
-    const hist = state.overHistory || [];
-    const curr = state.currentOverRuns || 0;
-    const oversData = [...hist];
-    if(state.legalBalls % 6 !== 0) { oversData.push(curr); }
-    
-    // Count Wickets Per Over
-    let wktsPerOver = {};
-    (state.fow || []).forEach(f => {
-       let ovIndex = Math.floor(parseFloat(f.overs)); // e.g. "2.4" means index 2 (3rd over)
-       wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1;
-    });
+      let hist = state.overHistory || [];
+      let curr = state.currentOverRuns || 0;
+      let oversData = [...hist];
+      if(state.legalBalls % 6 !== 0) { oversData.push(curr); }
 
-    const displayOvers = oversData.slice(-25);
-    const maxVal = Math.max(15, ...displayOvers);
+      let wktsPerOver = {};
+      (state.fow || []).forEach(f => {
+         let ovIndex = Math.floor(parseFloat(f.overs));
+         wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1;
+      });
 
-    document.getElementById('chartWrapper').innerHTML = displayOvers.map((val, idx) => {
-      const h = (val / maxVal) * 100;
-      const actualOvIndex = (hist.length - displayOvers.length) + idx + (state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1 ? 0 : 0);
-      const isCurrent = (idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
+      let displayOvers = oversData.slice(-20); // max 20 bars to fit perfectly
+      let maxVal = Math.max(15, ...displayOvers);
+      maxVal = Math.ceil(maxVal / 5) * 5; // round to nearest 5
+
+      let w = 700, h = 230, padX = 40, padY = 30;
+      let graphW = w - padX - 10;
+      let graphH = h - padY - 20;
+
+      let svgHtml = '';
       
-      let wCount = wktsPerOver[actualOvIndex] || 0;
-      // Places the 'W' exactly on top of the run value
-      let wLayer = wCount > 0 ? `<div class="bar-w-layer">${'W'.repeat(wCount)}</div>` : '';
+      // Axes Lines
+      svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+      svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-10}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+      
+      // Axis Labels
+      svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
+      svgHtml += `<text x="${w-40}" y="${h-2}" fill="var(--gold)" font-size="12" font-weight="bold">OVERS</text>`;
 
-      return `
-        <div class="bar-wrap">
-          ${wLayer}
-          <div class="bar-val">${val}</div>
-          <div class="bar ${isCurrent ? 'current' : ''}" style="height:${h}%;"></div>
-          <div class="bar-lbl">${actualOvIndex + 1}</div>
-        </div>
-      `;
-    }).join('');
+      // Y-axis Ticks
+      for(let i=0; i<=3; i++) {
+         let val = Math.round((maxVal / 3) * i);
+         let y = 20 + graphH - (val/maxVal * graphH);
+         svgHtml += `<text x="${padX-5}" y="${y+4}" fill="var(--muted)" font-size="12" text-anchor="end">${val}</text>`;
+         svgHtml += `<line x1="${padX}" y1="${y}" x2="${w-10}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
+      }
+
+      // Draw Bars
+      let barStep = graphW / Math.max(5, displayOvers.length);
+      let barW = Math.min(24, barStep * 0.6);
+      
+      displayOvers.forEach((val, idx) => {
+         let actualOvIndex = (hist.length - displayOvers.length) + idx + (state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1 ? 0 : 0);
+         let x = padX + (idx + 0.5) * barStep - barW/2;
+         let barH = (val / maxVal) * graphH;
+         let y = 20 + graphH - barH;
+         let isCurrent = (idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
+         
+         // Bar
+         svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="3" ry="3"/>`;
+         
+         // Run Value on Top
+         svgHtml += `<text x="${x + barW/2}" y="${y - 5}" fill="var(--ink)" font-size="14" font-weight="bold" text-anchor="middle">${val}</text>`;
+         
+         // Wicket Label (W)
+         let wCount = wktsPerOver[actualOvIndex] || 0;
+         if(wCount > 0) {
+             svgHtml += `<text x="${x + barW/2}" y="${y - 20}" fill="var(--crimson-2)" font-size="16" font-weight="900" text-anchor="middle">${'W'.repeat(wCount)}</text>`;
+         }
+         
+         // X-axis Overs Label
+         svgHtml += `<text x="${x + barW/2}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`;
+      });
+
+      document.getElementById('chartSvg').innerHTML = svgHtml;
   }
 
-  // 7. WORM GRAPH (Line Graph with Wicket Markers)
+  // 7. WORM GRAPH (SVG Line Graph)
   if(g.centerGraphic === 'worm') {
-      const svg = document.getElementById('wormSvg');
-      const maxOvers = state.meta.maxOvers;
-      const w = 740, h = 250;
-      
+      let maxOvers = state.meta.maxOvers;
+      let w = 700, h = 230, padX = 40, padY = 30; 
+      let graphW = w - padX - 20;
+      let graphH = h - padY - 20;
+
       let cRuns1 = [0]; let sum1 = 0;
       (state.overHistory || []).forEach(r => { sum1 += r; cRuns1.push(sum1); });
       if(state.legalBalls % 6 !== 0) { cRuns1.push(sum1 + (state.currentOverRuns||0)); }
@@ -410,17 +470,44 @@ onValue(ref(db, "current_match"), snap => {
       }
       
       let maxTotal = Math.max(state.score, state.target || 0, 50); 
+      maxTotal = Math.ceil(maxTotal / 50) * 50;
+
+      let svgHtml = '';
+      
+      // Axes Lines
+      svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+      svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${padX+graphW}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+      
+      // Axis Labels
+      svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
+      svgHtml += `<text x="${padX+graphW-20}" y="${h-2}" fill="var(--gold)" font-size="12" font-weight="bold">OVERS</text>`;
+
+      // Y-axis Ticks (every 50)
+      let ySteps = maxTotal / 50;
+      for(let i=0; i<=ySteps; i++) {
+         let val = i * 50;
+         let y = 20 + graphH - (val/maxTotal * graphH);
+         svgHtml += `<text x="${padX-5}" y="${y+4}" fill="var(--muted)" font-size="12" text-anchor="end">${val}</text>`;
+         svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
+      }
+
+      // X-axis Ticks (every 5 overs)
+      for(let i=5; i<=maxOvers; i+=5) {
+         let x = padX + (i/maxOvers * graphW);
+         svgHtml += `<text x="${x}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" text-anchor="middle">${i}</text>`;
+         svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+5}" stroke="var(--muted)"/>`;
+      }
       
       function buildPath(dataArr, currentBalls, isComplete) {
-          let d = `M 0 ${h}`;
+          let d = `M ${padX} ${20+graphH}`;
           dataArr.forEach((val, idx) => {
               let x = 0;
               if(idx === dataArr.length - 1 && !isComplete && currentBalls % 6 !== 0) {
-                  x = ((idx - 1) + (currentBalls % 6)/6) / maxOvers * w;
+                  x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW);
               } else {
-                  x = (idx / maxOvers) * w;
+                  x = padX + (idx / maxOvers) * graphW;
               }
-              let y = h - (val / maxTotal * h);
+              let y = 20 + graphH - (val / maxTotal * graphH);
               d += ` L ${x} ${y}`;
           });
           return d;
@@ -431,38 +518,32 @@ onValue(ref(db, "current_match"), snap => {
           (fowArray || []).forEach(f => {
               let ovrParts = String(f.overs).split('.');
               let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0);
-              let x = (balls / (maxOvers * 6)) * w;
-              let y = h - (f.score / maxTotal * h);
+              let x = padX + (balls / (maxOvers * 6)) * graphW;
+              let y = 20 + graphH - (f.score / maxTotal * graphH);
               html += `<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="var(--navy-deep)" stroke-width="2"/>`;
               html += `<text x="${x}" y="${y - 8}" fill="${color}" font-family="sans-serif" font-size="12" font-weight="900" text-anchor="middle">W</text>`;
           });
           return html;
       }
 
-      let svgHtml = '';
-      for(let i=0; i<=5; i++) {
-          let yy = i * (h/5);
-          svgHtml += `<line x1="0" y1="${yy}" x2="${w}" y2="${yy}" stroke="rgba(255,255,255,0.1)" />`;
-      }
-      
       if(state.innings === 2) {
           let path1 = buildPath(cRuns2, state.firstInnings.legalBalls, true);
-          svgHtml += `<path d="${path1}" fill="none" stroke="var(--muted)" stroke-width="4" />`;
+          svgHtml += `<path d="${path1}" fill="none" stroke="var(--muted)" stroke-width="3" />`;
           svgHtml += drawWickets(state.firstInnings.fow, "var(--muted)");
           
           let path2 = buildPath(cRuns1, state.legalBalls, state.inningsOver);
-          svgHtml += `<path d="${path2}" fill="none" stroke="var(--gold-2)" stroke-width="5" />`;
+          svgHtml += `<path d="${path2}" fill="none" stroke="var(--gold-2)" stroke-width="4" />`;
           svgHtml += drawWickets(state.fow, "var(--crimson-2)");
           
-          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--muted)">${state.firstInnings.team === 'A'?state.meta.tA:state.meta.tB} (1st Inn)</span> <span style="color:var(--gold-2)">${state.meta.batTeam==='A'?state.meta.tA:state.meta.tB} (Chasing)</span>`;
+          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--muted)">${state.firstInnings.team === 'A'?state.meta.tA:state.meta.tB} (1st Inn)</span> <span style="color:var(--gold-2)">${batTeamName} (Chasing)</span>`;
       } else {
           let path1 = buildPath(cRuns1, state.legalBalls, state.inningsOver);
-          svgHtml += `<path d="${path1}" fill="none" stroke="var(--gold-2)" stroke-width="5" />`;
+          svgHtml += `<path d="${path1}" fill="none" stroke="var(--gold-2)" stroke-width="4" />`;
           svgHtml += drawWickets(state.fow, "var(--crimson-2)");
-          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--gold-2)">${state.meta.batTeam==='A'?state.meta.tA:state.meta.tB}</span>`;
+          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--gold-2)">${batTeamName}</span>`;
       }
       
-      svg.innerHTML = svgHtml;
+      document.getElementById('wormSvg').innerHTML = svgHtml;
   }
 
   const pop = document.getElementById('popupEvent');
