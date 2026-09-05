@@ -23,6 +23,9 @@
   .btn-danger { background: var(--crimson); border-color: var(--crimson); color: #fff; font-weight: 700; }
   .btn-blue { background: var(--navy-3); border-color: var(--line); color: var(--ink); }
   .btn-accent { background: #3d2c00; border-color: var(--gold); color: var(--gold-2); }
+  
+  /* ACTIVE GREEN HIGHLIGHT */
+  .btn-active { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
 
   .screen { display: none; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 8px 30px; }
   .screen.active { display: flex; flex-direction: column; }
@@ -116,7 +119,10 @@
 
   <div id="inningsOverBanner" class="banner" style="display:none;">
     <div id="inningsOverText"></div>
-    <button class="btn-primary" style="margin-top:5px; width:100%; height:30px;" id="inningsOverBtn" onclick="startSecondInnings()">START 2ND INNINGS</button>
+    <div class="grid-2" style="margin-top:5px;">
+        <button class="btn-primary" style="width:100%; height:30px;" id="inningsOverBtn" onclick="startSecondInnings()">START 2ND INNINGS</button>
+        <button class="btn-blue btn-graphic" data-graphic="result" style="width:100%; height:30px;" onclick="toggleCenterGraphic('result')">SHOW RESULT</button>
+    </div>
   </div>
 
   <div class="card">
@@ -163,30 +169,45 @@
     </div>
   </div>
 
+  <!-- CENTER GRAPHICS -->
   <div class="card">
     <div class="card-title">
       <span>CENTER GRAPHICS (16:9)</span>
       <button class="btn-danger" style="padding:1px 6px; font-size:9px;" onclick="toggleCenterGraphic(null)">CLEAR ALL</button>
     </div>
+    
     <div class="grid-3" style="margin-bottom:8px;">
-      <button class="btn-blue" onclick="toggleCenterGraphic('part')">PARTNER</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('bat')">BAT CARD</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('bowl')">BOWL CARD</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('proj')">PROJ SCORE</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('fow')">FALL OF WKT</button>
+      <button class="btn-blue btn-graphic" data-graphic="part" onclick="toggleCenterGraphic('part')">PARTNER</button>
+      <button class="btn-blue btn-graphic" data-graphic="bat" onclick="toggleCenterGraphic('bat')">BAT CARD</button>
+      <button class="btn-blue btn-graphic" data-graphic="bowl" onclick="toggleCenterGraphic('bowl')">BOWL CARD</button>
+      <button class="btn-blue btn-graphic" data-graphic="proj" onclick="toggleCenterGraphic('proj')">PROJ / EQUATION</button>
+      <button class="btn-blue btn-graphic" data-graphic="fow" onclick="toggleCenterGraphic('fow')">FALL OF WKT</button>
     </div>
+
     <div class="card-title"><span style="color:#f2d878;">CHARTS & GRAPHS</span></div>
     <div class="grid-2" style="margin-bottom:6px;">
-      <button class="btn-blue" onclick="toggleCenterGraphic('chart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">BAR CHART (OVERS)</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('worm')" style="background:#16304f; color:#f2d878; border-color:var(--gold);">WORM GRAPH (LINE)</button>
+      <button class="btn-blue btn-graphic" data-graphic="chart" onclick="toggleCenterGraphic('chart')" style="background:#5b4413; color:#f2d878;">BAR CHART</button>
+      <button class="btn-blue btn-graphic" data-graphic="worm" onclick="toggleCenterGraphic('worm')" style="background:#16304f; color:#f2d878;">WORM GRAPH</button>
     </div>
-    <button class="btn-blue" style="width:100%; height:30px;" onclick="toggleGraphic('scorebug')">TOGGLE BOTTOM SCOREBUG</button>
+
+    <!-- 1ST INNINGS RECALL SECTION -->
+    <div id="recallSection" style="display:none; margin-top:8px;">
+        <div class="card-title"><span style="color:#f2d878;">1ST INNINGS RECALL</span></div>
+        <div class="grid-4" style="margin-bottom:6px;">
+          <button class="btn-blue btn-graphic" data-graphic="bat1" onclick="toggleCenterGraphic('bat1')">BATTING</button>
+          <button class="btn-blue btn-graphic" data-graphic="bowl1" onclick="toggleCenterGraphic('bowl1')">BOWLING</button>
+          <button class="btn-blue btn-graphic" data-graphic="chart1" onclick="toggleCenterGraphic('chart1')">CHART</button>
+          <button class="btn-blue btn-graphic" data-graphic="worm1" onclick="toggleCenterGraphic('worm1')">WORM</button>
+        </div>
+    </div>
+
+    <button class="btn-blue" id="btnBugToggle" style="width:100%; height:30px; margin-top:4px;" onclick="toggleGraphic('scorebug')">TOGGLE BOTTOM SCOREBUG</button>
   </div>
 
   <div class="card">
     <div class="card-title">
       <span>BOTTOM INFO STRIP</span>
-      <button class="btn-blue" style="padding:1px 6px; font-size:9px;" onclick="toggleGraphic('bottomStrip')">TOGGLE ON/OFF</button>
+      <button class="btn-blue" id="btnStripToggle" style="padding:1px 6px; font-size:9px;" onclick="toggleGraphic('bottomStrip')">TOGGLE ON/OFF</button>
     </div>
     <div class="grid-3" style="margin-bottom:4px;">
       <button class="btn-primary" onclick="setStripQuick('part')">PARTNER</button>
@@ -349,7 +370,7 @@ window.loadMatch = async function(id) {
   if(snap.exists()) {
     let loadedState = snap.val();
     
-    // NORMALIZE FIREBASE DATA (Prevents crashes on click by restoring empty arrays)
+    // NORMALIZE FIREBASE DATA
     if(!loadedState.overBalls) loadedState.overBalls = [];
     if(!loadedState.overHistory) loadedState.overHistory = [];
     if(!loadedState.fow) loadedState.fow = [];
@@ -358,7 +379,7 @@ window.loadMatch = async function(id) {
     if(!loadedState.squads.A) loadedState.squads.A = [];
     if(!loadedState.squads.B) loadedState.squads.B = [];
     if(!loadedState.partnership) loadedState.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
-    if (typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
+    if(typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
     
     state = loadedState;
     const tlSnap = await get(ref(db, `mb_match_timeline/${id}`));
@@ -478,15 +499,9 @@ window.submitExtra = function() {
 window.openWicketModal = function(type) {
   tempWicketType = type;
   document.getElementById('wicketTitle').innerText = type.replace('_', ' ');
-  
   const batterDiv = document.getElementById('outBatterDiv');
-  if(type === 'CAUGHT' || type === 'STUMPED') {
-      batterDiv.style.display = 'none';
-      document.getElementById('outBatterSelect').value = 'STRIKER';
-  } else {
-      batterDiv.style.display = 'block';
-  }
-
+  if(type === 'CAUGHT' || type === 'STUMPED') { batterDiv.style.display = 'none'; document.getElementById('outBatterSelect').value = 'STRIKER'; } 
+  else { batterDiv.style.display = 'block'; }
   document.getElementById('fielderLabel').innerText = type === 'STUMPED' ? 'Select Keeper' : type === 'RUN_OUT' ? 'Select Fielder' : 'Select Catcher';
   const select = document.getElementById('fielderSelect'); select.innerHTML = '<option value="">-- None / Direct --</option>';
   state.squads[state.meta.bowlTeam].forEach(p => { select.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
@@ -496,22 +511,18 @@ window.openWicketModal = function(type) {
 window.submitWicket = function() {
   const who = document.getElementById('outBatterSelect').value;
   const fielderId = document.getElementById('fielderSelect').value;
-  closeModal('wicketModal');
-  processWicket(tempWicketType, who, fielderId);
+  closeModal('wicketModal'); processWicket(tempWicketType, who, fielderId);
 };
 
 window.processWicket = function(type, who = "STRIKER", fielderId = null) {
-  if(state.inningsOver) return;
-  pushSnapshot(`Wicket: ${type}`);
+  if(state.inningsOver) return; pushSnapshot(`Wicket: ${type}`);
   if(type === 'CAUGHT' && !fielderId) openWicketModal('CAUGHT');
   if(type === 'CAUGHT' && !fielderId) return; 
 
   state.wickets += 1; state.legalBalls += 1; state.overBalls.push('W');
 
-  const batTeam = state.meta.batTeam;
-  const outId = who === "STRIKER" ? state.striker : state.nonStriker;
-  const outBatter = state.squads[batTeam].find(p => p.id === outId);
-  outBatter.isOut = true; outBatter.balls += 1;
+  const batTeam = state.meta.batTeam; const outId = who === "STRIKER" ? state.striker : state.nonStriker;
+  const outBatter = state.squads[batTeam].find(p => p.id === outId); outBatter.isOut = true; outBatter.balls += 1;
 
   const bowler = state.squads[state.meta.bowlTeam].find(p => p.id === state.bowler);
   const fielder = state.squads[state.meta.bowlTeam].find(p => p.id === fielderId);
@@ -575,11 +586,19 @@ function checkInningsEnd() {
 
 window.startSecondInnings = function() {
   pushSnapshot("Start 2nd Innings");
-  
   let finalOverHistory = [...state.overHistory];
   if (state.legalBalls % 6 !== 0) finalOverHistory.push(state.currentOverRuns);
   
-  state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory, fow: [...state.fow] };
+  // Save entire 1st Innings Data deeply for Recall
+  state.firstInnings = { 
+      team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, 
+      overHistory: finalOverHistory, fow: [...state.fow],
+      batters: JSON.parse(JSON.stringify(state.squads[state.meta.batTeam])),
+      bowlers: JSON.parse(JSON.stringify(state.squads[state.meta.bowlTeam])),
+      bowlerStats: JSON.parse(JSON.stringify(state.bowlerStats)),
+      extras: state.extras
+  };
+
   const newBat = state.meta.bowlTeam; const newBowl = state.meta.batTeam; state.meta.batTeam = newBat; state.meta.bowlTeam = newBowl;
   state.target = state.firstInnings.score + 1; state.innings = 2; state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = [];
   state.currentOverRuns = 0; state.overHistory = []; state.fow = []; state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
@@ -595,6 +614,7 @@ function computeResult() {
   else return `${bowlName} WON BY ${state.target - 1 - state.score} RUNS`;
 }
 
+// GRAPHICS TOGGLES WITH BUTTON HIGHLIGHT
 window.toggleGraphic = function(key) { state.graphics[key] = !state.graphics[key]; saveMatchCloud(); };
 window.toggleCenterGraphic = function(g) { state.graphics.centerGraphic = state.graphics.centerGraphic === g ? null : g; saveMatchCloud(); };
 window.setCustomStrip = function() { const val = document.getElementById('customStripInput').value; if(val) { state.graphics.dynamicText = val; state.graphics.bottomStrip = true; saveMatchCloud(); } };
@@ -604,9 +624,13 @@ window.setStripQuick = function(type) {
   if(type === 'part') txt = `${getOrdinal(state.wickets + 1).toUpperCase()} WKT PARTNERSHIP: ${state.partnership.runs} RUNS (${state.partnership.balls} BALLS)`;
   else if(type === 'fow') txt = "FALL OF WICKETS: " + (state.fow.length > 0 ? state.fow.map(f => `${f.wktNo}-${f.score}`).join(' | ') : "NONE");
   else if(type === 'proj') {
-    const crr = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0; const rem = state.meta.maxOvers - (state.legalBalls / 6);
-    const pCrr = Math.round(state.score + crr * rem); let base = Math.floor(crr); if(base % 2 !== 0) base += 1; if(base <= crr) base += 2;
-    txt = `PROJ: CRR(${crr.toFixed(1)}) ${pCrr} | @${base.toFixed(0)}: ${Math.round(state.score + base * rem)} | @${(base+2).toFixed(0)}: ${Math.round(state.score + (base + 2) * rem)}`;
+    if(state.innings === 2 && state.target != null) {
+      txt = `EQUATION: ${batTeamName} NEED ${Math.max(0, state.target - state.score)} RUNS FROM ${Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls)} BALLS`;
+    } else {
+      const crr = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0; const rem = state.meta.maxOvers - (state.legalBalls / 6);
+      const pCrr = Math.round(state.score + crr * rem); let base = Math.max(6, Math.floor(crr)); if(base % 2 !== 0) base -= 1;
+      txt = `PROJ: CRR(${crr.toFixed(1)}) ${pCrr} | @${base.toFixed(0)}: ${Math.round(state.score + base * rem)} | @${(base+2).toFixed(0)}: ${Math.round(state.score + (base + 2) * rem)}`;
+    }
   } else if(type === 'target') txt = state.target ? `TARGET: ${state.target} RUNS` : "1ST INNINGS IN PROGRESS";
   else if(type === 'need') {
     if(state.innings === 2 && state.target != null) txt = `${batTeamName} NEED ${Math.max(0, state.target - state.score)} RUNS OFF ${Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls)} BALLS`;
@@ -625,6 +649,21 @@ function updateUI() {
   
   const banner = document.getElementById('inningsOverBanner'); const bText = document.getElementById('inningsOverText'); const bBtn = document.getElementById('inningsOverBtn');
   if(state.inningsOver) { banner.style.display = 'block'; if(state.innings === 1) { bText.innerText = `INNINGS 1 COMPLETE — ${state.meta[tBat === 'A' ? 'tA' : 'tB']} ${state.score}/${state.wickets}`; bBtn.style.display = 'block'; } else { bText.innerText = computeResult(); bBtn.style.display = 'none'; } } else { banner.style.display = 'none'; }
+
+  // 1st Innings Recall Visibility
+  const recallSec = document.getElementById('recallSection');
+  if(state.innings === 2 || (state.innings === 1 && state.inningsOver)) recallSec.style.display = 'block'; else recallSec.style.display = 'none';
+
+  // Highlight Active Graphic Buttons
+  document.querySelectorAll('.btn-graphic').forEach(btn => {
+      if(btn.dataset.graphic === state.graphics.centerGraphic) btn.classList.add('btn-active');
+      else btn.classList.remove('btn-active');
+  });
+
+  // Highlight Bug & Strip Toggles
+  const btnBug = document.getElementById('btnBugToggle'); const btnStrip = document.getElementById('btnStripToggle');
+  if(state.graphics.scorebug) btnBug.classList.add('btn-active'); else btnBug.classList.remove('btn-active');
+  if(state.graphics.bottomStrip) btnStrip.classList.add('btn-active'); else btnStrip.classList.remove('btn-active');
 
   const availableBatters = state.squads[tBat].filter(p => !p.isOut && !p.isAbsent);
   document.getElementById('strikerSelect').innerHTML = availableBatters.map(p => `<option value="${p.id}" ${state.striker===p.id?'selected':''}>${p.name} (${p.runs})</option>`).join('');
