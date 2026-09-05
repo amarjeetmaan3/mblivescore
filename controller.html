@@ -24,6 +24,7 @@
   .btn-blue { background: var(--navy-3); border-color: var(--line); color: var(--ink); }
   .btn-accent { background: #3d2c00; border-color: var(--gold); color: var(--gold-2); }
   
+  /* ACTIVE GREEN HIGHLIGHT */
   .btn-active { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
 
   .screen { display: none; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 8px 30px; }
@@ -336,11 +337,14 @@ window.loadMatch = async function(id) {
   const snap = await get(ref(db, `mb_match_data/${id}`));
   if(snap.exists()) {
     let loadedState = snap.val();
+    
+    // NORMALIZE FIREBASE DATA (Prevents crashes on click by restoring empty arrays)
     if(!loadedState.overBalls) loadedState.overBalls = []; if(!loadedState.overHistory) loadedState.overHistory = []; if(!loadedState.fow) loadedState.fow = [];
     if(!loadedState.bowlerStats) loadedState.bowlerStats = {}; if(!loadedState.squads) loadedState.squads = {A:[], B:[]};
     if(!loadedState.squads.A) loadedState.squads.A = []; if(!loadedState.squads.B) loadedState.squads.B = [];
     if(!loadedState.partnership) loadedState.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
     if(typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
+    
     state = loadedState;
     const tlSnap = await get(ref(db, `mb_match_timeline/${id}`)); timelineHistory = tlSnap.exists() ? tlSnap.val() : [];
     startController();
@@ -355,16 +359,29 @@ window.deleteMatch = async function(id) {
 
 window.exitToHome = function() { document.getElementById('screen-live').classList.remove('active'); document.getElementById('screen-home').classList.add('active'); set(liveRef, null); renderSavedMatches(); };
 
-function startController() { document.getElementById('screen-home').classList.remove('active'); document.getElementById('screen-live').classList.add('active'); saveMatchCloud(); }
+function startController() { document.getElementById('screen-home').classList.remove('active'); document.getElementById('screen-live').classList.add('active'); syncLiveAndSave(); }
 
-function saveMatchCloud() {
-  if(!state) return; set(liveRef, state);
-  const summary = { id: state.id, title: state.title, meta: state.meta, legalBalls: state.legalBalls, innings: state.innings, score: state.score };
-  set(ref(db, `mb_saved_matches_list/${state.id}`), summary); set(ref(db, `mb_match_data/${state.id}`), state); set(ref(db, `mb_match_timeline/${state.id}`), timelineHistory); updateUI();
+// ================= THE SPEED FIX (Debounced Cloud Backup) =================
+let heavySaveTimer = null;
+function syncLiveAndSave() {
+  if(!state) return;
+  // 1. INSTANT LIVE SYNC for Overlay (Fast)
+  set(liveRef, state); 
+  updateUI();
+  
+  // 2. BACKGROUND BACKUP (Debounced by 800ms so buttons don't lag)
+  clearTimeout(heavySaveTimer);
+  heavySaveTimer = setTimeout(() => {
+      const summary = { id: state.id, title: state.title, meta: state.meta, legalBalls: state.legalBalls, innings: state.innings, score: state.score };
+      set(ref(db, `mb_saved_matches_list/${state.id}`), summary);
+      set(ref(db, `mb_match_data/${state.id}`), state);
+      // Reduce Timeline upload to keep network free
+      set(ref(db, `mb_match_timeline/${state.id}`), timelineHistory.slice(0, 15));
+  }, 800);
 }
 
-function pushSnapshot(desc) { timelineHistory.unshift({ id: Date.now(), desc, snapshot: JSON.stringify(state) }); if(timelineHistory.length > 40) timelineHistory.pop(); }
-window.undoToSnapshot = function(id) { const idx = timelineHistory.findIndex(x => x.id === id); if(idx > -1) { state = JSON.parse(timelineHistory[idx].snapshot); timelineHistory.splice(0, idx + 1); saveMatchCloud(); } };
+function pushSnapshot(desc) { timelineHistory.unshift({ id: Date.now(), desc, snapshot: JSON.stringify(state) }); if(timelineHistory.length > 15) timelineHistory.pop(); }
+window.undoToSnapshot = function(id) { const idx = timelineHistory.findIndex(x => x.id === id); if(idx > -1) { state = JSON.parse(timelineHistory[idx].snapshot); timelineHistory.splice(0, idx + 1); syncLiveAndSave(); } };
 
 window.openEditPlayers = function() {
   let html = `<div style="font-size:11px; color:var(--gold); margin:5px 0;">${state.meta.tA}</div>`; state.squads.A.forEach((p, i) => { html += `<input type="text" id="edit_A_${i}" value="${p.name}" style="width:100%; margin-bottom:2px;">`; });
@@ -373,7 +390,7 @@ window.openEditPlayers = function() {
 };
 window.saveEditPlayers = function() {
   state.squads.A.forEach((p, i) => { p.name = document.getElementById(`edit_A_${i}`).value; }); state.squads.B.forEach((p, i) => { p.name = document.getElementById(`edit_B_${i}`).value; });
-  closeModal('editPlayersModal'); saveMatchCloud();
+  closeModal('editPlayersModal'); syncLiveAndSave();
 };
 
 function getBowlerStats(id) { if(!state.bowlerStats[id]) state.bowlerStats[id] = { balls: 0, runs: 0, wickets: 0, maidens: 0, dots: 0, ovRunsTracker: 0 }; return state.bowlerStats[id]; }
@@ -384,7 +401,7 @@ window.processBall = function(runs) {
   state.score += runs; state.currentOverRuns += runs; state.legalBalls += 1; state.overBalls.push(runs); state.partnership.runs += runs; state.partnership.balls += 1; state.partnership.p1Runs += runs; state.partnership.p1Balls += 1;
   striker.runs += runs; striker.balls += 1; if(runs === 4) striker.fours += 1; if(runs === 6) striker.sixes += 1;
   const bs = getBowlerStats(state.bowler); bs.balls += 1; bs.runs += runs; bs.ovRunsTracker += runs; if(runs === 0) bs.dots += 1;
-  if(runs % 2 !== 0) swapStrikeInternal(); checkOverEnd(); triggerAutoGraphic(runs === 4 ? "FOUR" : (runs === 6 ? "SIX" : null)); checkInningsEnd(); saveMatchCloud();
+  if(runs % 2 !== 0) swapStrikeInternal(); checkOverEnd(); triggerAutoGraphic(runs === 4 ? "FOUR" : (runs === 6 ? "SIX" : null)); checkInningsEnd(); syncLiveAndSave();
 };
 
 window.openExtraModal = function(t) { tempExtraType = t; document.getElementById('extraTitle').innerText = t === 'WD' ? 'Wide Ball' : t === 'NB' ? 'No Ball' : t === 'B' ? 'Byes' : 'Leg Byes'; document.getElementById('extraRunsInput').value = 0; document.getElementById('extraModal').classList.add('active'); };
@@ -396,7 +413,7 @@ window.submitExtra = function() {
   if(tempExtraType === 'NB') { striker.balls += 1; state.partnership.p1Balls += 1; if(extraRuns > 0) { striker.runs += extraRuns; state.partnership.p1Runs += extraRuns; } }
   if(tempExtraType === 'WD' || tempExtraType === 'NB') { bs.runs += total; bs.ovRunsTracker += total; }
   if(isLegal) { state.legalBalls += 1; state.partnership.balls += 1; state.partnership.p1Balls += 1; striker.balls += 1; bs.balls += 1; if(extraRuns === 0) bs.dots += 1; }
-  if(extraRuns % 2 !== 0) swapStrikeInternal(); if(isLegal) checkOverEnd(); checkInningsEnd(); saveMatchCloud();
+  if(extraRuns % 2 !== 0) swapStrikeInternal(); if(isLegal) checkOverEnd(); checkInningsEnd(); syncLiveAndSave();
 };
 
 window.openWicketModal = function(type) {
@@ -418,12 +435,12 @@ window.processWicket = function(type, who = "STRIKER", fielderId = null) {
   state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
   const nextBatter = state.squads[batTeam].find(p => !p.isOut && !p.isAbsent && !p.isRetired && p.id !== state.striker && p.id !== state.nonStriker);
   if(who === "STRIKER" && nextBatter) state.striker = nextBatter.id; else if(nextBatter) state.nonStriker = nextBatter.id;
-  checkOverEnd(); triggerAutoGraphic("WICKET"); checkInningsEnd(); saveMatchCloud();
+  checkOverEnd(); triggerAutoGraphic("WICKET"); checkInningsEnd(); syncLiveAndSave();
 };
 
 window.markRetiredHurt = function() {
   if(state.inningsOver) return; const batTeam = state.meta.batTeam; const p = state.squads[batTeam].find(x => x.id === state.striker); if(!confirm(`Mark ${p.name} as Retired Hurt?`)) return; pushSnapshot("Retired Hurt"); p.isRetired = true; p.dismissalInfo = "retired hurt";
-  const next = state.squads[batTeam].find(x => !x.isOut && !x.isAbsent && !x.isRetired && x.id !== state.striker && x.id !== state.nonStriker); if(next) state.striker = next.id; saveMatchCloud();
+  const next = state.squads[batTeam].find(x => !x.isOut && !x.isAbsent && !x.isRetired && x.id !== state.striker && x.id !== state.nonStriker); if(next) state.striker = next.id; syncLiveAndSave();
 };
 
 window.openAbsentModal = function() {
@@ -433,17 +450,16 @@ window.openAbsentModal = function() {
 window.submitAbsent = function() {
   const id = document.getElementById('absentSelect').value; if(!id) return; closeModal('absentModal'); pushSnapshot("Batter Absent");
   const p = state.squads[state.meta.batTeam].find(x => x.id === id); p.isOut = true; p.isAbsent = true; p.dismissalInfo = "absent hurt"; state.wickets += 1;
-  state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: p.name }); checkInningsEnd(); saveMatchCloud();
+  state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: p.name }); checkInningsEnd(); syncLiveAndSave();
 };
 
 function swapStrikeInternal() { const temp = state.striker; state.striker = state.nonStriker; state.nonStriker = temp; const rTemp = state.partnership.p1Runs; state.partnership.p1Runs = state.partnership.p2Runs; state.partnership.p2Runs = rTemp; const bTemp = state.partnership.p1Balls; state.partnership.p1Balls = state.partnership.p2Balls; state.partnership.p2Balls = bTemp; }
-window.swapStrike = function() { pushSnapshot("Swap Strike"); swapStrikeInternal(); saveMatchCloud(); };
+window.swapStrike = function() { pushSnapshot("Swap Strike"); swapStrikeInternal(); syncLiveAndSave(); };
 
 function checkOverEnd() {
   if(state.legalBalls % 6 === 0 && state.legalBalls > 0 && !state.inningsOver) {
     let prevB = state.lastBowler;
-    const bs = getBowlerStats(state.bowler); if(bs.ovRunsTracker === 0) bs.maidens += 1; bs.ovRunsTracker = 0;
-    state.overHistory.push(state.currentOverRuns); state.currentOverRuns = 0;
+    const bs = getBowlerStats(state.bowler); if(bs.ovRunsTracker === 0) bs.maidens += 1; bs.ovRunsTracker = 0; state.overHistory.push(state.currentOverRuns); state.currentOverRuns = 0;
     swapStrikeInternal(); state.lastBowler = state.bowler; const bowlTeam = state.meta.bowlTeam; 
     let nextB = state.squads[bowlTeam].find(p => p.id === prevB);
     if(!nextB || nextB.id === state.lastBowler) nextB = state.squads[bowlTeam].find(p => p.id !== state.lastBowler);
@@ -461,7 +477,7 @@ window.startSecondInnings = function() {
   state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory, fow: [...state.fow], batters: JSON.parse(JSON.stringify(state.squads[state.meta.batTeam])), bowlers: JSON.parse(JSON.stringify(state.squads[state.meta.bowlTeam])), bowlerStats: JSON.parse(JSON.stringify(state.bowlerStats)), extras: state.extras };
   const newBat = state.meta.bowlTeam; const newBowl = state.meta.batTeam; state.meta.batTeam = newBat; state.meta.bowlTeam = newBowl;
   state.target = state.firstInnings.score + 1; state.innings = 2; state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = []; state.currentOverRuns = 0; state.overHistory = []; state.fow = []; state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 }; state.inningsOver = false; state.lastBowler = null; state.striker = state.squads[newBat][0].id; state.nonStriker = state.squads[newBat][1].id; state.bowler = state.squads[newBowl][0].id;
-  state.graphics.dynamicText = `${newBat === 'A' ? state.meta.tA : state.meta.tB} NEED ${state.target} TO WIN`; saveMatchCloud();
+  state.graphics.dynamicText = `${newBat === 'A' ? state.meta.tA : state.meta.tB} NEED ${state.target} TO WIN`; syncLiveAndSave();
 };
 
 function computeResult() {
@@ -472,7 +488,7 @@ function computeResult() {
   else return `${bowlName} WON BY ${state.target - 1 - state.score} RUNS`;
 }
 
-window.toggleGraphic = function(key) { state.graphics[key] = !state.graphics[key]; saveMatchCloud(); };
+window.toggleGraphic = function(key) { state.graphics[key] = !state.graphics[key]; syncLiveAndSave(); };
 
 window.setGraphicInnings = function(mode) {
     if(mode === 'prev' && (!state || !state.firstInnings)) return;
@@ -480,15 +496,15 @@ window.setGraphicInnings = function(mode) {
 };
 
 window.handleGraphicClick = function(baseTarget) {
-    if(baseTarget === null) { state.graphics.centerGraphic = null; saveMatchCloud(); return; }
+    if(baseTarget === null) { state.graphics.centerGraphic = null; syncLiveAndSave(); return; }
     let finalTarget = baseTarget;
     if(graphicInningsMode === 'prev' && baseTarget !== 'result') finalTarget += '1';
     if(state.graphics.centerGraphic === finalTarget) state.graphics.centerGraphic = null; 
     else state.graphics.centerGraphic = finalTarget; 
-    saveMatchCloud();
+    syncLiveAndSave();
 };
 
-window.setCustomStrip = function() { const val = document.getElementById('customStripInput').value; if(val) { state.graphics.dynamicText = val; state.graphics.bottomStrip = true; saveMatchCloud(); } };
+window.setCustomStrip = function() { const val = document.getElementById('customStripInput').value; if(val) { state.graphics.dynamicText = val; state.graphics.bottomStrip = true; syncLiveAndSave(); } };
 window.setStripQuick = function(type) {
   let txt = ""; const batTeamName = state.meta.batTeam === 'A' ? state.meta.tA : state.meta.tB;
   if(type === 'part') txt = `${getOrdinal(state.wickets + 1).toUpperCase()} WKT PARTNERSHIP: ${state.partnership.runs} RUNS (${state.partnership.balls} BALLS)`;
@@ -498,10 +514,10 @@ window.setStripQuick = function(type) {
     else { const crr = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0; const rem = state.meta.maxOvers - (state.legalBalls / 6); const pCrr = Math.round(state.score + crr * rem); let base = Math.max(6, Math.floor(crr)); if(base % 2 !== 0) base -= 1; txt = `PROJ: CRR(${crr.toFixed(1)}) ${pCrr} | @${base.toFixed(0)}: ${Math.round(state.score + base * rem)} | @${(base+2).toFixed(0)}: ${Math.round(state.score + (base + 2) * rem)}`; }
   } else if(type === 'target') txt = state.target ? `TARGET: ${state.target} RUNS` : "1ST INNINGS IN PROGRESS";
   else if(type === 'need') { if(state.innings === 2 && state.target != null) txt = `${batTeamName} NEED ${Math.max(0, state.target - state.score)} RUNS OFF ${Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls)} BALLS`; else txt = `1ST INNINGS: ${batTeamName} ${state.score}/${state.wickets} (${fmtOvers(state.legalBalls)} OVS)`; }
-  state.graphics.dynamicText = txt; state.graphics.bottomStrip = true; saveMatchCloud();
+  state.graphics.dynamicText = txt; state.graphics.bottomStrip = true; syncLiveAndSave();
 };
 
-window.manualPlayerChange = function() { state.striker = document.getElementById('strikerSelect').value; state.nonStriker = document.getElementById('nonStrikerSelect').value; state.bowler = document.getElementById('bowlerSelect').value; saveMatchCloud(); };
+window.manualPlayerChange = function() { state.striker = document.getElementById('strikerSelect').value; state.nonStriker = document.getElementById('nonStrikerSelect').value; state.bowler = document.getElementById('bowlerSelect').value; syncLiveAndSave(); };
 function triggerAutoGraphic(type) { if(!type) return; state.graphics.activeEvent = type; setTimeout(() => { if(state && state.graphics) { state.graphics.activeEvent = null; set(liveRef, state); } }, 2500); }
 window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); };
 
