@@ -163,14 +163,11 @@
     </div>
   </div>
 
-  <!-- Center Graphics Update (Layout Improved) -->
   <div class="card">
     <div class="card-title">
       <span>CENTER GRAPHICS (16:9)</span>
       <button class="btn-danger" style="padding:1px 6px; font-size:9px;" onclick="toggleCenterGraphic(null)">CLEAR ALL</button>
     </div>
-    
-    <!-- Standard Graphics -->
     <div class="grid-3" style="margin-bottom:8px;">
       <button class="btn-blue" onclick="toggleCenterGraphic('part')">PARTNER</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('bat')">BAT CARD</button>
@@ -178,20 +175,14 @@
       <button class="btn-blue" onclick="toggleCenterGraphic('proj')">PROJ SCORE</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('fow')">FALL OF WKT</button>
     </div>
-
-    <!-- Charts & Graphs Section -->
-    <div class="card-title">
-      <span style="color:#f2d878;">CHARTS & GRAPHS</span>
-    </div>
+    <div class="card-title"><span style="color:#f2d878;">CHARTS & GRAPHS</span></div>
     <div class="grid-2" style="margin-bottom:6px;">
       <button class="btn-blue" onclick="toggleCenterGraphic('chart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">BAR CHART (OVERS)</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('worm')" style="background:#16304f; color:#f2d878; border-color:var(--gold);">WORM GRAPH (LINE)</button>
     </div>
-
     <button class="btn-blue" style="width:100%; height:30px;" onclick="toggleGraphic('scorebug')">TOGGLE BOTTOM SCOREBUG</button>
   </div>
 
-  <!-- Info Strip Controls -->
   <div class="card">
     <div class="card-title">
       <span>BOTTOM INFO STRIP</span>
@@ -210,7 +201,6 @@
     </div>
   </div>
 
-  <!-- Timeline -->
   <div class="card">
     <div class="card-title">TIMELINE & DEEP UNDO</div>
     <div class="timeline" id="timelineList"></div>
@@ -264,7 +254,6 @@
   </div>
 </div>
 
-<!-- Player Edit Modal -->
 <div class="modal-overlay" id="editPlayersModal">
   <div class="modal" style="max-height:85vh; overflow-y:auto;">
     <h3>Edit Player Names</h3>
@@ -278,7 +267,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js"; // Added remove
+import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
@@ -297,7 +286,6 @@ window.tempWicketType = "";
 function fmtOvers(balls) { return `${Math.floor(balls/6)}.${balls%6}`; }
 function getOrdinal(n) { const s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
 
-// Match Init
 window.createNewMatch = function() {
   const tA = document.getElementById('tA_name').value.trim() || "IND";
   const tB = document.getElementById('tB_name').value.trim() || "AUS";
@@ -361,13 +349,15 @@ window.loadMatch = async function(id) {
   if(snap.exists()) {
     let loadedState = snap.val();
     
-    // NORMALIZE FIREBASE DATA (Firebase deletes empty arrays, causing push() to crash)
+    // NORMALIZE FIREBASE DATA (Prevents crashes on click by restoring empty arrays)
     if(!loadedState.overBalls) loadedState.overBalls = [];
     if(!loadedState.overHistory) loadedState.overHistory = [];
     if(!loadedState.fow) loadedState.fow = [];
     if(!loadedState.bowlerStats) loadedState.bowlerStats = {};
+    if(!loadedState.squads) loadedState.squads = {A:[], B:[]};
     if(!loadedState.squads.A) loadedState.squads.A = [];
     if(!loadedState.squads.B) loadedState.squads.B = [];
+    if(!loadedState.partnership) loadedState.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
     if (typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
     
     state = loadedState;
@@ -378,7 +368,6 @@ window.loadMatch = async function(id) {
   }
 };
 
-// FIREBASE MATCH DELETE
 window.deleteMatch = async function(id) {
   if(confirm("Are you sure you want to delete this match permanently?")) {
     await remove(ref(db, `mb_saved_matches_list/${id}`));
@@ -424,7 +413,6 @@ window.undoToSnapshot = function(id) {
   }
 };
 
-// Edit Players Modal
 window.openEditPlayers = function() {
   let html = `<div style="font-size:11px; color:var(--gold); margin:5px 0;">${state.meta.tA}</div>`;
   state.squads.A.forEach((p, i) => { html += `<input type="text" id="edit_A_${i}" value="${p.name}" style="width:100%; margin-bottom:2px;">`; });
