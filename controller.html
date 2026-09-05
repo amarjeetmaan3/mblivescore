@@ -149,7 +149,6 @@
         <button onclick="openExtraModal('B')">BYE</button><button onclick="openExtraModal('LB')">LB</button>
       </div>
       <div class="wicket-pad grid-2">
-        <!-- BOWL, LBW skip modal and directly target STRIKER -->
         <button onclick="processWicket('CAUGHT', 'STRIKER')">CATCH</button>
         <button onclick="processWicket('BOWLED', 'STRIKER')">BOWL</button>
         <button onclick="processWicket('LBW', 'STRIKER')">LBW</button>
@@ -164,21 +163,31 @@
     </div>
   </div>
 
-  <!-- Center Graphics -->
+  <!-- Center Graphics Update (Layout Improved) -->
   <div class="card">
     <div class="card-title">
       <span>CENTER GRAPHICS (16:9)</span>
-      <button class="btn-danger" style="padding:1px 6px; font-size:9px;" onclick="toggleCenterGraphic(null)">CLEAR</button>
+      <button class="btn-danger" style="padding:1px 6px; font-size:9px;" onclick="toggleCenterGraphic(null)">CLEAR ALL</button>
     </div>
-    <div class="grid-4" style="margin-bottom:4px;">
+    
+    <!-- Standard Graphics -->
+    <div class="grid-3" style="margin-bottom:8px;">
       <button class="btn-blue" onclick="toggleCenterGraphic('part')">PARTNER</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('bat')">BAT CARD</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('bowl')">BOWL CARD</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('proj')">PROJ SCORE</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('fow')">FALL OF WKT</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('chart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">OVER CHART</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('worm')" style="background:#16304f; color:#f2d878; border-color:var(--gold); grid-column: span 2;">WORM GRAPH</button>
     </div>
+
+    <!-- Charts & Graphs Section -->
+    <div class="card-title">
+      <span style="color:#f2d878;">CHARTS & GRAPHS</span>
+    </div>
+    <div class="grid-2" style="margin-bottom:6px;">
+      <button class="btn-blue" onclick="toggleCenterGraphic('chart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">BAR CHART (OVERS)</button>
+      <button class="btn-blue" onclick="toggleCenterGraphic('worm')" style="background:#16304f; color:#f2d878; border-color:var(--gold);">WORM GRAPH (LINE)</button>
+    </div>
+
     <button class="btn-blue" style="width:100%; height:30px;" onclick="toggleGraphic('scorebug')">TOGGLE BOTTOM SCOREBUG</button>
   </div>
 
@@ -269,7 +278,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js"; // Added remove
 
 const app = initializeApp({
   apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY",
@@ -338,6 +347,7 @@ window.renderSavedMatches = async function() {
         <span><b>${m.title}</b> (${m.meta.squadSize}P | Ov ${fmtOvers(m.legalBalls)})</span>
         <div style="display:flex; gap:3px;">
           <button class="btn-primary" style="padding:2px 6px; font-size:10px;" onclick="loadMatch('${m.id}')">LOAD</button>
+          <button class="btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteMatch('${m.id}')"><i class="fas fa-trash"></i></button>
         </div>
       </div>
     `).join('');
@@ -349,13 +359,32 @@ window.renderSavedMatches = async function() {
 window.loadMatch = async function(id) {
   const snap = await get(ref(db, `mb_match_data/${id}`));
   if(snap.exists()) {
-    state = snap.val();
+    let loadedState = snap.val();
+    
+    // NORMALIZE FIREBASE DATA (Firebase deletes empty arrays, causing push() to crash)
+    if(!loadedState.overBalls) loadedState.overBalls = [];
+    if(!loadedState.overHistory) loadedState.overHistory = [];
+    if(!loadedState.fow) loadedState.fow = [];
+    if(!loadedState.bowlerStats) loadedState.bowlerStats = {};
+    if(!loadedState.squads.A) loadedState.squads.A = [];
+    if(!loadedState.squads.B) loadedState.squads.B = [];
+    if (typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
+    
+    state = loadedState;
     const tlSnap = await get(ref(db, `mb_match_timeline/${id}`));
     timelineHistory = tlSnap.exists() ? tlSnap.val() : [];
     
-    if (typeof state.currentOverRuns === 'undefined') state.currentOverRuns = 0;
-    if (!state.overHistory) state.overHistory = [];
     startController();
+  }
+};
+
+// FIREBASE MATCH DELETE
+window.deleteMatch = async function(id) {
+  if(confirm("Are you sure you want to delete this match permanently?")) {
+    await remove(ref(db, `mb_saved_matches_list/${id}`));
+    await remove(ref(db, `mb_match_data/${id}`));
+    await remove(ref(db, `mb_match_timeline/${id}`));
+    renderSavedMatches();
   }
 };
 
@@ -372,10 +401,9 @@ function startController() {
   saveMatchCloud();
 }
 
-// FIRBEASE CLOUD SAVING (Replaces LocalStorage)
 function saveMatchCloud() {
   if(!state) return;
-  set(liveRef, state); // Sync with overlay
+  set(liveRef, state);
   const summary = { id: state.id, title: state.title, meta: state.meta, legalBalls: state.legalBalls, innings: state.innings, score: state.score };
   set(ref(db, `mb_saved_matches_list/${state.id}`), summary);
   set(ref(db, `mb_match_data/${state.id}`), state);
@@ -459,7 +487,6 @@ window.submitExtra = function() {
   if(isLegal) checkOverEnd(); checkInningsEnd(); saveMatchCloud();
 };
 
-// FIXED WICKET LOGIC
 window.openWicketModal = function(type) {
   tempWicketType = type;
   document.getElementById('wicketTitle').innerText = type.replace('_', ' ');
@@ -467,7 +494,7 @@ window.openWicketModal = function(type) {
   const batterDiv = document.getElementById('outBatterDiv');
   if(type === 'CAUGHT' || type === 'STUMPED') {
       batterDiv.style.display = 'none';
-      document.getElementById('outBatterSelect').value = 'STRIKER'; // Force Striker
+      document.getElementById('outBatterSelect').value = 'STRIKER';
   } else {
       batterDiv.style.display = 'block';
   }
@@ -485,12 +512,11 @@ window.submitWicket = function() {
   processWicket(tempWicketType, who, fielderId);
 };
 
-// Bowled, LBW, Hit Wkt directly pass through here
 window.processWicket = function(type, who = "STRIKER", fielderId = null) {
   if(state.inningsOver) return;
   pushSnapshot(`Wicket: ${type}`);
-  if(type === 'CAUGHT' && !fielderId) openWicketModal('CAUGHT'); // Safety fallback
-  if(type === 'CAUGHT' && !fielderId) return; // Wait for modal
+  if(type === 'CAUGHT' && !fielderId) openWicketModal('CAUGHT');
+  if(type === 'CAUGHT' && !fielderId) return; 
 
   state.wickets += 1; state.legalBalls += 1; state.overBalls.push('W');
 
@@ -565,10 +591,10 @@ window.startSecondInnings = function() {
   let finalOverHistory = [...state.overHistory];
   if (state.legalBalls % 6 !== 0) finalOverHistory.push(state.currentOverRuns);
   
-  state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory };
+  state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory, fow: [...state.fow] };
   const newBat = state.meta.bowlTeam; const newBowl = state.meta.batTeam; state.meta.batTeam = newBat; state.meta.bowlTeam = newBowl;
   state.target = state.firstInnings.score + 1; state.innings = 2; state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = [];
-  state.currentOverRuns = 0; state.overHistory = []; state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
+  state.currentOverRuns = 0; state.overHistory = []; state.fow = []; state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
   state.inningsOver = false; state.lastBowler = null; state.striker = state.squads[newBat][0].id; state.nonStriker = state.squads[newBat][1].id; state.bowler = state.squads[newBowl][0].id;
   state.graphics.dynamicText = `${newBat === 'A' ? state.meta.tA : state.meta.tB} NEED ${state.target} TO WIN`; saveMatchCloud();
 };
