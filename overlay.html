@@ -166,11 +166,21 @@
 </div>
 
 <div class="target-panel" id="targetPanel">
-  <div class="panel-title">TARGET</div>
-  <div class="target-row"><span class="k">To Win</span><span class="v accent" id="tgtTarget">—</span></div>
-  <div class="target-row"><span class="k">Need</span><span class="v" id="tgtNeed">—</span></div>
-  <div class="target-row"><span class="k">From</span><span class="v" id="tgtBalls">—</span></div>
-  <div class="compare-line"><span id="tgtCompare">—</span></div>
+  <div class="panel-title" id="tgtPanelTitle">TARGET</div>
+  <div class="target-row"><span class="k" id="tgtRow1Label">To Win</span><span class="v accent" id="tgtTarget">—</span></div>
+  <div class="target-row"><span class="k" id="tgtRow2Label">Need</span><span class="v" id="tgtNeed">—</span></div>
+  <div class="target-row" id="tgtRow3"><span class="k">From</span><span class="v" id="tgtBalls">—</span></div>
+  <div class="compare-line" id="tgtCompareLine"><span id="tgtCompare">—</span></div>
+</div>
+
+<div class="partnership-panel" id="fowPanel" style="top:auto; bottom:170px; right:44px;">
+  <div class="panel-title">FALL OF WICKETS</div>
+  <div id="fowLines" style="font-size:13px; line-height:1.6; color:var(--ink);"></div>
+</div>
+
+<div class="target-panel" id="recentPanel" style="top:auto; bottom:170px; left:44px;">
+  <div class="panel-title">LAST BALLS</div>
+  <div style="display:flex; gap:5px; flex-wrap:wrap;" id="recentBalls"></div>
 </div>
 
 <div class="popup-event" id="popupEvent">
@@ -273,19 +283,56 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('partSub').innerText = `off ${state.partnership.balls} balls`;
   } else partPanel.classList.remove('show');
 
-  // Target / comparison panel
+  // Target panel (2nd innings) or Projected Score panel (1st innings) — same slot, context-aware
   const tgtPanel = document.getElementById('targetPanel');
   if(g.target && state.innings === 2 && state.target != null) {
     tgtPanel.classList.add('show');
     const ballsLeft = (state.meta.maxOvers * 6) - state.legalBalls;
     const runsNeeded = Math.max(0, state.target - state.score);
+    document.getElementById('tgtPanelTitle').innerText = "TARGET";
+    document.getElementById('tgtRow1Label').innerText = "To Win";
+    document.getElementById('tgtRow2Label').innerText = "Need";
+    document.getElementById('tgtRow3').style.display = 'flex';
+    document.getElementById('tgtCompareLine').style.display = 'flex';
     document.getElementById('tgtTarget').innerText = state.target;
     document.getElementById('tgtNeed').innerText = `${runsNeeded} runs`;
     document.getElementById('tgtBalls').innerText = `${ballsLeft} balls`;
     if(state.firstInnings) {
       document.getElementById('tgtCompare').innerText = `1st Inns: ${state.firstInnings.team === 'A' ? state.meta.tA : state.meta.tB} ${state.firstInnings.score}/${state.firstInnings.wickets}`;
     }
+  } else if(g.target && state.innings === 1 && state.legalBalls > 0) {
+    tgtPanel.classList.add('show');
+    const oversLeft = state.meta.maxOvers - (state.legalBalls / 6);
+    const crr = (state.score / state.legalBalls) * 6;
+    const projected = Math.round(state.score + (crr * oversLeft));
+    document.getElementById('tgtPanelTitle').innerText = "PROJECTED SCORE";
+    document.getElementById('tgtRow1Label').innerText = "Proj. Total";
+    document.getElementById('tgtRow2Label').innerText = "Run Rate";
+    document.getElementById('tgtTarget').innerText = projected;
+    document.getElementById('tgtNeed').innerText = crr.toFixed(2);
+    document.getElementById('tgtRow3').style.display = 'none';
+    document.getElementById('tgtCompareLine').style.display = 'none';
   } else tgtPanel.classList.remove('show');
+
+  // Fall of wickets panel
+  const fowPanel = document.getElementById('fowPanel');
+  if(g.fow && state.fow && state.fow.length > 0) {
+    fowPanel.classList.add('show');
+    document.getElementById('fowLines').innerHTML = state.fow.slice(-6).map(f => `${f.wktNo}-${f.score} (${f.overs})`).join(' &nbsp;|&nbsp; ');
+  } else fowPanel.classList.remove('show');
+
+  // Recent balls panel
+  const recentPanel = document.getElementById('recentPanel');
+  if(g.recentBalls && state.ballLog && state.ballLog.length > 0) {
+    recentPanel.classList.add('show');
+    document.getElementById('recentBalls').innerHTML = state.ballLog.map(b => {
+      let color = "var(--navy-3)";
+      if(b.label === '4') color = "var(--gold)";
+      if(b.label === '6') color = "var(--crimson)";
+      if(b.label === 'W') color = "var(--crimson-2)";
+      return `<div class="ball-pill" style="background:${color}">${b.label}</div>`;
+    }).join('');
+  } else recentPanel.classList.remove('show');
 
   // Event popup (FOUR/SIX/WICKET)
   const pop = document.getElementById('popupEvent');
