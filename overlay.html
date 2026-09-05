@@ -19,7 +19,8 @@
   /* ================= MAIN SCOREBUG ================= */
   .scorebug {
     position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: stretch; min-width: 920px;
+    display: flex; flex-direction: column; align-items: stretch; 
+    width: 1150px; max-width: 96vw; /* FULL LENGTH INCREASED */
     opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
   }
   .scorebug.show { opacity: 1; }
@@ -34,26 +35,26 @@
     border: 1px solid var(--line); border-bottom: none; overflow: hidden; height: 100px; border-radius: 8px 8px 0 0;
   }
 
-  #bugNormal { display: flex; align-items: stretch; width: 100%; }
+  #bugNormal { display: flex; align-items: stretch; width: 100%; justify-content: space-between; }
   #bugResult { display: none; justify-content: center; align-items: center; width: 100%; background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); letter-spacing: 2px; }
 
-  .team-block { background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 1px; padding: 0 24px; display: flex; align-items: center; border-right: 3px solid var(--crimson); min-width: 140px; justify-content: center; }
+  .team-block { background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; padding: 0 24px; display: flex; align-items: center; border-right: 3px solid var(--crimson); min-width: 150px; justify-content: center; text-align:center; white-space:nowrap; }
   .score-block { display: flex; align-items: center; padding: 0 24px; border-right: 1px solid var(--line); }
   .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 58px; line-height: 0.9; transform: translateY(4px); }
   .score-block .overs { font-size: 20px; font-weight: 700; color: var(--muted); margin-left: 12px; align-self: center; }
   .rate-block { display:flex; flex-direction:column; justify-content:center; padding: 0 20px; border-right: 1px solid var(--line); gap: 2px; }
   .rate-block .label { font-size: 12px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
   .rate-block .value { font-size: 22px; font-weight: 700; line-height: 1; }
-  .batters-block { display:flex; flex-direction:column; justify-content:center; padding: 0 22px; border-right: 1px solid var(--line); gap: 4px; min-width: 220px; }
+  .batters-block { display:flex; flex-direction:column; justify-content:center; padding: 0 22px; border-right: 1px solid var(--line); gap: 4px; min-width: 250px; flex:1; }
   .batter-row { display:flex; justify-content: space-between; font-size: 18px; font-weight: 700; }
   .batter-row.on-strike { color: var(--gold-2); }
   .batter-row .fig { color: var(--muted); font-size: 16px; margin-left: 10px; }
-  .bowler-block { display:flex; flex-direction:column; justify-content:center; padding: 0 18px; min-width: 240px; }
+  .bowler-block { display:flex; flex-direction:column; justify-content:center; padding: 0 22px; min-width: 280px; }
   .bowler-info { display:flex; align-items:baseline; gap: 8px; margin-bottom: 6px; }
   .bowler-info .label { font-size: 12px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
   .bowler-info .name { font-size: 18px; font-weight: 700; }
   .bowler-info .fig { font-size: 16px; color: var(--muted); margin-left: auto; }
-  .over-track { display: flex; flex-wrap: wrap; gap: 5px; max-width: 220px; }
+  .over-track { display: flex; flex-wrap: wrap; gap: 5px; max-width: 260px; }
   .ball-pill { min-width: 24px; height: 24px; padding: 0 4px; border-radius: 50%; background: var(--navy-3); color: var(--ink); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
 
   .bottom-strip { background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-2) 100%); color: #fff; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 30px; text-align: center; opacity: 0; transition: opacity .15s; }
@@ -78,6 +79,14 @@
   .part-center { text-align: center; flex: 1.5; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
   .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 72px; color: var(--gold-2); line-height: 1; }
   .part-balls { font-size: 16px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
+
+  /* NEW: ALL PARTNERSHIPS GRAPHIC */
+  #graphic-allpart { width: 850px; }
+  .allpart-list { padding: 10px 25px; max-height: 350px; overflow-y: auto; }
+  .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 600; }
+  .ap-p1 { flex: 1; text-align: left; }
+  .ap-mid { flex: 0.5; text-align: center; color: var(--gold-2); font-family: 'Bebas Neue', sans-serif; font-size: 34px; line-height: 1; }
+  .ap-p2 { flex: 1; text-align: right; }
 
   #graphic-bat { width: 800px; }
   .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -165,6 +174,11 @@
   </div>
 </div>
 
+<div class="center-panel" id="graphic-allpart">
+  <div class="center-title" id="allpartTitle">ALL PARTNERSHIPS</div>
+  <div class="allpart-list" id="allpartListBody"></div>
+</div>
+
 <div class="center-panel" id="graphic-bat">
   <div class="center-title" id="batTitle">BATTING SCORECARD</div>
   <table class="sc-table"><thead><tr><th>BATTER</th><th></th><th>R</th><th>B</th><th>4s</th><th>6s</th></tr></thead><tbody id="batTableBody"></tbody></table>
@@ -231,6 +245,7 @@ const app = initializeApp({ apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY", a
 const db = getDatabase(app);
 
 function fmtOvers(balls) { return `${Math.floor(balls/6)}.${balls%6}`; }
+function getOrdinal(n) { const s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
 
 function getNiceMax(maxVal, ticks) {
     if(maxVal <= 0) return 10; let unrounded = maxVal / ticks; let mag = Math.pow(10, Math.floor(Math.log10(unrounded)));
@@ -248,7 +263,8 @@ onValue(ref(db, "current_match"), snap => {
   const state = snap.val();
   if(!state) { document.querySelectorAll('.scorebug, .center-panel').forEach(el => el.classList.remove('show')); return; }
 
-  const g = state.graphics || {}; const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
+  const g = state.graphics || {};
+  const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
   const batTeamName = tBat === 'A' ? state.meta.tA : state.meta.tB;
 
   const bug = document.getElementById('scorebug');
@@ -261,7 +277,15 @@ onValue(ref(db, "current_match"), snap => {
       document.getElementById('bugNormal').style.display = 'flex'; document.getElementById('bugResult').style.display = 'none';
   }
   
-  document.getElementById('ovTeam').innerText = batTeamName; document.getElementById('ovScore').innerText = `${state.score}/${state.wickets}`; document.getElementById('ovOvers').innerText = `(${fmtOvers(state.legalBalls)})`;
+  // DYNAMIC TEAM FONT SIZING
+  const teamEl = document.getElementById('ovTeam');
+  teamEl.innerText = batTeamName;
+  if(batTeamName.length > 9) teamEl.style.fontSize = '26px';
+  else if(batTeamName.length > 5) teamEl.style.fontSize = '32px';
+  else teamEl.style.fontSize = '40px';
+
+  document.getElementById('ovScore').innerText = `${state.score}/${state.wickets}`;
+  document.getElementById('ovOvers').innerText = `(${fmtOvers(state.legalBalls)})`;
   
   const crr = state.legalBalls > 0 ? ((state.score / state.legalBalls) * 6).toFixed(2) : "0.00";
   document.getElementById('ovCrr').innerText = crr;
@@ -292,7 +316,7 @@ onValue(ref(db, "current_match"), snap => {
   const bStrip = document.getElementById('bottomStrip');
   if(g.bottomStrip && g.dynamicText) { bStrip.classList.add('show'); bStrip.innerText = g.dynamicText; } else bStrip.classList.remove('show');
 
-  const panels = ['part', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm', 'result'];
+  const panels = ['part', 'allpart', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm', 'result'];
   panels.forEach(p => { document.getElementById(`graphic-${p}`).classList.remove('show'); });
 
   let renderTarget = g.centerGraphic; let isRecall = false;
@@ -315,6 +339,31 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('partTotalRuns').innerText = state.partnership.runs; document.getElementById('partTotalBalls').innerText = state.partnership.balls;
     if(striker) { document.getElementById('partP1Name').innerText = striker.name; document.getElementById('partP1Score').innerText = `${state.partnership.p1Runs || 0} (${state.partnership.p1Balls || 0})`; }
     if(nonStriker) { document.getElementById('partP2Name').innerText = nonStriker.name; document.getElementById('partP2Score').innerText = `${state.partnership.p2Runs || 0} (${state.partnership.p2Balls || 0})`; }
+  }
+
+  // ALL PARTNERSHIPS
+  if(renderTarget === 'allpart') {
+      document.getElementById('allpartTitle').innerText = `ALL PARTNERSHIPS${isRecall?' (1ST INN)':''}`;
+      let pastParts = isRecall ? (state.firstInnings.pastPartnerships || []) : (state.pastPartnerships || []);
+      let currPart = isRecall ? null : state.partnership;
+      let html = '';
+      
+      pastParts.forEach(pt => {
+         html += `<div class="allpart-item">
+            <div class="ap-p1"><span style="color:var(--muted); font-size:14px; margin-right:4px;">${getOrdinal(pt.wktNo)}</span> ${pt.p1Name} <span style="color:var(--gold-2)">${pt.p1Runs}(${pt.p1Balls})</span></div>
+            <div class="ap-mid">${pt.runs}<div style="font-size:14px; color:var(--muted); font-family:'Rajdhani',sans-serif;">(${pt.balls})</div></div>
+            <div class="ap-p2"><span style="color:var(--gold-2)">${pt.p2Runs}(${pt.p2Balls})</span> ${pt.p2Name}</div>
+         </div>`;
+      });
+      
+      if(currPart && !isRecall && state.legalBalls > 0 && !state.inningsOver) {
+          html += `<div class="allpart-item" style="background:rgba(212,175,55,0.1)">
+            <div class="ap-p1"><span style="color:var(--muted); font-size:14px; margin-right:4px;">${getOrdinal(state.wickets + 1)}*</span> ${striker?striker.name:''} <span style="color:var(--gold-2)">${currPart.p1Runs}(${currPart.p1Balls})</span></div>
+            <div class="ap-mid">${currPart.runs}<div style="font-size:14px; color:var(--muted); font-family:'Rajdhani',sans-serif;">(${currPart.balls})</div></div>
+            <div class="ap-p2"><span style="color:var(--gold-2)">${currPart.p2Runs}(${currPart.p2Balls})</span> ${nonStriker?nonStriker.name:''}</div>
+         </div>`;
+      }
+      document.getElementById('allpartListBody').innerHTML = html;
   }
 
   if(renderTarget === 'bat') {
@@ -353,9 +402,10 @@ onValue(ref(db, "current_match"), snap => {
       }
   }
 
+  // FALL OF WICKETS (With Overs added)
   if(renderTarget === 'fow') {
     document.getElementById('fowTitle').innerText = `FALL OF WICKETS${isRecall?' (1ST INN)':''}`;
-    document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score}</span></div>`).join('');
+    document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score} <span style="color:var(--muted); font-size:15px; margin-left:6px;">(${f.overs} Ov)</span></span></div>`).join('');
   }
 
   if(renderTarget === 'chart') {
@@ -364,8 +414,7 @@ onValue(ref(db, "current_match"), snap => {
       if(!isRecall && state.legalBalls % 6 !== 0) { oversData.push(state.currentOverRuns || 0); }
       let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
       let displayOvers = oversData.slice(-20); let rawMax = Math.max(10, ...displayOvers); let maxVal = getNiceMax(rawMax, 4);
-      let w = 700, h = 230, padX = 40, padY = 30; let graphW = w - padX - 10; let graphH = h - padY - 20;
-      let svgHtml = '';
+      let w = 700, h = 230, padX = 40, padY = 30; let graphW = w - padX - 10; let graphH = h - padY - 20; let svgHtml = '';
       svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
       svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-10}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
       svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
