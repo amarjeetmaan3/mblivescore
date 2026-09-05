@@ -18,8 +18,8 @@
 
   /* ================= MAIN SCOREBUG ================= */
   .scorebug {
-    position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: stretch; min-width: 920px; /* LENGTH INCREASED */
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); /* MOVED DOWN */
+    display: flex; flex-direction: column; align-items: stretch; min-width: 920px;
     opacity: 0; transition: opacity .35s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
   }
   .scorebug.show { opacity: 1; }
@@ -70,21 +70,21 @@
 
   /* ================= CENTER GRAPHICS ================= */
   .center-panel {
-    position: absolute; top: 36%; left: 50%; transform: translate(-50%, -50%); /* MOVED UP FROM 50% to 36% */
+    position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
     background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
     border: 2px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
     opacity: 0; pointer-events: none; transition: all .4s ease; z-index: 5;
     display: flex; flex-direction: column; overflow: hidden;
   }
   .center-panel.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-  .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 3px; padding: 8px; }
+  .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 3px; padding: 6px; }
 
   /* 1. Full Partnership */
   #graphic-part { width: 650px; }
-  .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 25px 35px; }
+  .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 15px 35px; } /* REDUCED GAP */
   .part-player { text-align: center; flex: 1; }
   .part-name { font-size: 22px; font-weight: 700; color: var(--ink); }
-  .part-contrib { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--muted); margin-top: 5px; }
+  .part-contrib { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--muted); margin-top: 2px; }
   .part-center { text-align: center; flex: 1.5; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
   .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 72px; color: var(--gold-2); line-height: 1; }
   .part-balls { font-size: 16px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
@@ -92,38 +92,38 @@
   /* 2. Batting Scorecard */
   #graphic-bat { width: 800px; }
   .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
-  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 14px; padding: 10px 15px; letter-spacing: 1px; }
-  .sc-table td { padding: 10px 15px; border-bottom: 1px solid rgba(212,175,55,0.15); font-size: 17px; font-weight: 600; }
+  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 14px; padding: 6px 15px; letter-spacing: 1px; } /* REDUCED GAP */
+  .sc-table td { padding: 3px 15px; border-bottom: 1px solid rgba(212,175,55,0.15); font-size: 17px; font-weight: 600; } /* REDUCED GAP */
   .sc-table tr:last-child td { border-bottom: none; }
   .sc-status { font-size: 14px; color: var(--muted); font-weight: 500; }
   .sc-notout { color: var(--gold-2); font-weight: 700; }
-  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 14px 20px; font-weight: 700; font-size: 18px; border-top: 2px solid var(--gold); }
+  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 8px 20px; font-weight: 700; font-size: 18px; border-top: 2px solid var(--gold); } /* REDUCED GAP */
 
   /* 3. Bowling Scorecard */
   #graphic-bowl { width: 800px; }
   .sc-table.bowl th { text-align: center; }
   .sc-table.bowl td { text-align: center; }
   .sc-table.bowl td:first-child, .sc-table.bowl th:first-child { text-align: left; }
-  .fow-strip { background: var(--navy-deep); padding: 12px 15px; font-size: 15px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
+  .fow-strip { background: var(--navy-deep); padding: 8px 15px; font-size: 15px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
 
   /* 4. Projected Score */
-  #graphic-proj { width: 550px; text-align: center; padding-bottom: 20px; }
-  .proj-row { display: flex; justify-content: space-between; padding: 12px 45px; border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 700; }
-  .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 26px; }
+  #graphic-proj { width: 550px; text-align: center; padding-bottom: 15px; }
+  .proj-row { display: flex; justify-content: space-between; padding: 8px 45px; border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 700; } /* REDUCED GAP */
+  .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 26px; padding: 12px 45px; }
 
   /* 5. Fall of Wickets */
   #graphic-fow { width: 550px; }
-  .fow-list { padding: 15px 25px; max-height: 300px; overflow: hidden; }
-  .fow-item { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 600; }
+  .fow-list { padding: 10px 25px; max-height: 300px; overflow: hidden; }
+  .fow-item { display: flex; justify-content: space-between; padding: 6px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 600; } /* REDUCED GAP */
 
-  /* 6. Over Bar Chart (NEW) */
+  /* 6. Over Bar Chart */
   #graphic-chart { width: 750px; padding-bottom: 15px; }
-  .chart-wrapper { display: flex; align-items: flex-end; justify-content: center; gap: 12px; height: 200px; padding: 20px 20px 0 20px; border-bottom: 2px solid var(--line); margin: 0 20px 10px; }
+  .chart-wrapper { display: flex; align-items: flex-end; justify-content: center; gap: 12px; height: 180px; padding: 15px 20px 0 20px; border-bottom: 2px solid var(--line); margin: 0 20px 10px; }
   .bar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 28px; }
-  .bar-val { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
+  .bar-val { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--ink); }
   .bar { width: 100%; background: var(--gold); border-radius: 4px 4px 0 0; transition: height .5s ease; min-height: 2px; }
   .bar.current { background: var(--crimson-2); }
-  .bar-lbl { font-size: 14px; font-weight: 700; color: var(--muted); margin-top: 8px; }
+  .bar-lbl { font-size: 14px; font-weight: 700; color: var(--muted); margin-top: 6px; }
 
   /* Popups */
   .popup-event {
@@ -235,7 +235,7 @@
   <div class="fow-list" id="fowListBody"></div>
 </div>
 
-<!-- 6. PER OVER RUNS BAR CHART (NEW) -->
+<!-- 6. PER OVER RUNS BAR CHART -->
 <div class="center-panel" id="graphic-chart">
   <div class="center-title">RUNS PER OVER</div>
   <div class="chart-wrapper" id="chartWrapper"></div>
@@ -381,7 +381,7 @@ onValue(ref(db, "current_match"), snap => {
     ).join('');
   }
 
-  // 6. Over Bar Chart (NEW)
+  // 6. Over Bar Chart
   if(g.centerGraphic === 'chart') {
     const hist = state.overHistory || [];
     const curr = state.currentOverRuns || 0;
