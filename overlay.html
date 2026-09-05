@@ -16,9 +16,9 @@
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
   .mark { font-family: 'Orbitron', sans-serif; }
 
-  /* ================= MAIN SCOREBUG ================= */
+  /* ================= MAIN SCOREBUG (MOVED TO ABSOLUTE BOTTOM) ================= */
   .scorebug {
-    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); /* MOVED DOWN */
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: stretch; min-width: 920px;
     opacity: 0; transition: opacity .35s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
   }
@@ -31,7 +31,8 @@
 
   .main-strip {
     display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
-    border: 1px solid var(--line); border-radius: 8px; overflow: hidden; height: 100px;
+    border: 1px solid var(--line); border-bottom: none; overflow: hidden; height: 100px;
+    border-radius: 8px 8px 0 0;
   }
 
   .team-block {
@@ -64,7 +65,7 @@
   .bottom-strip {
     background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-2) 100%); color: #fff;
     font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
-    padding: 8px 30px; border-radius: 0 0 6px 6px; text-align: center; opacity: 0; transition: opacity .3s;
+    padding: 8px 30px; text-align: center; opacity: 0; transition: opacity .3s;
   }
   .bottom-strip.show { opacity: 1; }
 
@@ -79,9 +80,8 @@
   .center-panel.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
   .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 3px; padding: 6px; }
 
-  /* 1. Full Partnership */
   #graphic-part { width: 650px; }
-  .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 15px 35px; } /* REDUCED GAP */
+  .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 15px 35px; }
   .part-player { text-align: center; flex: 1; }
   .part-name { font-size: 22px; font-weight: 700; color: var(--ink); }
   .part-contrib { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--muted); margin-top: 2px; }
@@ -89,34 +89,29 @@
   .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 72px; color: var(--gold-2); line-height: 1; }
   .part-balls { font-size: 16px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
 
-  /* 2. Batting Scorecard */
   #graphic-bat { width: 800px; }
   .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
-  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 14px; padding: 6px 15px; letter-spacing: 1px; } /* REDUCED GAP */
-  .sc-table td { padding: 3px 15px; border-bottom: 1px solid rgba(212,175,55,0.15); font-size: 17px; font-weight: 600; } /* REDUCED GAP */
+  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 14px; padding: 6px 15px; letter-spacing: 1px; }
+  .sc-table td { padding: 3px 15px; border-bottom: 1px solid rgba(212,175,55,0.15); font-size: 17px; font-weight: 600; }
   .sc-table tr:last-child td { border-bottom: none; }
   .sc-status { font-size: 14px; color: var(--muted); font-weight: 500; }
   .sc-notout { color: var(--gold-2); font-weight: 700; }
-  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 8px 20px; font-weight: 700; font-size: 18px; border-top: 2px solid var(--gold); } /* REDUCED GAP */
+  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 8px 20px; font-weight: 700; font-size: 18px; border-top: 2px solid var(--gold); }
 
-  /* 3. Bowling Scorecard */
   #graphic-bowl { width: 800px; }
   .sc-table.bowl th { text-align: center; }
   .sc-table.bowl td { text-align: center; }
   .sc-table.bowl td:first-child, .sc-table.bowl th:first-child { text-align: left; }
   .fow-strip { background: var(--navy-deep); padding: 8px 15px; font-size: 15px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
 
-  /* 4. Projected Score */
   #graphic-proj { width: 550px; text-align: center; padding-bottom: 15px; }
-  .proj-row { display: flex; justify-content: space-between; padding: 8px 45px; border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 700; } /* REDUCED GAP */
+  .proj-row { display: flex; justify-content: space-between; padding: 8px 45px; border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 700; }
   .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 26px; padding: 12px 45px; }
 
-  /* 5. Fall of Wickets */
   #graphic-fow { width: 550px; }
   .fow-list { padding: 10px 25px; max-height: 300px; overflow: hidden; }
-  .fow-item { display: flex; justify-content: space-between; padding: 6px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 600; } /* REDUCED GAP */
+  .fow-item { display: flex; justify-content: space-between; padding: 6px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 600; }
 
-  /* 6. Over Bar Chart */
   #graphic-chart { width: 750px; padding-bottom: 15px; }
   .chart-wrapper { display: flex; align-items: flex-end; justify-content: center; gap: 12px; height: 180px; padding: 15px 20px 0 20px; border-bottom: 2px solid var(--line); margin: 0 20px 10px; }
   .bar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 28px; }
@@ -125,7 +120,9 @@
   .bar.current { background: var(--crimson-2); }
   .bar-lbl { font-size: 14px; font-weight: 700; color: var(--muted); margin-top: 6px; }
 
-  /* Popups */
+  /* 7. WORM GRAPH (LINE GRAPH) */
+  #graphic-worm { width: 750px; }
+  
   .popup-event {
     position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
     background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
@@ -138,7 +135,6 @@
 </head>
 <body>
 
-<!-- MAIN SCOREBUG -->
 <div class="scorebug" id="scorebug">
   <div class="brand-bar">M.B. LIVE STUDIO</div>
   <div class="main-strip">
@@ -175,39 +171,24 @@
   <div class="bottom-strip" id="bottomStrip"></div>
 </div>
 
-<!-- 1. FULL PARTNERSHIP -->
 <div class="center-panel" id="graphic-part">
   <div class="center-title" id="partTitle">PARTNERSHIP</div>
   <div class="part-flex">
-    <div class="part-player">
-      <div class="part-name" id="partP1Name">—</div>
-      <div class="part-contrib" id="partP1Score">0 (0)</div>
-    </div>
-    <div class="part-center">
-      <div class="part-total" id="partTotalRuns">0</div>
-      <div class="part-balls">OFF <span id="partTotalBalls">0</span> BALLS</div>
-    </div>
-    <div class="part-player">
-      <div class="part-name" id="partP2Name">—</div>
-      <div class="part-contrib" id="partP2Score">0 (0)</div>
-    </div>
+    <div class="part-player"><div class="part-name" id="partP1Name">—</div><div class="part-contrib" id="partP1Score">0 (0)</div></div>
+    <div class="part-center"><div class="part-total" id="partTotalRuns">0</div><div class="part-balls">OFF <span id="partTotalBalls">0</span> BALLS</div></div>
+    <div class="part-player"><div class="part-name" id="partP2Name">—</div><div class="part-contrib" id="partP2Score">0 (0)</div></div>
   </div>
 </div>
 
-<!-- 2. BATTING SCORECARD -->
 <div class="center-panel" id="graphic-bat">
   <div class="center-title" id="batTitle">BATTING SCORECARD</div>
   <table class="sc-table">
     <thead><tr><th>BATTER</th><th></th><th>R</th><th>B</th><th>4s</th><th>6s</th></tr></thead>
     <tbody id="batTableBody"></tbody>
   </table>
-  <div class="sc-footer">
-    <div id="batExtras">Extras: 0</div>
-    <div id="batTotal">Total: 0/0 (0.0 Overs)</div>
-  </div>
+  <div class="sc-footer"><div id="batExtras">Extras: 0</div><div id="batTotal">Total: 0/0 (0.0 Overs)</div></div>
 </div>
 
-<!-- 3. BOWLING SCORECARD -->
 <div class="center-panel" id="graphic-bowl">
   <div class="center-title" id="bowlTitle">BOWLING SCORECARD</div>
   <table class="sc-table bowl">
@@ -217,31 +198,33 @@
   <div class="fow-strip" id="bowlFowStrip">Fall of Wickets: —</div>
 </div>
 
-<!-- 4. PROJECTED SCORE -->
 <div class="center-panel" id="graphic-proj">
   <div class="center-title">PROJECTED SCORE</div>
-  <div class="proj-row highlight">
-    <span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span>
-    <span id="projCrrTotal" class="num" style="font-size:32px;">0</span>
-  </div>
+  <div class="proj-row highlight"><span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span><span id="projCrrTotal" class="num" style="font-size:32px;">0</span></div>
   <div class="proj-row"><span>Run Rate <span id="projR1L">8.0</span></span><span id="projR1T" class="num">0</span></div>
   <div class="proj-row"><span>Run Rate <span id="projR2L">10.0</span></span><span id="projR2T" class="num">0</span></div>
   <div class="proj-row"><span>Run Rate <span id="projR3L">12.0</span></span><span id="projR3T" class="num">0</span></div>
 </div>
 
-<!-- 5. FALL OF WICKETS -->
 <div class="center-panel" id="graphic-fow">
   <div class="center-title">FALL OF WICKETS</div>
   <div class="fow-list" id="fowListBody"></div>
 </div>
 
-<!-- 6. PER OVER RUNS BAR CHART -->
 <div class="center-panel" id="graphic-chart">
   <div class="center-title">RUNS PER OVER</div>
   <div class="chart-wrapper" id="chartWrapper"></div>
 </div>
 
-<!-- POPUPS -->
+<!-- WORM GRAPH -->
+<div class="center-panel" id="graphic-worm">
+  <div class="center-title">WORM GRAPH (CUMULATIVE SCORE)</div>
+  <div style="padding: 15px 30px; position: relative;">
+     <svg id="wormSvg" width="700" height="250" viewBox="0 -10 700 260"></svg>
+  </div>
+  <div id="wormLegend" style="display:flex; justify-content:center; gap:30px; padding-bottom:15px; font-weight:700; font-size:16px;"></div>
+</div>
+
 <div class="popup-event" id="popupEvent">
   <div class="pop-title num" id="popTitle">WICKET</div>
   <div class="pop-sub" id="popSub"></div>
@@ -269,7 +252,6 @@ onValue(ref(db, "current_match"), snap => {
   const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
   const batTeamName = tBat === 'A' ? state.meta.tA : state.meta.tB;
 
-  // 0. MAIN SCOREBUG
   const bug = document.getElementById('scorebug');
   if(g.scorebug) bug.classList.add('show'); else bug.classList.remove('show');
   
@@ -302,30 +284,26 @@ onValue(ref(db, "current_match"), snap => {
   document.getElementById('ovBowlerName').innerText = bowler ? bowler.name : "—";
   document.getElementById('ovBowlerFig').innerText = `${fmtOvers(bs.balls)}-${bs.runs}-${bs.wickets}`;
 
-  // Max 10 balls logic
   const recent10 = (state.overBalls || []).slice(-10);
   document.getElementById('ovBalls').innerHTML = recent10.map(b => {
     let color = "var(--navy-3)", text = b;
     if(b === 4 || b === '4') color = "var(--gold)";
     else if(b === 6 || b === '6') color = "var(--crimson)";
     else if(typeof b === 'string' && b.includes('W')) color = "var(--crimson-2)";
-    else if(typeof b === 'string') { color = "#5b4413"; text = b.replace('+0',''); } // Extras
+    else if(typeof b === 'string') { color = "#5b4413"; text = b.replace('+0',''); }
     return `<div class="ball-pill" style="background:${color}">${text}</div>`;
   }).join('');
 
-  // Info Strip
   const bStrip = document.getElementById('bottomStrip');
   if(g.bottomStrip && g.dynamicText) { bStrip.classList.add('show'); bStrip.innerText = g.dynamicText; }
   else bStrip.classList.remove('show');
 
-  // Center Panels Toggle Logic
-  const panels = ['part', 'bat', 'bowl', 'proj', 'fow', 'chart'];
+  const panels = ['part', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm'];
   panels.forEach(p => {
     const el = document.getElementById(`graphic-${p}`);
     if(g.centerGraphic === p) el.classList.add('show'); else el.classList.remove('show');
   });
 
-  // 1. Full Partnership
   if(g.centerGraphic === 'part' && state.partnership) {
     document.getElementById('partTitle').innerText = `${state.wickets + 1}${['st','nd','rd'][state.wickets]||'th'} WICKET PARTNERSHIP`;
     document.getElementById('partTotalRuns').innerText = state.partnership.runs;
@@ -334,7 +312,6 @@ onValue(ref(db, "current_match"), snap => {
     if(nonStriker) { document.getElementById('partP2Name').innerText = nonStriker.name; document.getElementById('partP2Score').innerText = `${state.partnership.p2Runs || 0} (${state.partnership.p2Balls || 0})`; }
   }
 
-  // 2. Batting Scorecard
   if(g.centerGraphic === 'bat') {
     document.getElementById('batTitle').innerText = `${batTeamName} BATTING`;
     document.getElementById('batTableBody').innerHTML = (state.squads[tBat]||[]).map(p => {
@@ -348,7 +325,6 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('batExtras').innerText = `Extras: ${state.extras || 0}`;
   }
 
-  // 3. Bowling Scorecard
   if(g.centerGraphic === 'bowl') {
     document.getElementById('bowlTitle').innerText = `${tBowl === 'A' ? state.meta.tA : state.meta.tB} BOWLING`;
     const bStats = state.bowlerStats || {};
@@ -361,7 +337,6 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('bowlFowStrip').innerText = `Fall of Wickets: ${fowText || 'None'}`;
   }
 
-  // 4. Projected Score
   if(g.centerGraphic === 'proj' && state.innings === 1) {
     const oversLeft = state.meta.maxOvers - (state.legalBalls / 6);
     document.getElementById('projCrrLabel').innerText = crr;
@@ -374,40 +349,84 @@ onValue(ref(db, "current_match"), snap => {
     });
   }
 
-  // 5. FoW List
   if(g.centerGraphic === 'fow') {
     document.getElementById('fowListBody').innerHTML = (state.fow||[]).map(f => 
       `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score}</span></div>`
     ).join('');
   }
 
-  // 6. Over Bar Chart
   if(g.centerGraphic === 'chart') {
     const hist = state.overHistory || [];
     const curr = state.currentOverRuns || 0;
     const oversData = [...hist];
-    // Push current over runs if the over is currently in progress
     if(state.legalBalls % 6 !== 0) { oversData.push(curr); }
-
-    // Display max 20 overs on screen to keep design clean
     const displayOvers = oversData.slice(-20);
-    const maxVal = Math.max(15, ...displayOvers); // Set base minimum height to 15
+    const maxVal = Math.max(15, ...displayOvers);
 
     document.getElementById('chartWrapper').innerHTML = displayOvers.map((val, idx) => {
       const h = (val / maxVal) * 100;
       const overNum = (hist.length - displayOvers.length) + idx + 1;
       const isCurrent = (idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
-      return `
-        <div class="bar-wrap">
-          <div class="bar-val">${val}</div>
-          <div class="bar ${isCurrent ? 'current' : ''}" style="height:${h}%;"></div>
-          <div class="bar-lbl">${overNum}</div>
-        </div>
-      `;
+      return `<div class="bar-wrap"><div class="bar-val">${val}</div><div class="bar ${isCurrent ? 'current' : ''}" style="height:${h}%;"></div><div class="bar-lbl">${overNum}</div></div>`;
     }).join('');
   }
 
-  // Popups
+  // WORM GRAPH (Line Graph) Logic
+  if(g.centerGraphic === 'worm') {
+      const svg = document.getElementById('wormSvg');
+      const maxOvers = state.meta.maxOvers;
+      const w = 700, h = 250;
+      
+      let cRuns1 = [0]; let sum1 = 0;
+      (state.overHistory || []).forEach(r => { sum1 += r; cRuns1.push(sum1); });
+      if(state.legalBalls % 6 !== 0) { cRuns1.push(sum1 + (state.currentOverRuns||0)); }
+      
+      let cRuns2 = [];
+      if(state.innings === 2 && state.firstInnings) {
+          let sum2 = 0; cRuns2.push(0);
+          (state.firstInnings.overHistory || []).forEach(r => { sum2 += r; cRuns2.push(sum2); });
+      }
+      
+      let maxTotal = Math.max(state.score, state.target || 0, 50); 
+      
+      function buildPath(dataArr, currentBalls, isComplete) {
+          let d = `M 0 ${h}`;
+          dataArr.forEach((val, idx) => {
+              let x = 0;
+              if(idx === dataArr.length - 1 && !isComplete && currentBalls % 6 !== 0) {
+                  x = ((idx - 1) + (currentBalls % 6)/6) / maxOvers * w;
+              } else {
+                  x = (idx / maxOvers) * w;
+              }
+              let y = h - (val / maxTotal * h);
+              d += ` L ${x} ${y}`;
+          });
+          return d;
+      }
+
+      let svgHtml = '';
+      for(let i=0; i<=5; i++) {
+          let yy = i * (h/5);
+          svgHtml += `<line x1="0" y1="${yy}" x2="${w}" y2="${yy}" stroke="rgba(255,255,255,0.1)" />`;
+      }
+      
+      if(state.innings === 2) {
+          let path1 = buildPath(cRuns2, state.firstInnings.legalBalls, true);
+          svgHtml += `<path d="${path1}" fill="none" stroke="var(--muted)" stroke-width="4" />`;
+          
+          let path2 = buildPath(cRuns1, state.legalBalls, state.inningsOver);
+          svgHtml += `<path d="${path2}" fill="none" stroke="var(--gold-2)" stroke-width="6" />`;
+          
+          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--muted)">${state.firstInnings.team === 'A'?state.meta.tA:state.meta.tB} (1st Inn)</span> <span style="color:var(--gold-2)">${state.meta.batTeam==='A'?state.meta.tA:state.meta.tB} (Chasing)</span>`;
+      } else {
+          let path1 = buildPath(cRuns1, state.legalBalls, state.inningsOver);
+          svgHtml += `<path d="${path1}" fill="none" stroke="var(--gold-2)" stroke-width="6" />`;
+          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--gold-2)">${state.meta.batTeam==='A'?state.meta.tA:state.meta.tB}</span>`;
+      }
+      
+      svg.innerHTML = svgHtml;
+  }
+
   const pop = document.getElementById('popupEvent');
   if(g.activeEvent) {
     document.getElementById('popTitle').innerText = g.activeEvent === "WICKET" ? "OUT!" : g.activeEvent;
