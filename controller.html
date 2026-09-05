@@ -177,13 +177,14 @@
       <span>CENTER GRAPHICS (16:9 MIDDLE)</span>
       <button class="btn-danger" style="padding:1px 6px; font-size:9px;" onclick="toggleCenterGraphic(null)">CLEAR</button>
     </div>
-    <div class="grid-3">
-      <button class="btn-blue" onclick="toggleCenterGraphic('part')">PARTNERSHIP</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('bat')">BATTING CARD</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('bowl')">BOWLING CARD</button>
+    <div class="grid-4">
+      <button class="btn-blue" onclick="toggleCenterGraphic('part')">PARTNER</button>
+      <button class="btn-blue" onclick="toggleCenterGraphic('bat')">BAT CARD</button>
+      <button class="btn-blue" onclick="toggleCenterGraphic('bowl')">BOWL CARD</button>
       <button class="btn-blue" onclick="toggleCenterGraphic('proj')">PROJ SCORE</button>
-      <button class="btn-blue" onclick="toggleCenterGraphic('fow')">FALL OF WKTS</button>
-      <button class="btn-blue" onclick="toggleGraphic('scorebug')">TOGGLE BUG</button>
+      <button class="btn-blue" onclick="toggleCenterGraphic('fow')">FALL OF WKT</button>
+      <button class="btn-blue" onclick="toggleCenterGraphic('chart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">OVER CHART</button>
+      <button class="btn-blue" onclick="toggleGraphic('scorebug')" style="grid-column: span 2;">TOGGLE SCOREBUG</button>
     </div>
   </div>
 
@@ -307,6 +308,7 @@ window.createNewMatch = function() {
     meta: { tA, tB, squadSize, maxOvers, batTeam, bowlTeam },
     squads: { A: rosterA, B: rosterB },
     innings: 1, score: 0, wickets: 0, legalBalls: 0, extras: 0, overBalls: [],
+    currentOverRuns: 0, overHistory: [], // NEW - BAR CHART DATA
     target: null, firstInnings: null, inningsOver: false,
     partnership: { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 },
     bowlerStats: {}, fow: [],
@@ -364,6 +366,10 @@ window.exitToHome = function() {
 };
 
 function startController() {
+  // Ensure Bar chart arrays exist for old matches loaded from localstorage
+  if (typeof state.currentOverRuns === 'undefined') state.currentOverRuns = 0;
+  if (!state.overHistory) state.overHistory = [];
+
   document.getElementById('screen-home').classList.remove('active');
   document.getElementById('screen-live').classList.add('active');
   saveMatchLocal();
@@ -409,6 +415,7 @@ window.processBall = function(runs) {
   const striker = state.squads[tBat].find(p => p.id === state.striker);
 
   state.score += runs;
+  state.currentOverRuns += runs; // NEW - Bar Chart
   state.legalBalls += 1;
   state.overBalls.push(runs);
   state.partnership.runs += runs;
@@ -457,6 +464,7 @@ window.submitExtra = function() {
   const total = extraRuns + penalty;
 
   state.score += total;
+  state.currentOverRuns += total; // NEW - Bar Chart
   state.extras += total;
   state.partnership.runs += total;
   state.overBalls.push(`${tempExtraType}${extraRuns > 0 ? '+' + extraRuns : ''}`);
@@ -608,6 +616,10 @@ function checkOverEnd() {
     if(bs.ovRunsTracker === 0) bs.maidens += 1;
     bs.ovRunsTracker = 0;
 
+    // Track Chart Array & Reset
+    state.overHistory.push(state.currentOverRuns);
+    state.currentOverRuns = 0;
+
     swapStrikeInternal();
     state.lastBowler = state.bowler;
     const bowlTeam = state.meta.bowlTeam;
@@ -637,6 +649,7 @@ window.startSecondInnings = function() {
   state.target = state.firstInnings.score + 1;
   state.innings = 2;
   state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = [];
+  state.currentOverRuns = 0; state.overHistory = []; // Reset bar chart
   state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
   state.inningsOver = false;
   state.lastBowler = null;
