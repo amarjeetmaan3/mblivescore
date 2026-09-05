@@ -2,192 +2,201 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MB Live Studio - Control Room</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MB Live Studio - Controller</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-  /* COMPACT & PROFESSIONAL BROADCAST UI */
-  * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; }
+  * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; font-size: 12px; }
   body { margin: 0; background: #070b10; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
   
-  /* Inputs & Buttons */
-  button, input, select { outline: none; border: 1px solid #1e293b; background: #0f172a; color: #fff; padding: 6px 10px; border-radius: 4px; }
-  button { font-weight: 700; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  button, input, select { outline: none; border: 1px solid #1e293b; background: #0f172a; color: #fff; padding: 8px; border-radius: 4px; }
+  button { font-weight: bold; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; gap: 5px; }
   button:active { transform: scale(0.95); }
-  select, input { padding: 4px 8px; }
   
-  /* Colors */
-  .btn-green { background: #059669; border-color: #047857; }
-  .btn-red { background: #dc2626; border-color: #b91c1c; }
-  .btn-blue { background: #2563eb; border-color: #1d4ed8; }
-  .btn-purple { background: #7c3aed; border-color: #6d28d9; }
+  .btn-primary { background: #0284c7; border-color: #0369a1; }
+  .btn-success { background: #059669; border-color: #047857; }
+  .btn-danger { background: #dc2626; border-color: #b91c1c; }
   .btn-dark { background: #1e293b; border-color: #334155; }
-  .btn-graphic { background: #0f172a; border-color: #334155; color: #94a3b8; justify-content: flex-start; padding: 8px 12px; }
-  .btn-graphic.active { background: #0284c7; border-color: #0369a1; color: #fff; }
+  .btn-graphic { justify-content: flex-start; background: #0f172a; color: #94a3b8; }
+  .btn-graphic.active { background: #0284c7; color: #fff; }
 
-  /* Layout */
-  .header { background: #020617; padding: 10px 15px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
-  .header h2 { margin: 0; font-size: 16px; color: #38bdf8; font-weight: 900; letter-spacing: 1px; }
-  
-  .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; padding: 10px; height: calc(100vh - 40px); overflow-y: auto; }
-  
-  .panel { background: #0b1120; border: 1px solid #1e293b; border-radius: 6px; display: flex; flex-direction: column; }
-  .panel-head { background: #0f172a; padding: 6px 10px; font-weight: 800; font-size: 11px; color: #94a3b8; border-bottom: 1px solid #1e293b; text-transform: uppercase; display: flex; justify-content: space-between; }
-  .panel-body { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .header { background: #020617; padding: 10px 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
+  .header h2 { margin: 0; font-size: 18px; color: #38bdf8; font-weight: 900; letter-spacing: 1px; }
 
-  /* Grids */
-  .g-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .g-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .g-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .screen { display: none; padding: 15px; overflow-y: auto; height: 100%; }
+  .screen.active { display: block; }
   
-  /* HUD */
-  .hud-box { display: flex; justify-content: space-between; background: #0284c7; padding: 10px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-  .hud-score { font-size: 24px; font-weight: 900; line-height: 1; margin: 4px 0; }
+  .dashboard { display: grid; grid-template-columns: 350px 1fr 300px; gap: 15px; height: 100%; }
+  .panel { background: #0b1120; border: 1px solid #1e293b; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; }
+  .p-head { background: #0f172a; padding: 10px; font-weight: 800; font-size: 11px; color: #94a3b8; border-bottom: 1px solid #1e293b; text-transform: uppercase; }
+  .p-body { padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;}
+
+  .g-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .g-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .g-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+  /* Live HUD Box */
+  .hud-box { background: linear-gradient(135deg, #1d4ed8, #0ea5e9); padding: 15px; border-radius: 6px; display: flex; justify-content: space-between; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+  .hud-score { font-size: 32px; font-weight: 900; line-height: 1; margin: 5px 0; font-family: 'Teko', sans-serif; color: #facc15; }
+  
+  /* Scoring Keypad */
+  .score-pad button { height: 45px; font-size: 18px; font-weight: 900; background: #1e293b; border-color: #334155; font-family: 'Teko', sans-serif;}
+  .score-pad button[data-run="4"] { background: #2563eb; border-color: #1d4ed8; }
+  .score-pad button[data-run="6"] { background: #059669; border-color: #047857; }
   
   /* Timeline */
-  .timeline { flex: 1; overflow-y: auto; background: #020617; border-radius: 4px; border: 1px solid #1e293b; }
-  .tl-item { display: flex; justify-content: space-between; padding: 6px; border-bottom: 1px solid #1e293b; font-size: 11px; align-items: center; }
-  .tl-item button { padding: 2px 6px; font-size: 9px; background: #334155; }
-  
-  /* Screens & Modals */
-  .screen { display: none; } .screen.active { display: block; }
+  .timeline-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #1e293b; font-size: 11px; align-items: center; }
+  .timeline-item button { padding: 4px 8px; font-size: 10px; background: #334155; }
+
+  /* Modal */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
   .modal-bg.active { display: flex; }
-  .modal { background: #0f172a; padding: 15px; border-radius: 6px; width: 300px; border: 1px solid #1e293b; }
-
-  /* Keypad Adjustments */
-  .score-btn { height: 35px; font-size: 14px; font-weight: 900; background: #1e293b; border-color: #334155; }
-  .score-btn.b4 { background: #1d4ed8; border-color: #1e40af; }
-  .score-btn.b6 { background: #059669; border-color: #047857; }
+  .modal { background: #0f172a; padding: 20px; border-radius: 8px; width: 320px; border: 1px solid #1e293b; }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
-  <h2>M.B. LIVE STUDIO | CONTROL ROOM</h2>
-  <div id="connStatus" style="color:#10b981; font-weight:bold; font-size:11px;">🟢 SYNCED</div>
+  <h2>M.B. LIVE STUDIO | CONTROL CENTER</h2>
+  <div id="connStatus" style="color:#10b981; font-weight:bold;">🟢 LIVE SYNCED</div>
 </div>
 
 <!-- ================= 1. START / LOAD SCREEN ================= -->
-<div id="screen-home" class="screen active" style="padding: 20px; max-width: 800px; margin: 0 auto;">
-  <div class="g-2">
-    <!-- Load Match -->
+<div id="screen-home" class="screen active">
+  <div style="max-width: 800px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    
     <div class="panel">
-      <div class="panel-head">Load Saved Match</div>
-      <div class="panel-body" id="savedMatchesList" style="max-height:300px; overflow-y:auto;"></div>
+      <div class="p-head">Load Saved Match</div>
+      <div class="p-body" id="savedMatchesList" style="max-height: 400px;"></div>
     </div>
-    <!-- Create Match -->
+
     <div class="panel">
-      <div class="panel-head">Create New Match</div>
-      <div class="panel-body">
+      <div class="p-head">Create New Match</div>
+      <div class="p-body">
         <div class="g-2">
-          <div><label>Team A</label><input type="text" id="tA_name" value="IND"></div>
-          <div><label>Team B</label><input type="text" id="tB_name" value="AUS"></div>
-          <div><label>Squad Size</label><input type="number" id="squadSize" value="11" min="2"></div>
-          <div><label>Max Overs</label><input type="number" id="maxOvers" value="20" min="1"></div>
+          <div><label style="color:#94a3b8; font-size:10px;">Team A</label><input type="text" id="tA_name" value="IND"></div>
+          <div><label style="color:#94a3b8; font-size:10px;">Team B</label><input type="text" id="tB_name" value="AUS"></div>
+          <div><label style="color:#94a3b8; font-size:10px;">Total Players (11 = 10 wkts All Out)</label><input type="number" id="squadSize" value="11" min="2"></div>
+          <div><label style="color:#94a3b8; font-size:10px;">Max Overs</label><input type="number" id="maxOvers" value="20" min="1"></div>
         </div>
-        <label>Toss Result</label>
+        <label style="color:#94a3b8; font-size:10px;">Toss Result</label>
         <select id="tossWinner"><option value="A">Team A Won</option><option value="B">Team B Won</option></select>
         <select id="tossDecision"><option value="BAT">Elected to BAT</option><option value="BOWL">Elected to BOWL</option></select>
-        <button class="btn-green" style="margin-top:10px; padding:10px;" onclick="createNewMatch()">START MATCH</button>
+        
+        <button class="btn-success" style="margin-top:15px; padding:12px; font-size:14px;" onclick="createNewMatch()">START MATCH</button>
       </div>
     </div>
+
   </div>
 </div>
 
 <!-- ================= 2. LIVE DASHBOARD ================= -->
-<div id="screen-live" class="screen dashboard">
-  
-  <!-- COLUMN 1: Management -->
-  <div class="panel">
-    <div class="panel-head">MATCH STATUS <button class="btn-red" style="padding:2px 6px; font-size:9px;" onclick="exitToHome()">EXIT</button></div>
-    <div class="panel-body">
-      <div class="hud-box">
-        <div>
-          <div id="hudTeam" style="font-size:11px; font-weight:800; color:#e0f2fe;">TEAM</div>
-          <div class="hud-score"><span id="hudRuns">0</span>/<span id="hudWickets">0</span></div>
-          <div style="font-size:11px; font-weight:bold;">Overs: <span id="hudOvers">0.0</span></div>
+<div id="screen-live" class="screen">
+  <div class="dashboard">
+    
+    <!-- COL 1: Match Management -->
+    <div class="panel">
+      <div class="p-head" style="display:flex; justify-content:space-between;">MATCH STATUS <button class="btn-danger" style="padding:2px 8px; font-size:9px;" onclick="exitToHome()">EXIT</button></div>
+      <div class="p-body">
+        
+        <div class="hud-box">
+          <div>
+            <div id="hudTeam" style="font-size:12px; font-weight:800; color:#e0f2fe;">TEAM</div>
+            <div class="hud-score"><span id="hudRuns">0</span><span style="font-size:24px; color:#fff;">/<span id="hudWickets">0</span></span></div>
+            <div style="font-size:12px; font-weight:bold;">Overs: <span id="hudOvers">0.0</span></div>
+          </div>
+          <div style="text-align: right; font-size:12px;">
+            <div>CRR: <span id="hudCrr">0.00</span></div>
+            <div style="margin-top:5px; color:#fde047; font-weight:bold;">Target: <span id="hudTarget">—</span></div>
+          </div>
         </div>
-        <div style="text-align: right; font-size:11px;">
-          <div>CRR: <span id="hudCrr">0.00</span></div>
-          <div style="margin-top:4px; color:#fde047; font-weight:bold;">Target: <span id="hudTarget">—</span></div>
-          <div style="margin-top:4px;">Partner: <span id="hudPart">0 (0)</span></div>
+
+        <div style="border-top:1px solid #1e293b; padding-top:12px; margin-top:5px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <b style="color:#94a3b8; font-size:11px;">ON CREASE (SELECT PLAYERS)</b>
+            <button class="btn-primary" style="padding:2px 8px; font-size:9px;" onclick="swapStrike()"><i class="fas fa-exchange-alt"></i> SWAP</button>
+          </div>
+          <label style="color:#38bdf8; font-size:10px; font-weight:bold;">Striker *</label><select id="strikerSelect" onchange="manualPlayerChange()" style="margin-bottom:8px;"></select>
+          <label style="color:#cbd5e1; font-size:10px; font-weight:bold;">Non-Striker</label><select id="nonStrikerSelect" onchange="manualPlayerChange()" style="margin-bottom:8px;"></select>
+          <label style="color:#c084fc; font-size:10px; font-weight:bold;">Bowler</label><select id="bowlerSelect" onchange="manualPlayerChange()"></select>
         </div>
+
+        <button class="btn-dark" style="margin-top:auto;" onclick="startSecondInnings()">START 2nd INNINGS (TARGET)</button>
+
       </div>
-      
-      <div style="border-top:1px solid #1e293b; padding-top:10px; margin-top:5px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-          <b style="color:#94a3b8; font-size:11px;">ON CREASE</b>
-          <button class="btn-blue" style="padding:2px 6px; font-size:9px;" onclick="swapStrike()">SWAP STRIKE</button>
+    </div>
+
+    <!-- COL 2: Scoring Keypad & Deep Undo -->
+    <div class="panel">
+      <div class="p-head">SCORE CONTROL</div>
+      <div class="p-body">
+        
+        <div class="g-4 score-pad">
+          <button onclick="processBall(0)">0</button>
+          <button onclick="processBall(1)">1</button>
+          <button onclick="processBall(2)">2</button>
+          <button onclick="processBall(3)">3</button>
+          <button onclick="processBall(4)" data-run="4" style="grid-column: span 2;">4</button>
+          <button onclick="processBall(6)" data-run="6" style="grid-column: span 2;">6</button>
         </div>
+        
+        <div class="g-4" style="margin-top:5px;">
+          <button class="btn-dark" onclick="openExtraModal('WD')">WD</button>
+          <button class="btn-dark" onclick="openExtraModal('NB')">NB</button>
+          <button class="btn-dark" onclick="openExtraModal('B')">BYE</button>
+          <button class="btn-dark" onclick="openExtraModal('LB')">LB</button>
+        </div>
+
+        <div class="g-2" style="margin-top:5px;">
+          <button class="btn-danger" style="height:40px;" onclick="openWicketModal('CAUGHT')">CAUGHT</button>
+          <button class="btn-danger" style="height:40px;" onclick="openWicketModal('RUN_OUT')">RUN OUT</button>
+          <button class="btn-danger" style="height:40px;" onclick="processWicket('BOWLED')">BOWLED</button>
+          <button class="btn-danger" style="height:40px;" onclick="openWicketModal('STUMPED')">STUMPED</button>
+        </div>
+
+        <!-- UNDO TIMELINE -->
+        <div style="border-top:1px solid #1e293b; padding-top:12px; margin-top:5px; flex:1; display:flex; flex-direction:column;">
+          <b style="color:#94a3b8; font-size:11px; margin-bottom:8px;">MATCH TIMELINE (DEEP UNDO)</b>
+          <div id="timelineList" style="flex:1; overflow-y:auto; background:#020617; border-radius:4px; border:1px solid #1e293b; padding:5px;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COL 3: Broadcast Overlays -->
+    <div class="panel">
+      <div class="p-head">BROADCAST GRAPHICS</div>
+      <div class="p-body">
+        
+        <b style="color:#94a3b8; font-size:11px;">ON-SCREEN ELEMENTS (TOGGLE)</b>
         <div class="g-2">
-          <div><label style="color:#38bdf8; font-size:10px;">Striker *</label><select id="strikerSelect" onchange="manualPlayerChange()"></select></div>
-          <div><label style="color:#94a3b8; font-size:10px;">Non-Striker</label><select id="nonStrikerSelect" onchange="manualPlayerChange()"></select></div>
+          <button class="btn-graphic" id="gfx_scorebug" onclick="toggleGraphic('scorebug')"><i class="fas fa-tv"></i> Scorebug</button>
+          <button class="btn-graphic" id="gfx_bottomStrip" onclick="toggleGraphic('bottomStrip')"><i class="fas fa-info-circle"></i> Info Strip</button>
+          <button class="btn-graphic" id="gfx_partnership" onclick="toggleGraphic('partnership')"><i class="fas fa-handshake"></i> Partnership</button>
+          <button class="btn-graphic" id="gfx_battingCard" onclick="toggleGraphic('battingCard')" style="grid-column: span 2;"><i class="fas fa-list-ol"></i> Batting Scorecard</button>
+          <button class="btn-graphic" id="gfx_bowlingCard" onclick="toggleGraphic('bowlingCard')" style="grid-column: span 2;"><i class="fas fa-baseball-ball"></i> Bowling Scorecard</button>
         </div>
-        <div style="margin-top:6px;"><label style="color:#facc15; font-size:10px;">Bowler</label><select id="bowlerSelect" onchange="manualPlayerChange()"></select></div>
+
+        <b style="color:#94a3b8; font-size:11px; margin-top:15px;">MANUAL POPUPS</b>
+        <div class="g-3">
+          <button class="btn-primary" style="padding:15px 0;" onclick="triggerAutoGraphic('FOUR')">FOUR</button>
+          <button class="btn-success" style="padding:15px 0;" onclick="triggerAutoGraphic('SIX')">SIX</button>
+          <button class="btn-danger" style="padding:15px 0;" onclick="triggerAutoGraphic('WICKET')">WICKET</button>
+          <button class="btn-dark" style="padding:10px 0;" onclick="triggerAutoGraphic('FIFTY')">50</button>
+          <button class="btn-dark" style="padding:10px 0;" onclick="triggerAutoGraphic('HUNDRED')">100</button>
+          <button class="btn-dark" style="padding:10px 0;" onclick="triggerAutoGraphic('MILESTONE')">MILESTONE</button>
+        </div>
+
+        <b style="color:#94a3b8; font-size:11px; margin-top:15px;">INFO STRIP TEXT</b>
+        <div style="display:flex; gap:5px;">
+          <input type="text" id="customStripText" placeholder="e.g. 50 RUN PARTNERSHIP" style="flex:1;">
+          <button class="btn-primary" onclick="updateStripText()">SET</button>
+        </div>
+
       </div>
     </div>
+
   </div>
-
-  <!-- COLUMN 2: Scoring Engine -->
-  <div class="panel">
-    <div class="panel-head">SCORE CONTROL</div>
-    <div class="panel-body">
-      <div class="g-4">
-        <button class="score-btn" onclick="processBall(0)">0</button>
-        <button class="score-btn" onclick="processBall(1)">1</button>
-        <button class="score-btn" onclick="processBall(2)">2</button>
-        <button class="score-btn" onclick="processBall(3)">3</button>
-        <button class="score-btn b4" onclick="processBall(4)" style="grid-column: span 2;">4</button>
-        <button class="score-btn b6" onclick="processBall(6)" style="grid-column: span 2;">6</button>
-      </div>
-      
-      <div class="g-4" style="margin-top:5px;">
-        <button class="btn-dark" onclick="openExtraModal('WD')">WD</button>
-        <button class="btn-dark" onclick="openExtraModal('NB')">NB</button>
-        <button class="btn-dark" onclick="openExtraModal('B')">BYE</button>
-        <button class="btn-dark" onclick="openExtraModal('LB')">LB</button>
-      </div>
-
-      <div class="g-2" style="margin-top:5px;">
-        <button class="btn-red" style="height:35px;" onclick="openWicketModal('CAUGHT')">CAUGHT</button>
-        <button class="btn-red" style="height:35px;" onclick="openWicketModal('RUN_OUT')">RUN OUT</button>
-        <button class="btn-red" style="height:35px;" onclick="processWicket('BOWLED')">BOWLED</button>
-        <button class="btn-red" style="height:35px;" onclick="openWicketModal('STUMPED')">STUMPED</button>
-      </div>
-      
-      <div style="border-top:1px solid #1e293b; padding-top:10px; margin-top:5px; flex:1; display:flex; flex-direction:column;">
-        <b style="color:#94a3b8; font-size:11px; margin-bottom:5px;">DEEP UNDO TIMELINE</b>
-        <div class="timeline" id="timelineList"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- COLUMN 3: Graphics Controller -->
-  <div class="panel">
-    <div class="panel-head">BROADCAST GRAPHICS</div>
-    <div class="panel-body" style="overflow-y:auto;">
-      <b style="color:#94a3b8; font-size:11px;">OVERLAYS (TOGGLE)</b>
-      <div class="g-2">
-        <button class="btn-graphic" id="gfx_scorebug" onclick="toggleGraphic('scorebug')"><i class="fas fa-tv"></i> Scorebug</button>
-        <button class="btn-graphic" id="gfx_partnership" onclick="toggleGraphic('partnership')"><i class="fas fa-handshake"></i> Partnership</button>
-        <button class="btn-graphic" id="gfx_battingCard" onclick="toggleGraphic('battingCard')"><i class="fas fa-clipboard-list"></i> Batting Card</button>
-        <button class="btn-graphic" id="gfx_bowlingCard" onclick="toggleGraphic('bowlingCard')"><i class="fas fa-baseball-ball"></i> Bowling Card</button>
-        <button class="btn-graphic" id="gfx_bottomStrip" onclick="toggleGraphic('bottomStrip')"><i class="fas fa-bullhorn"></i> Info Strip</button>
-      </div>
-
-      <b style="color:#94a3b8; font-size:11px; margin-top:10px;">MANUAL POPUPS</b>
-      <div class="g-3">
-        <button class="btn-blue" style="padding:10px 0;" onclick="triggerAutoGraphic('FOUR')">FOUR</button>
-        <button class="btn-green" style="padding:10px 0;" onclick="triggerAutoGraphic('SIX')">SIX</button>
-        <button class="btn-red" style="padding:10px 0;" onclick="triggerAutoGraphic('WICKET')">WICKET</button>
-        <button class="btn-dark" style="padding:10px 0;" onclick="triggerAutoGraphic('FIFTY')">50</button>
-        <button class="btn-dark" style="padding:10px 0;" onclick="triggerAutoGraphic('HUNDRED')">100</button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <!-- ================= MODALS ================= -->
@@ -196,9 +205,9 @@
   <div class="modal">
     <h3 id="extraTitle" style="margin-top:0; color:#38bdf8;">Extra Ball</h3>
     <label style="color:#94a3b8; font-size:11px;">Runs completed by batsmen on this extra?</label>
-    <input type="number" id="extraRunsInput" value="0" min="0" style="width:100%; font-size:20px; text-align:center; margin:10px 0;">
+    <input type="number" id="extraRunsInput" value="0" min="0" style="width:100%; font-size:24px; text-align:center; margin:10px 0; font-weight:bold;">
     <div class="g-2">
-      <button class="btn-green" onclick="submitExtra()">SUBMIT</button>
+      <button class="btn-success" onclick="submitExtra()">SUBMIT</button>
       <button class="btn-dark" onclick="closeModal('extraModal')">CANCEL</button>
     </div>
   </div>
@@ -208,12 +217,12 @@
 <div class="modal-bg" id="wicketModal">
   <div class="modal">
     <h3 id="wicketTitle" style="margin-top:0; color:#ef4444;">Wicket</h3>
-    <label style="color:#94a3b8; font-size:11px;">Who is Out?</label>
-    <select id="outBatterSelect" style="width:100%; margin:5px 0 10px 0;"><option value="STRIKER">Striker</option><option value="NON_STRIKER">Non-Striker</option></select>
-    <label style="color:#94a3b8; font-size:11px;">Fielder/Keeper</label>
-    <select id="fielderSelect" style="width:100%; margin:5px 0 15px 0;"></select>
+    <label style="color:#94a3b8; font-size:11px;">Who got Out?</label>
+    <select id="outBatterSelect" style="width:100%; margin:5px 0 15px 0;"><option value="STRIKER">Striker</option><option value="NON_STRIKER">Non-Striker</option></select>
+    <label style="color:#94a3b8; font-size:11px;">Fielder / Keeper (Optional)</label>
+    <select id="fielderSelect" style="width:100%; margin:5px 0 20px 0;"></select>
     <div class="g-2">
-      <button class="btn-red" onclick="submitWicket()">OUT</button>
+      <button class="btn-danger" onclick="submitWicket()">CONFIRM OUT</button>
       <button class="btn-dark" onclick="closeModal('wicketModal')">CANCEL</button>
     </div>
   </div>
@@ -252,12 +261,11 @@ window.createNewMatch = function() {
   let batTeam = (tossW === "A" && tossD === "BAT") || (tossW === "B" && tossD === "BOWL") ? "A" : "B";
   let bowlTeam = batTeam === "A" ? "B" : "A";
 
-  // INJECTED LOGIC: Added individual runs, balls, fours, sixes for Scorecard sync.
   let rosterA = Array.from({length: squadSize}, (_, i) => ({ id: `A${i+1}`, name: `${tA} Player ${i+1}`, isOut: false, runs: 0, balls: 0, fours: 0, sixes: 0, bowlRuns: 0, bowlBalls: 0, wickets: 0 }));
   let rosterB = Array.from({length: squadSize}, (_, i) => ({ id: `B${i+1}`, name: `${tB} Player ${i+1}`, isOut: false, runs: 0, balls: 0, fours: 0, sixes: 0, bowlRuns: 0, bowlBalls: 0, wickets: 0 }));
 
   state = {
-    id: "MB_" + Date.now(), title: `${tA} vs ${tB}`,
+    id: "MB_" + Date.now(), title: `${tA} vs ${tB}`, innings: 1,
     meta: { tA, tB, squadSize, maxOvers, batTeam, bowlTeam },
     squads: { A: rosterA, B: rosterB },
     score: 0, wickets: 0, legalBalls: 0, overBalls: [], target: null,
@@ -267,20 +275,38 @@ window.createNewMatch = function() {
   };
   if(batTeam === "B"){ state.striker = rosterB[0].id; state.nonStriker = rosterB[1].id; state.bowler = rosterA[0].id; }
 
-  timelineHistory = [];
-  saveMatchLocal(); startLiveController();
+  timelineHistory = []; saveMatchLocal(); startLiveController();
+};
+
+window.startSecondInnings = function() {
+  if(!confirm("Are you sure you want to end this innings and start Second Innings?")) return;
+  pushSnapshot("Started 2nd Innings");
+  
+  state.target = state.score + 1;
+  state.score = 0; state.wickets = 0; state.legalBalls = 0; state.overBalls = [];
+  state.partnershipRuns = 0; state.partnershipBalls = 0;
+  
+  const oldBat = state.meta.batTeam;
+  state.meta.batTeam = state.meta.bowlTeam;
+  state.meta.bowlTeam = oldBat;
+  state.innings = 2;
+  
+  const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
+  state.striker = state.squads[tBat][0].id; state.nonStriker = state.squads[tBat][1].id; state.bowler = state.squads[tBowl][0].id; state.lastBowler = null;
+  
+  finalizeAction();
 };
 
 window.renderSavedMatches = function() {
   const list = document.getElementById('savedMatchesList');
   const matches = JSON.parse(localStorage.getItem('mb_saved_matches') || '[]');
-  if(matches.length === 0) { list.innerHTML = "<div style='color:#94a3b8; font-size:11px;'>No saved matches.</div>"; return; }
+  if(matches.length === 0) { list.innerHTML = "<div style='color:#94a3b8; font-size:11px;'>No saved matches available.</div>"; return; }
   list.innerHTML = matches.map(m => `
-    <div style="display:flex; justify-content:space-between; background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px; align-items:center;">
-      <div><b style="color:#fff; font-size:12px;">${m.title}</b><div style="font-size:9px; color:#94a3b8;">Score: ${m.score}/${m.wickets}</div></div>
+    <div style="display:flex; justify-content:space-between; background:#1e293b; padding:10px; border-radius:4px; margin-bottom:8px; align-items:center;">
+      <div><b style="color:#fff; font-size:14px;">${m.title}</b><div style="font-size:10px; color:#94a3b8; margin-top:2px;">Score: ${m.score}/${m.wickets} | Innings: ${m.innings}</div></div>
       <div style="display:flex; gap:5px;">
-        <button class="btn-green" style="font-size:9px; padding:4px;" onclick="loadMatch('${m.id}')">LOAD</button>
-        <button class="btn-red" style="font-size:9px; padding:4px;" onclick="deleteMatch('${m.id}')">DEL</button>
+        <button class="btn-success" style="font-size:10px; padding:6px 10px;" onclick="loadMatch('${m.id}')">LOAD</button>
+        <button class="btn-danger" style="font-size:10px; padding:6px 10px;" onclick="deleteMatch('${m.id}')"><i class="fas fa-trash"></i></button>
       </div>
     </div>
   `).join('');
@@ -310,40 +336,22 @@ window.saveMatchLocal = function() {
   set(liveRef, state);
 };
 
-window.exitToHome = function() {
-  document.getElementById('screen-live').classList.remove('active');
-  document.getElementById('screen-home').classList.add('active');
-  set(liveRef, null); renderSavedMatches();
-};
+window.exitToHome = function() { document.getElementById('screen-live').classList.remove('active'); document.getElementById('screen-home').classList.add('active'); set(liveRef, null); renderSavedMatches(); };
+function startLiveController() { document.getElementById('screen-home').classList.remove('active'); document.getElementById('screen-live').classList.add('active'); updateUI(); }
 
-function startLiveController() {
-  document.getElementById('screen-home').classList.remove('active');
-  document.getElementById('screen-live').classList.add('active');
-  updateUI();
-}
-
-// ================= CORE SCORING & STATS UPDATE =================
-function pushSnapshot(desc) {
-  timelineHistory.unshift({ id: Date.now(), desc: desc, snapshot: JSON.stringify(state) });
-  if(timelineHistory.length > 40) timelineHistory.pop();
-}
+// ================= CORE SCORING & ALL-OUT LOGIC =================
+function pushSnapshot(desc) { timelineHistory.unshift({ id: Date.now(), desc: desc, snapshot: JSON.stringify(state) }); if(timelineHistory.length > 50) timelineHistory.pop(); }
 
 window.undoToSnapshot = function(id) {
   const idx = timelineHistory.findIndex(x => x.id === id);
-  if(idx > -1) {
-    state = JSON.parse(timelineHistory[idx].snapshot);
-    timelineHistory.splice(0, idx + 1);
-    saveMatchLocal(); updateUI();
-  }
+  if(idx > -1) { state = JSON.parse(timelineHistory[idx].snapshot); timelineHistory.splice(0, idx + 1); saveMatchLocal(); updateUI(); }
 };
 
 window.processBall = function(runs) {
   if(checkAllOut()) return;
   pushSnapshot(`Score ${runs} runs`);
-  
   state.score += runs; state.legalBalls += 1; state.overBalls.push(runs);
   
-  // INJECTED LOGIC: Update individual player stats
   const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
   const striker = state.squads[tBat].find(p => p.id === state.striker);
   const bowler = state.squads[tBowl].find(p => p.id === state.bowler);
@@ -351,8 +359,7 @@ window.processBall = function(runs) {
   if(striker) { striker.runs += runs; striker.balls += 1; if(runs===4) striker.fours++; if(runs===6) striker.sixes++; }
   if(bowler) { bowler.bowlRuns += runs; bowler.bowlBalls += 1; }
   
-  state.partnershipRuns = (state.partnershipRuns || 0) + runs;
-  state.partnershipBalls = (state.partnershipBalls || 0) + 1;
+  state.partnershipRuns = (state.partnershipRuns || 0) + runs; state.partnershipBalls = (state.partnershipBalls || 0) + 1;
   
   if(runs % 2 !== 0) swapStrikeInternal();
   checkOver();
@@ -361,40 +368,29 @@ window.processBall = function(runs) {
 };
 
 window.openExtraModal = function(type) {
-  tempExtraType = type;
-  document.getElementById('extraTitle').innerText = type;
-  document.getElementById('extraRunsInput').value = 0;
-  document.getElementById('extraModal').classList.add('active');
+  tempExtraType = type; document.getElementById('extraTitle').innerText = type === 'WD' ? 'Wide' : type === 'NB' ? 'No Ball' : type === 'B' ? 'Byes' : 'Leg Byes';
+  document.getElementById('extraRunsInput').value = 0; document.getElementById('extraModal').classList.add('active');
 };
 
 window.submitExtra = function() {
   const extraRuns = parseInt(document.getElementById('extraRunsInput').value) || 0;
-  closeModal('extraModal');
-  if(checkAllOut()) return;
+  closeModal('extraModal'); if(checkAllOut()) return;
   pushSnapshot(`Extra: ${tempExtraType} + ${extraRuns}`);
   
   const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
-  const striker = state.squads[tBat].find(p => p.id === state.striker);
-  const bowler = state.squads[tBowl].find(p => p.id === state.bowler);
+  const striker = state.squads[tBat].find(p => p.id === state.striker); const bowler = state.squads[tBowl].find(p => p.id === state.bowler);
 
   let isLegal = (tempExtraType === 'B' || tempExtraType === 'LB');
   let penalty = (tempExtraType === 'WD' || tempExtraType === 'NB') ? 1 : 0;
   let totalRuns = extraRuns + penalty;
   
-  state.score += totalRuns;
-  state.overBalls.push(`${tempExtraType}${extraRuns>0 ? '+'+extraRuns : ''}`);
+  state.score += totalRuns; state.overBalls.push(`${tempExtraType}${extraRuns>0 ? '+'+extraRuns : ''}`);
   
-  // Update Bowler/Batter Extras logic
   if(!isLegal && bowler) bowler.bowlRuns += totalRuns;
-  if(isLegal) {
-      if(bowler) bowler.bowlBalls += 1;
-      if(striker) striker.balls += 1;
-      state.legalBalls += 1;
-  }
+  if(isLegal) { if(bowler) bowler.bowlBalls += 1; if(striker) striker.balls += 1; state.legalBalls += 1; }
   
   state.partnershipRuns = (state.partnershipRuns || 0) + totalRuns;
   if(isLegal) state.partnershipBalls = (state.partnershipBalls || 0) + 1;
-  
   if(extraRuns % 2 !== 0) swapStrikeInternal();
   if(isLegal) checkOver();
   finalizeAction();
@@ -403,24 +399,20 @@ window.submitExtra = function() {
 window.openWicketModal = function(type) {
   tempWicketType = type; document.getElementById('wicketTitle').innerText = type.replace('_', ' ');
   const fieldTeam = state.meta.bowlTeam; const select = document.getElementById('fielderSelect');
-  select.innerHTML = '<option value="">-- Select Fielder --</option>';
+  select.innerHTML = '<option value="">-- Optional Fielder --</option>';
   state.squads[fieldTeam].forEach(p => { select.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
   document.getElementById('wicketModal').classList.add('active');
 };
 
 window.submitWicket = function() {
-  const who = document.getElementById('outBatterSelect').value;
-  const fielder = document.getElementById('fielderSelect').value;
-  if(!fielder) { alert("Select Fielder"); return; }
+  const who = document.getElementById('outBatterSelect').value; const fielder = document.getElementById('fielderSelect').value;
   closeModal('wicketModal'); processWicket(tempWicketType, who, fielder);
 };
 
 window.processWicket = function(type, who = "STRIKER", fielderId = null) {
-  if(checkAllOut()) return;
-  pushSnapshot(`WICKET: ${type}`);
+  if(checkAllOut()) return; pushSnapshot(`WICKET: ${type.replace('_',' ')}`);
   
   state.wickets += 1; state.legalBalls += 1; state.overBalls.push('W');
-  
   const batTeam = state.meta.batTeam; const bowlTeam = state.meta.bowlTeam;
   const outId = who === "STRIKER" ? state.striker : state.nonStriker;
   
@@ -430,19 +422,22 @@ window.processWicket = function(type, who = "STRIKER", fielderId = null) {
   const bowler = state.squads[bowlTeam].find(p => p.id === state.bowler);
   if(bowler) { bowler.bowlBalls += 1; if(type !== 'RUN_OUT') bowler.wickets += 1; }
   
-  // Reset Partnership
   state.partnershipRuns = 0; state.partnershipBalls = 0;
   
-  // New Batter Assign
-  const nextBatter = state.squads[batTeam].find(p => !p.isOut && p.id !== state.striker && p.id !== state.nonStriker);
-  if(who === "STRIKER" && nextBatter) state.striker = nextBatter.id;
-  else if (nextBatter) state.nonStriker = nextBatter.id;
+  // ALL OUT LOGIC EXECUTED HERE: Total Squad - 1
+  if(state.wickets >= state.meta.squadSize - 1) {
+    alert("TEAM IS ALL OUT!");
+  } else {
+    // Bring Next Batter
+    const nextBatter = state.squads[batTeam].find(p => !p.isOut && p.id !== state.striker && p.id !== state.nonStriker);
+    if(who === "STRIKER" && nextBatter) state.striker = nextBatter.id; else if (nextBatter) state.nonStriker = nextBatter.id;
+  }
   
   checkOver(); triggerAutoGraphic("WICKET"); finalizeAction();
 };
 
 function checkAllOut() {
-  if (state.wickets >= state.meta.squadSize - 1) { alert("All Out!"); return true; }
+  if (state.wickets >= state.meta.squadSize - 1) { alert("Team is All Out!"); return true; }
   return false;
 }
 
@@ -463,6 +458,7 @@ window.closeModal = function(id) { document.getElementById(id).classList.remove(
 
 window.toggleGraphic = function(key) { state.graphics[key] = !state.graphics[key]; saveMatchLocal(); updateUI(); };
 window.triggerAutoGraphic = function(type) { if(!type) return; state.graphics.activeEvent = type; set(liveRef, state); setTimeout(() => { state.graphics.activeEvent = null; set(liveRef, state); }, 4000); };
+window.updateStripText = function() { state.graphics.dynamicText = document.getElementById('customStripText').value; saveMatchLocal(); };
 window.manualPlayerChange = function() { state.striker = document.getElementById('strikerSelect').value; state.nonStriker = document.getElementById('nonStrikerSelect').value; state.bowler = document.getElementById('bowlerSelect').value; saveMatchLocal(); };
 function finalizeAction() { saveMatchLocal(); updateUI(); }
 
@@ -470,10 +466,10 @@ function updateUI() {
   if(!state) return;
   const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
   document.getElementById('hudTeam').innerText = state.meta[tBat === 'A' ? 'tA' : 'tB'];
-  document.getElementById('hudRuns').innerText = state.score;
-  document.getElementById('hudWickets').innerText = state.wickets;
+  document.getElementById('hudRuns').innerText = state.score; document.getElementById('hudWickets').innerText = state.wickets;
   document.getElementById('hudOvers').innerText = `${Math.floor(state.legalBalls/6)}.${state.legalBalls%6}`;
   document.getElementById('hudCrr').innerText = state.legalBalls > 0 ? ((state.score / state.legalBalls) * 6).toFixed(2) : "0.00";
+  document.getElementById('hudTarget').innerText = state.target ? state.target : "—";
   document.getElementById('hudPart').innerText = `${state.partnershipRuns} (${state.partnershipBalls})`;
   
   const sSel = document.getElementById('strikerSelect'); const nsSel = document.getElementById('nonStrikerSelect');
@@ -483,13 +479,10 @@ function updateUI() {
   const bSel = document.getElementById('bowlerSelect');
   bSel.innerHTML = state.squads[tBowl].filter(p => p.id !== state.lastBowler).map(p => `<option value="${p.id}" ${state.bowler===p.id?'selected':''}>${p.name}</option>`).join('');
 
-  document.querySelectorAll('.btn-graphic').forEach(btn => {
-    const key = btn.id.replace('gfx_', '');
-    if(state.graphics[key]) btn.classList.add('active'); else btn.classList.remove('active');
-  });
+  document.querySelectorAll('.btn-graphic').forEach(btn => { const key = btn.id.replace('gfx_', ''); if(state.graphics[key]) btn.classList.add('active'); else btn.classList.remove('active'); });
 
   const tl = document.getElementById('timelineList');
-  tl.innerHTML = timelineHistory.map(t => `<div class="tl-item"><span>${t.desc}</span><button onclick="undoToSnapshot(${t.id})">↶ UNDO</button></div>`).join('');
+  tl.innerHTML = timelineHistory.map(t => `<div class="timeline-item"><span>${t.desc}</span><button onclick="undoToSnapshot(${t.id})">↶ UNDO</button></div>`).join('');
 }
 initApp();
 </script>
