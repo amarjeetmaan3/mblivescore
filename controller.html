@@ -24,7 +24,6 @@
   .btn-blue { background: var(--navy-3); border-color: var(--line); color: var(--ink); }
   .btn-accent { background: #3d2c00; border-color: var(--gold); color: var(--gold-2); }
   
-  /* ACTIVE GREEN HIGHLIGHT */
   .btn-active { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
 
   .screen { display: none; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 8px 30px; }
@@ -171,7 +170,6 @@
       <button class="btn-danger" style="padding:1px 6px; font-size:9px;" onclick="handleGraphicClick(null)">CLEAR ALL</button>
     </div>
     
-    <!-- Innings Selector -->
     <div class="grid-2" style="margin-bottom:6px;">
         <button id="btnInnCurr" class="btn-blue btn-active" onclick="setGraphicInnings('curr')" style="font-size:10px;">CURRENT INNINGS</button>
         <button id="btnInnPrev" class="btn-blue" onclick="setGraphicInnings('prev')" style="font-size:10px;">1ST INNINGS RECALL</button>
@@ -179,6 +177,7 @@
     
     <div class="grid-3" style="margin-bottom:8px;">
       <button class="btn-blue btn-graphic" data-graphic="part" onclick="handleGraphicClick('part')">PARTNER</button>
+      <button class="btn-blue btn-graphic" data-graphic="allpart" onclick="handleGraphicClick('allpart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">ALL PARTS</button>
       <button class="btn-blue btn-graphic" data-graphic="bat" onclick="handleGraphicClick('bat')">BAT CARD</button>
       <button class="btn-blue btn-graphic" data-graphic="bowl" onclick="handleGraphicClick('bowl')">BOWL CARD</button>
       <button class="btn-blue btn-graphic" data-graphic="proj" onclick="handleGraphicClick('proj')">PROJ / EQUATION</button>
@@ -187,8 +186,8 @@
 
     <div class="card-title"><span style="color:#f2d878;">CHARTS & GRAPHS</span></div>
     <div class="grid-2" style="margin-bottom:6px;">
-      <button class="btn-blue btn-graphic" data-graphic="chart" onclick="handleGraphicClick('chart')" style="background:#5b4413; color:#f2d878;">BAR CHART</button>
-      <button class="btn-blue btn-graphic" data-graphic="worm" onclick="handleGraphicClick('worm')" style="background:#16304f; color:#f2d878;">WORM GRAPH</button>
+      <button class="btn-blue btn-graphic" data-graphic="chart" onclick="handleGraphicClick('chart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">BAR CHART</button>
+      <button class="btn-blue btn-graphic" data-graphic="worm" onclick="handleGraphicClick('worm')" style="background:#16304f; color:#f2d878; border-color:var(--gold);">WORM GRAPH</button>
     </div>
 
     <button class="btn-blue" id="btnBugToggle" style="width:100%; height:30px; margin-top:4px;" onclick="toggleGraphic('scorebug')">TOGGLE BOTTOM SCOREBUG</button>
@@ -309,6 +308,7 @@ window.createNewMatch = function() {
     innings: 1, score: 0, wickets: 0, legalBalls: 0, extras: 0, overBalls: [], currentOverRuns: 0, overHistory: [],
     target: null, firstInnings: null, inningsOver: false,
     partnership: { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 },
+    pastPartnerships: [], // NEW TRACKER
     bowlerStats: {}, fow: [],
     striker: (batTeam === "A" ? rosterA : rosterB)[0].id, nonStriker: (batTeam === "A" ? rosterA : rosterB)[1].id,
     bowler: (batTeam === "A" ? rosterB : rosterA)[0].id, lastBowler: null,
@@ -337,12 +337,11 @@ window.loadMatch = async function(id) {
   const snap = await get(ref(db, `mb_match_data/${id}`));
   if(snap.exists()) {
     let loadedState = snap.val();
-    
-    // NORMALIZE FIREBASE DATA (Prevents crashes on click by restoring empty arrays)
     if(!loadedState.overBalls) loadedState.overBalls = []; if(!loadedState.overHistory) loadedState.overHistory = []; if(!loadedState.fow) loadedState.fow = [];
     if(!loadedState.bowlerStats) loadedState.bowlerStats = {}; if(!loadedState.squads) loadedState.squads = {A:[], B:[]};
     if(!loadedState.squads.A) loadedState.squads.A = []; if(!loadedState.squads.B) loadedState.squads.B = [];
     if(!loadedState.partnership) loadedState.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
+    if(!loadedState.pastPartnerships) loadedState.pastPartnerships = [];
     if(typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
     
     state = loadedState;
@@ -361,21 +360,14 @@ window.exitToHome = function() { document.getElementById('screen-live').classLis
 
 function startController() { document.getElementById('screen-home').classList.remove('active'); document.getElementById('screen-live').classList.add('active'); syncLiveAndSave(); }
 
-// ================= THE SPEED FIX (Debounced Cloud Backup) =================
 let heavySaveTimer = null;
 function syncLiveAndSave() {
   if(!state) return;
-  // 1. INSTANT LIVE SYNC for Overlay (Fast)
-  set(liveRef, state); 
-  updateUI();
-  
-  // 2. BACKGROUND BACKUP (Debounced by 800ms so buttons don't lag)
+  set(liveRef, state); updateUI();
   clearTimeout(heavySaveTimer);
   heavySaveTimer = setTimeout(() => {
       const summary = { id: state.id, title: state.title, meta: state.meta, legalBalls: state.legalBalls, innings: state.innings, score: state.score };
-      set(ref(db, `mb_saved_matches_list/${state.id}`), summary);
-      set(ref(db, `mb_match_data/${state.id}`), state);
-      // Reduce Timeline upload to keep network free
+      set(ref(db, `mb_saved_matches_list/${state.id}`), summary); set(ref(db, `mb_match_data/${state.id}`), state);
       set(ref(db, `mb_match_timeline/${state.id}`), timelineHistory.slice(0, 15));
   }, 800);
 }
@@ -428,11 +420,19 @@ window.submitWicket = function() { const who = document.getElementById('outBatte
 window.processWicket = function(type, who = "STRIKER", fielderId = null) {
   if(state.inningsOver) return; pushSnapshot(`Wicket: ${type}`); if(type === 'CAUGHT' && !fielderId) openWicketModal('CAUGHT'); if(type === 'CAUGHT' && !fielderId) return; 
   state.wickets += 1; state.legalBalls += 1; state.overBalls.push('W');
+
   const batTeam = state.meta.batTeam; const outId = who === "STRIKER" ? state.striker : state.nonStriker; const outBatter = state.squads[batTeam].find(p => p.id === outId); outBatter.isOut = true; outBatter.balls += 1;
   const bowler = state.squads[state.meta.bowlTeam].find(p => p.id === state.bowler); const fielder = state.squads[state.meta.bowlTeam].find(p => p.id === fielderId);
+
   if(type === 'BOWLED') outBatter.dismissalInfo = `b ${bowler ? bowler.name : ''}`; else if(type === 'LBW') outBatter.dismissalInfo = `lbw b ${bowler ? bowler.name : ''}`; else if(type === 'CAUGHT') outBatter.dismissalInfo = `c ${fielder ? fielder.name : 'Sub'} b ${bowler ? bowler.name : ''}`; else if(type === 'STUMPED') outBatter.dismissalInfo = `st ${fielder ? fielder.name : 'Keeper'} b ${bowler ? bowler.name : ''}`; else if(type === 'RUN_OUT') outBatter.dismissalInfo = `run out (${fielder ? fielder.name : ''})`; else if(type === 'HIT_WICKET') outBatter.dismissalInfo = `hit wkt b ${bowler ? bowler.name : ''}`;
   const bs = getBowlerStats(state.bowler); bs.balls += 1; if(type !== 'RUN_OUT') bs.wickets += 1; bs.dots += 1;
-  state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
+  state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); 
+  
+  // TRACK PAST PARTNERSHIP
+  let p1 = state.squads[batTeam].find(p => p.id === state.striker); let p2 = state.squads[batTeam].find(p => p.id === state.nonStriker);
+  state.pastPartnerships.push({ wktNo: state.wickets, p1Name: p1 ? p1.name : '', p1Runs: state.partnership.p1Runs, p1Balls: state.partnership.p1Balls, p2Name: p2 ? p2.name : '', p2Runs: state.partnership.p2Runs, p2Balls: state.partnership.p2Balls, runs: state.partnership.runs, balls: state.partnership.balls });
+  state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
+
   const nextBatter = state.squads[batTeam].find(p => !p.isOut && !p.isAbsent && !p.isRetired && p.id !== state.striker && p.id !== state.nonStriker);
   if(who === "STRIKER" && nextBatter) state.striker = nextBatter.id; else if(nextBatter) state.nonStriker = nextBatter.id;
   checkOverEnd(); triggerAutoGraphic("WICKET"); checkInningsEnd(); syncLiveAndSave();
@@ -474,9 +474,9 @@ function checkInningsEnd() {
 
 window.startSecondInnings = function() {
   pushSnapshot("Start 2nd Innings"); let finalOverHistory = [...state.overHistory]; if (state.legalBalls % 6 !== 0) finalOverHistory.push(state.currentOverRuns);
-  state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory, fow: [...state.fow], batters: JSON.parse(JSON.stringify(state.squads[state.meta.batTeam])), bowlers: JSON.parse(JSON.stringify(state.squads[state.meta.bowlTeam])), bowlerStats: JSON.parse(JSON.stringify(state.bowlerStats)), extras: state.extras };
+  state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory, fow: [...state.fow], batters: JSON.parse(JSON.stringify(state.squads[state.meta.batTeam])), bowlers: JSON.parse(JSON.stringify(state.squads[state.meta.bowlTeam])), bowlerStats: JSON.parse(JSON.stringify(state.bowlerStats)), extras: state.extras, pastPartnerships: [...state.pastPartnerships] };
   const newBat = state.meta.bowlTeam; const newBowl = state.meta.batTeam; state.meta.batTeam = newBat; state.meta.bowlTeam = newBowl;
-  state.target = state.firstInnings.score + 1; state.innings = 2; state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = []; state.currentOverRuns = 0; state.overHistory = []; state.fow = []; state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 }; state.inningsOver = false; state.lastBowler = null; state.striker = state.squads[newBat][0].id; state.nonStriker = state.squads[newBat][1].id; state.bowler = state.squads[newBowl][0].id;
+  state.target = state.firstInnings.score + 1; state.innings = 2; state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = []; state.currentOverRuns = 0; state.overHistory = []; state.fow = []; state.partnership = { runs: 0, balls: 0, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 }; state.pastPartnerships = []; state.inningsOver = false; state.lastBowler = null; state.striker = state.squads[newBat][0].id; state.nonStriker = state.squads[newBat][1].id; state.bowler = state.squads[newBowl][0].id;
   state.graphics.dynamicText = `${newBat === 'A' ? state.meta.tA : state.meta.tB} NEED ${state.target} TO WIN`; syncLiveAndSave();
 };
 
@@ -489,18 +489,12 @@ function computeResult() {
 }
 
 window.toggleGraphic = function(key) { state.graphics[key] = !state.graphics[key]; syncLiveAndSave(); };
-
-window.setGraphicInnings = function(mode) {
-    if(mode === 'prev' && (!state || !state.firstInnings)) return;
-    graphicInningsMode = mode; updateUI();
-};
+window.setGraphicInnings = function(mode) { if(mode === 'prev' && (!state || !state.firstInnings)) return; graphicInningsMode = mode; updateUI(); };
 
 window.handleGraphicClick = function(baseTarget) {
     if(baseTarget === null) { state.graphics.centerGraphic = null; syncLiveAndSave(); return; }
-    let finalTarget = baseTarget;
-    if(graphicInningsMode === 'prev' && baseTarget !== 'result') finalTarget += '1';
-    if(state.graphics.centerGraphic === finalTarget) state.graphics.centerGraphic = null; 
-    else state.graphics.centerGraphic = finalTarget; 
+    let finalTarget = baseTarget; if(graphicInningsMode === 'prev' && baseTarget !== 'result') finalTarget += '1';
+    if(state.graphics.centerGraphic === finalTarget) state.graphics.centerGraphic = null; else state.graphics.centerGraphic = finalTarget; 
     syncLiveAndSave();
 };
 
