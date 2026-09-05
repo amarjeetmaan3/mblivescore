@@ -140,12 +140,23 @@
       </div>
       <div class="wicket-pad grid-2">
         <button onclick="openWicketModal('CAUGHT')">CAUGHT</button>
-        <button onclick="openWicketModal('BOWLED')">BOWLED</button>
+        <button onclick="processWicket('BOWLED')">BOWLED</button>
+        <button onclick="processWicket('LBW')">LBW</button>
         <button onclick="openWicketModal('RUN_OUT')">RUN OUT</button>
         <button onclick="openWicketModal('STUMPED')">STUMPED</button>
+        <button onclick="processWicket('HIT_WICKET')">HIT WICKET</button>
       </div>
     </div>
-    <button class="absent-btn" style="width:100%; margin-top:10px;" onclick="openAbsentModal()"><i class="fas fa-user-slash"></i> MARK BATTER ABSENT</button>
+    <div class="grid-2" style="margin-top:10px;">
+      <button class="absent-btn" onclick="openAbsentModal()"><i class="fas fa-user-slash"></i> MARK ABSENT</button>
+      <button class="absent-btn" onclick="markRetiredHurt()"><i class="fas fa-briefcase-medical"></i> RETIRED HURT</button>
+    </div>
+  </div>
+
+  <!-- Fall of Wickets -->
+  <div class="card">
+    <div class="card-title">FALL OF WICKETS</div>
+    <div class="timeline" id="fowList" style="max-height:110px;"></div>
   </div>
 
   <!-- Graphics & Timeline -->
@@ -154,8 +165,10 @@
     <div class="grid-4" style="margin-bottom: 10px;">
       <button class="btn-blue" style="font-size:10px;" onclick="toggleGraphic('scorebug')">SCOREBUG</button>
       <button class="btn-blue" style="font-size:10px;" onclick="toggleGraphic('partnership')">PARTNER</button>
-      <button class="btn-blue" style="font-size:10px;" onclick="toggleGraphic('target')">TARGET</button>
+      <button class="btn-blue" style="font-size:10px;" onclick="toggleGraphic('target')">TARGET/PROJ</button>
       <button class="btn-blue" style="font-size:10px;" onclick="toggleGraphic('bottomStrip')">INFO STRIP</button>
+      <button class="btn-blue" style="font-size:10px;" onclick="toggleGraphic('fow')">FOW</button>
+      <button class="btn-blue" style="font-size:10px;" onclick="toggleGraphic('recentBalls')">RECENT BALLS</button>
     </div>
     <div style="margin-bottom:10px;">
       <label class="small-label">Info Strip Text (shown on overlay)</label>
@@ -261,9 +274,9 @@ window.createNewMatch = function() {
     score: 0, wickets: 0, legalBalls: 0, overBalls: [],
     target: null, firstInnings: null, inningsOver: false,
     partnership: { runs: 0, balls: 0 },
-    bowlerStats: {},
+    bowlerStats: {}, fow: [], ballLog: [],
     striker: rosterA[0].id, nonStriker: rosterA[1].id, bowler: rosterB[0].id, lastBowler: null,
-    graphics: { scorebug: true, partnership: false, target: false, bottomStrip: true, dynamicText: "M.B. LIVE STUDIO", activeEvent: null, milestoneEvent: null }
+    graphics: { scorebug: true, partnership: false, target: false, bottomStrip: true, fow: false, recentBalls: false, dynamicText: "M.B. LIVE STUDIO", activeEvent: null, milestoneEvent: null }
   };
   if(batTeam === "B"){ state.striker = rosterB[0].id; state.nonStriker = rosterB[1].id; state.bowler = rosterA[0].id; }
 
@@ -323,7 +336,20 @@ window.exitToHome = function() {
   renderSavedMatches();
 };
 
+function normalizeState() {
+  if(!state) return;
+  if(!state.fow) state.fow = [];
+  if(!state.ballLog) state.ballLog = [];
+  if(state.graphics.fow === undefined) state.graphics.fow = false;
+  if(state.graphics.recentBalls === undefined) state.graphics.recentBalls = false;
+  Object.values(state.squads).flat().forEach(p => {
+    if(p.isAbsent === undefined) p.isAbsent = false;
+    if(p.isRetired === undefined) p.isRetired = false;
+  });
+}
+
 function startLiveController() {
+  normalizeState();
   document.getElementById('screen-home').classList.remove('active');
   document.getElementById('screen-live').classList.add('active');
   updateUI();
@@ -360,6 +386,19 @@ function checkBatterMilestone(batter) {
 function checkBowlerMilestone(bs, bowlerName) {
   if(bs.wickets === 5) triggerMilestone(`${bowlerName} — 5-WICKET HAUL!`);
 }
+function pushBallLog(label) {
+  const over = Math.floor(state.legalBalls/6);
+  const ball = state.legalBalls % 6 === 0 && state.legalBalls > 0 ? 6 : state.legalBalls % 6;
+  state.ballLog.push({ tag: `${over}.${ball}`, label });
+  if(state.ballLog.length > 10) state.ballLog.shift();
+}
+function pushFow(outBatter) {
+  state.fow.push({
+    wktNo: state.wickets, score: state.score,
+    overs: `${Math.floor(state.legalBalls/6)}.${state.legalBalls%6}`,
+    batterName: outBatter.name, dismissal: outBatter.dismissal
+  });
+}
 
 // ================= SCORING LOGIC =================
 window.processBall = function(runs) {
@@ -383,6 +422,7 @@ window.processBall = function(runs) {
   bs.balls += 1; bs.runs += runs;
 
   checkBatterMilestone(striker);
+  pushBallLog(String(runs));
   if(runs % 2 !== 0) swapStrikeInternal();
   checkOver();
   triggerAutoGraphic(runs === 4 ? "FOUR" : (runs === 6 ? "SIX" : null));
@@ -434,6 +474,7 @@ window.submitExtra = function() {
     bs.balls += 1;
     striker.balls += 1;
   }
+  pushBallLog(`${tempExtraType}${extraRuns > 0 ? '+' + extraRuns : ''}`);
   if(extraRuns % 2 !== 0) swapStrikeInternal();
   if(isLegalDelivery) checkOver();
 
@@ -489,6 +530,8 @@ window.processWicket = function(type, who = "STRIKER", fielderId = null) {
     checkBowlerMilestone(bs, bowler ? bowler.name : "Bowler");
   }
 
+  pushFow(outBatter);
+  pushBallLog("W");
   state.partnership = { runs: 0, balls: 0 };
 
   const nextBatter = state.squads[batTeam].find(p => !p.isOut && !p.isAbsent && p.id !== state.striker && p.id !== state.nonStriker);
@@ -498,6 +541,21 @@ window.processWicket = function(type, who = "STRIKER", fielderId = null) {
   checkOver();
   triggerAutoGraphic("WICKET");
   checkInningsEnd();
+  finalizeAction();
+};
+
+// ================= RETIRED HURT (not a wicket) =================
+window.markRetiredHurt = function() {
+  if(state.inningsOver) return;
+  const batTeam = state.meta.batTeam;
+  const strikerP = state.squads[batTeam].find(p => p.id === state.striker);
+  if(!confirm(`Mark ${strikerP.name} as Retired Hurt? This is not a wicket — they can return later via manual selection.`)) return;
+  pushSnapshot("RETIRED HURT");
+  strikerP.isRetired = true;
+  strikerP.dismissal = 'RETIRED_HURT';
+
+  const nextBatter = state.squads[batTeam].find(p => !p.isOut && !p.isRetired && p.id !== state.striker && p.id !== state.nonStriker);
+  if(nextBatter) state.striker = nextBatter.id;
   finalizeAction();
 };
 
@@ -523,6 +581,7 @@ window.submitAbsent = function() {
   const p = state.squads[batTeam].find(x => x.id === id);
   p.isOut = true; p.isAbsent = true; p.dismissal = 'ABSENT';
   state.wickets += 1;
+  pushFow(p);
   checkInningsEnd();
   finalizeAction();
 };
@@ -671,6 +730,12 @@ function updateUI() {
     const bs = state.bowlerStats[p.id];
     return `<option value="${p.id}" ${state.bowler===p.id?'selected':''}>${p.name} (${fmtBowlerFig(bs)})</option>`;
   }).join('');
+
+  // Fall of wickets render
+  const fowList = document.getElementById('fowList');
+  fowList.innerHTML = state.fow.length === 0 ? "<div style='font-size:12px; color:var(--muted);'>No wickets yet.</div>" : state.fow.map(f => `
+    <div class="timeline-item"><span>${f.wktNo}-${f.score} (${f.overs}) ${f.batterName}</span></div>
+  `).join('');
 
   // Timeline render
   const tl = document.getElementById('timelineList');
