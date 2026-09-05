@@ -121,8 +121,6 @@
 <div class="scorebug" id="scorebug">
   <div class="brand-bar">M.B. LIVE STUDIO</div>
   <div class="main-strip">
-      
-      <!-- Normal Scorebug View -->
       <div id="bugNormal">
         <div class="team-block" id="ovTeam">IND</div>
         <div class="score-block">
@@ -150,12 +148,9 @@
           <div class="over-track" id="ovBalls"></div>
         </div>
       </div>
-      
-      <!-- Match Result View (Hides everything else when active) -->
       <div id="bugResult">
           <span id="bugResultText"></span>
       </div>
-
   </div>
   <div class="bottom-strip" id="bottomStrip"></div>
 </div>
@@ -266,7 +261,6 @@ onValue(ref(db, "current_match"), snap => {
   const bug = document.getElementById('scorebug');
   if(g.scorebug) bug.classList.add('show'); else bug.classList.remove('show');
   
-  // Transform Scorebug if Match Over
   if(state.innings === 2 && state.inningsOver) {
       document.getElementById('bugNormal').style.display = 'none';
       document.getElementById('bugResult').style.display = 'flex';
@@ -319,39 +313,28 @@ onValue(ref(db, "current_match"), snap => {
   if(g.bottomStrip && g.dynamicText) { bStrip.classList.add('show'); bStrip.innerText = g.dynamicText; }
   else bStrip.classList.remove('show');
 
-  // Multi-panel mapping
   const panels = ['part', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm', 'result'];
   panels.forEach(p => { document.getElementById(`graphic-${p}`).classList.remove('show'); });
 
-  // Render Logic Flags
   let renderTarget = g.centerGraphic;
   let isRecall = false;
-  if(renderTarget && renderTarget.endsWith('1')) {
-      isRecall = true;
-      renderTarget = renderTarget.replace('1', '');
-  }
-  
+  if(renderTarget && renderTarget.endsWith('1')) { isRecall = true; renderTarget = renderTarget.replace('1', ''); }
   if(renderTarget) { document.getElementById(`graphic-${renderTarget}`).classList.add('show'); }
 
-  // Variables for Data
   let actBatTeamName = batTeamName, actSquads = state.squads, actScore = state.score, actWickets = state.wickets, actBalls = state.legalBalls, actExtras = state.extras, actBStats = state.bowlerStats, actFow = state.fow || [];
   let actBowlTeam = tBowl, actBatTeam = tBat;
 
-  // Recall Override
   if(isRecall && state.firstInnings) {
       actBatTeamName = state.firstInnings.team === 'A' ? state.meta.tA : state.meta.tB;
-      actBatTeam = state.firstInnings.team;
-      actBowlTeam = state.firstInnings.team === 'A' ? 'B' : 'A';
+      actBatTeam = state.firstInnings.team; actBowlTeam = state.firstInnings.team === 'A' ? 'B' : 'A';
       actSquads = { [actBatTeam]: state.firstInnings.batters, [actBowlTeam]: state.firstInnings.bowlers };
       actScore = state.firstInnings.score; actWickets = state.firstInnings.wickets; actBalls = state.firstInnings.legalBalls; actExtras = state.firstInnings.extras; actBStats = state.firstInnings.bowlerStats; actFow = state.firstInnings.fow || [];
   }
 
-  // RESULT
   if(g.centerGraphic === 'result' && state.inningsOver) {
       document.getElementById('resultText').innerText = getMatchResultText(state);
   }
 
-  // PARTNERSHIP
   if(g.centerGraphic === 'part' && state.partnership) {
     document.getElementById('partTitle').innerText = `${state.wickets + 1}${['st','nd','rd'][state.wickets]||'th'} WICKET PARTNERSHIP`;
     document.getElementById('partTotalRuns').innerText = state.partnership.runs;
@@ -360,7 +343,6 @@ onValue(ref(db, "current_match"), snap => {
     if(nonStriker) { document.getElementById('partP2Name').innerText = nonStriker.name; document.getElementById('partP2Score').innerText = `${state.partnership.p2Runs || 0} (${state.partnership.p2Balls || 0})`; }
   }
 
-  // BATTING CARD
   if(renderTarget === 'bat') {
     document.getElementById('batTitle').innerText = `${actBatTeamName} BATTING${isRecall?' (1ST INN)':''}`;
     document.getElementById('batTableBody').innerHTML = (actSquads[actBatTeam]||[]).map(p => {
@@ -374,7 +356,6 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('batExtras').innerText = `Extras: ${actExtras || 0}`;
   }
 
-  // BOWLING CARD
   if(renderTarget === 'bowl') {
     document.getElementById('bowlTitle').innerText = `${actBowlTeam === 'A' ? state.meta.tA : state.meta.tB} BOWLING${isRecall?' (1ST INN)':''}`;
     document.getElementById('bowlTableBody').innerHTML = (actSquads[actBowlTeam]||[]).filter(p => actBStats[p.id]).map(p => {
@@ -386,7 +367,6 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('bowlFowStrip').innerText = `Fall of Wickets: ${fowText || 'None'}`;
   }
 
-  // PROJ / MATCH EQUATION
   if(g.centerGraphic === 'proj') {
       if (state.innings === 1) {
           document.getElementById('projInns1').style.display = 'block'; document.getElementById('projInns2').style.display = 'none';
@@ -407,7 +387,6 @@ onValue(ref(db, "current_match"), snap => {
       }
   }
 
-  // FOW
   if(renderTarget === 'fow') {
     document.getElementById('fowTitle').innerText = `FALL OF WICKETS${isRecall?' (1ST INN)':''}`;
     document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score}</span></div>`).join('');
@@ -465,7 +444,6 @@ onValue(ref(db, "current_match"), snap => {
              svgHtml += `<text x="${x + barW/2}" y="${y - 20 - (wc*15)}" fill="var(--crimson-2)" font-size="16" font-weight="900" text-anchor="middle">W</text>`;
          }
          
-         // 2-OVER GAP LABEL LOGIC
          if ((actualOvIndex + 1) % 2 === 0) {
              svgHtml += `<text x="${x + barW/2}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`;
          }
@@ -509,7 +487,6 @@ onValue(ref(db, "current_match"), snap => {
          svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
       }
       
-      // 2-OVER GAP TICKS
       for(let i=2; i<=maxOvers; i+=2) {
          let x = padX + (i/maxOvers * graphW);
          svgHtml += `<text x="${x}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" text-anchor="middle">${i}</text>`;
