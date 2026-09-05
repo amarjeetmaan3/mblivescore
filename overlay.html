@@ -3,43 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>MB Live Score — Premium Overlay</title>
+<title>MB Live Studio — Premium Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* =====================================================
-   ICC / STAR SPORTS PREMIUM BROADCAST DESIGN
+   PREMIUM BROADCAST CSS (ICC / TV STYLE)
 ===================================================== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; font-family: 'Montserrat', sans-serif; color: #fff; pointer-events: none; text-transform: uppercase; }
 #overlay { position: fixed; inset: 0; overflow: hidden; }
 
-/* MAIN SCOREBUG */
-.scorebug { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; opacity: 0; transition: opacity 0.4s ease, transform 0.4s; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.8)); z-index: 10;}
+/* SCOREBUG */
+.scorebug { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; opacity: 0; transition: 0.4s ease; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.8)); z-index: 10;}
 .scorebug.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* Slanted Info Bar */
 .match-info { background: #0ea5e9; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: 2px; padding: 4px 20px 3px 20px; align-self: flex-start; margin-left: 20px; clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+.scorebug-main { display: flex; height: 55px; background: rgba(5, 10, 20, 0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; backdrop-filter: blur(10px); }
 
-/* Horizontal Strip */
-.scorebug-main-strip { display: flex; height: 55px; background: rgba(5, 10, 20, 0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; backdrop-filter: blur(10px); }
-
-/* Team Name (Slanted) */
 .team { display: flex; align-items: center; padding: 0 25px; font-family: 'Teko', sans-serif; font-size: 40px; font-weight: 700; letter-spacing: 1px; }
 .team.left { background: linear-gradient(135deg, #1d4ed8, #0ea5e9); clip-path: polygon(0 0, 100% 0, calc(100% - 15px) 100%, 0 100%); margin-right: -10px; z-index: 2; }
-.team.right { display: none; /* Hidden in main bug, handled dynamically if needed */ }
+.team.right { display: none; } /* Hidden for compact modern look */
 
-/* Score Area */
 .score-main { display: flex; align-items: baseline; padding: 0 25px 0 35px; border-right: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); }
 .score-value { font-family: 'Teko', sans-serif; font-size: 50px; font-weight: 700; color: #facc15; line-height: 55px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .overs-value { font-size: 15px; font-weight: 700; color: #cbd5e1; margin-left: 10px; }
 
+/* BALLS STRIP */
+.balls-strip { display: flex; align-items: center; padding: 0 15px; gap: 5px; min-width: 150px; }
+.ball { width: 22px; height: 22px; border-radius: 50%; background: #1e293b; color: #fff; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.1); }
+.ball.b4 { background: #2563eb; } .ball.b6 { background: #10b981; } .ball.bw { background: #ef4444; }
+
 /* TARGET STRIP */
-.target-strip { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); min-width: 380px; padding: 5px 25px; background: rgba(5, 10, 20, 0.95); border: 1px solid #0ea5e9; border-bottom: none; border-radius: 6px 6px 0 0; text-align: center; opacity: 0; transition: 0.3s; z-index: 9;}
+.target-strip { position: absolute; bottom: 95px; left: 50%; transform: translateX(-50%); min-width: 380px; padding: 5px 25px; background: rgba(5, 10, 20, 0.95); border: 1px solid #0ea5e9; border-bottom: none; border-radius: 6px 6px 0 0; text-align: center; opacity: 0; transition: 0.3s; z-index: 9;}
 .target-strip.show { opacity: 1; }
 .target-main { font-size: 13px; font-weight: 900; color: #fff; letter-spacing: 1px; }
 .target-secondary { margin-top: 2px; font-size: 11px; font-weight: 700; color: #0ea5e9; }
 
-/* BATTER LOWER THIRD */
+/* LOWER THIRDS */
 .lower-third { position: absolute; bottom: 115px; left: 45px; width: 340px; opacity: 0; transform: translateX(-30px); transition: 0.4s ease; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
 .lower-third.show { opacity: 1; transform: translateX(0); }
 .lt-top { height: 28px; background: #0ea5e9; padding: 0 15px; display: flex; align-items: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #fff; }
@@ -49,7 +49,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
 .lt-runs { font-family: 'Teko', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1; }
 .lt-balls { font-size: 10px; font-weight: 700; color: #94a3b8; margin-top: 2px; }
 
-/* BOWLER LOWER THIRD */
 .bowler-card { position: absolute; bottom: 115px; right: 45px; width: 340px; opacity: 0; transform: translateX(30px); transition: 0.4s ease; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
 .bowler-card.show { opacity: 1; transform: translateX(0); }
 .bowler-top { height: 28px; background: #6366f1; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #fff; }
@@ -57,7 +56,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
 .bowler-name { font-size: 16px; font-weight: 800; color: #c084fc; }
 .bowler-figures { font-family: 'Teko', sans-serif; font-size: 32px; font-weight: 700; color: #facc15; line-height: 1; }
 
-/* CENTER EVENT POPUP */
+/* EVENT POPUP */
 .event { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.6); opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-align: center; }
 .event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .event-label { display: inline-block; padding: 6px 24px; background: #0ea5e9; border-radius: 4px 4px 0 0; font-size: 12px; font-weight: 900; letter-spacing: 2px; }
@@ -72,7 +71,16 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
 .part-score { font-family: 'Teko', sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1; text-align: center;}
 .part-meta { font-size: 10px; font-weight: 700; color: #94a3b8; text-align: center; }
 
-/* OTHER DISPLAYS */
+/* COMMENTARY & POWERPLAY */
+.commentary { position: absolute; left: 45px; bottom: 40px; max-width: 450px; background: rgba(5, 10, 20, 0.95); border-left: 4px solid #0ea5e9; padding: 10px 15px; opacity: 0; transform: translateX(-30px); transition: 0.3s; }
+.commentary.show { opacity: 1; transform: translateX(0); }
+.commentary-title { font-size: 10px; color: #38bdf8; font-weight: 900; letter-spacing: 1px; }
+.commentary-text { margin-top: 4px; font-size: 14px; font-weight: 700; line-height: 1.4; }
+
+.powerplay { position: absolute; top: 120px; right: 45px; padding: 8px 16px; background: #f59e0b; color: #000; border-radius: 4px; font-size: 12px; font-weight: 900; opacity: 0; transition: 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.powerplay.show { opacity: 1; }
+
+/* SCREENS */
 .innings-break, .result { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(3, 7, 11, 0.85); opacity: 0; transition: 0.4s; backdrop-filter: blur(8px); }
 .innings-break.show, .result.show { opacity: 1; }
 .break-box, .result-box { width: min(620px, 90vw); background: #0f172a; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 1px solid #334155; }
@@ -84,37 +92,33 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
 .break-info span { font-size: 10px; font-weight: 700; color: #94a3b8; }
 .result-team { padding: 30px 15px 10px; font-size: 36px; font-weight: 900; text-align: center; color: #facc15; }
 .result-text { padding: 0 15px 30px; font-size: 16px; font-weight: 700; color: #cbd5e1; text-align: center; }
-.commentary { position: absolute; left: 45px; bottom: 40px; max-width: 450px; background: rgba(5, 10, 20, 0.95); border-left: 4px solid #0ea5e9; padding: 10px 15px; opacity: 0; transform: translateX(-30px); transition: 0.3s; }
-.commentary.show { opacity: 1; transform: translateX(0); }
-.commentary-title { font-size: 10px; color: #38bdf8; font-weight: 900; letter-spacing: 1px; }
-.commentary-text { margin-top: 4px; font-size: 14px; font-weight: 700; line-height: 1.4; }
-.powerplay { position: absolute; top: 120px; right: 45px; padding: 8px 16px; background: #f59e0b; color: #000; border-radius: 4px; font-size: 12px; font-weight: 900; opacity: 0; transition: 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-.powerplay.show { opacity: 1; }
 </style>
 </head>
 <body>
+
 <div id="overlay">
 
   <!-- SCOREBUG -->
   <div id="scorebug" class="scorebug">
     <div class="match-info" id="matchInfo">MB LIVE SCORE</div>
-    <div class="scorebug-main-strip">
+    <div class="scorebug-main">
       <div class="team left"><span id="teamAName" class="team-name">TEAM A</span></div>
       <div class="score-main">
-        <span id="scoreValue" class="runs">0/0</span>
-        <span id="oversValue" class="overs">(0.0)</span>
+        <span id="scoreValue" class="score-value">0/0</span>
+        <span id="oversValue" class="overs-value">(0.0)</span>
       </div>
+      <div class="balls-strip" id="ballsStrip"></div>
       <div class="team right"><span id="teamBName" class="team-name">TEAM B</span></div>
     </div>
   </div>
 
-  <!-- TARGET -->
+  <!-- TARGET STRIP -->
   <div id="targetStrip" class="target-strip">
     <div id="targetMain" class="target-main"></div>
     <div id="targetSecondary" class="target-secondary"></div>
   </div>
 
-  <!-- BATTER LOWER THIRD -->
+  <!-- BATTER -->
   <div id="lowerThird" class="lower-third">
     <div class="lt-top">BATTING</div>
     <div class="lt-body">
@@ -126,7 +130,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
     </div>
   </div>
 
-  <!-- BOWLER LOWER THIRD -->
+  <!-- BOWLER -->
   <div id="bowlerCard" class="bowler-card">
     <div class="bowler-top"><span>BOWLING</span><span id="bowlerOvers">0.0</span></div>
     <div class="bowler-body">
@@ -135,7 +139,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
     </div>
   </div>
 
-  <!-- EVENT GRAPHIC -->
+  <!-- EVENT -->
   <div id="event" class="event">
     <div id="eventLabel" class="event-label">MB LIVE</div>
     <div id="eventMain" class="event-main">EVENT</div>
@@ -151,10 +155,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
     </div>
   </div>
 
-  <!-- POWERPLAY -->
   <div id="powerplay" class="powerplay">POWERPLAY</div>
 
-  <!-- COMMENTARY -->
   <div id="commentary" class="commentary">
     <div class="commentary-title">LIVE COMMENTARY</div>
     <div id="commentaryText" class="commentary-text">—</div>
@@ -185,7 +187,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: transparen
 </div>
 
 <!-- =========================================================================
-     YOUR 100% ORIGINAL JAVASCRIPT FROM SOURCE 1 (DO NOT CHANGE A SINGLE LINE)
+     FIXED JAVASCRIPT LOGIC (DATA STRUCTURE BUGS RESOLVED)
 ========================================================================= -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -206,8 +208,7 @@ const db=getDatabase(app);
 const matchRef=ref(db, "current_match");
 
 const $=id=> document.getElementById(id);
-
-let eventTimer=null; let lowerTimer=null; let bowlerTimer=null; let partnershipTimer=null; let breakTimer=null; let resultTimer=null; let commentaryTimer=null;
+let eventTimer=null; let commentaryTimer=null; let breakTimer=null;
 
 function show(el){ el.classList.add("show"); }
 function hide(el){ el.classList.remove("show"); }
@@ -215,61 +216,106 @@ function setText(id,text){ $(id).textContent=text; }
 function number(x){ return Number(x)||0; }
 function oversFromBalls(balls){ balls=number(balls); return (Math.floor(balls/6)+"."+(balls%6)); }
 function runRate(runs,balls){ if(!balls)return "0.00"; return (runs/(balls/6)).toFixed(2); }
-function extrasTotal(i){ if(!i?.extras)return 0; return (number(i.extras.wide)+number(i.extras.noBall)+number(i.extras.bye)+number(i.extras.legBye)+number(i.extras.penalty)); }
+function extrasTotal(i){ if(!i?.extras)return 0; return (number(i.extras.wides)+number(i.extras.noBalls)+number(i.extras.byes)+number(i.extras.legByes)+number(i.extras.penalty)); }
 
 function updateScorebug(state,i){
   const g=state.graphics||{};
   if(g.master===false || g.scorebug===false){ hide($("scorebug")); return; }
-  setText("teamAName", state.meta.teamA||"TEAM A"); setText("teamBName", state.meta.teamB||"TEAM B");
-  setText("scoreValue", `${i.runs||0}/${i.wickets||0}`); setText("oversValue", `(${i.overNo||0}.${i.legalBalls||0})`);
+  
+  // FIXED: Fetching Team Names from Correct Source 2 Structure
+  const batKey = i.battingTeam || "A";
+  const bowlKey = i.bowlingTeam || "B";
+  setText("teamAName", state.teams[batKey]?.shortName || state.teams[batKey]?.name || "TEAM A");
+  setText("teamBName", state.teams[bowlKey]?.shortName || state.teams[bowlKey]?.name || "TEAM B");
+  
+  setText("scoreValue", `${i.runs||0}/${i.wickets||0}`); 
+  setText("oversValue", `(${oversFromBalls(i.legalBalls)})`); // FIXED: Using oversFromBalls
   setText("matchInfo", `${state.meta.tournament||""} • ${state.meta.maxOvers||20} OV`);
+
+  // Auto Render Balls Strip from ballHistory
+  const strip = $("ballsStrip");
+  strip.innerHTML = "";
+  if(i.ballHistory && i.ballHistory.length > 0) {
+      const curOver = Math.floor(i.legalBalls/6);
+      const balls = i.ballHistory.filter(b => b.over === curOver);
+      balls.forEach(b => {
+          let txt = b.runsBat; let cls = 'ball';
+          if(b.extras && b.extras.runs > 0) txt = b.extras.type;
+          if(b.wicket) txt = 'W';
+          if(txt===4) cls+=' b4'; if(txt===6) cls+=' b6'; if(txt==='W') cls+=' bw';
+          strip.innerHTML += `<div class="${cls}">${txt}</div>`;
+      });
+  }
+
   show($("scorebug"));
 }
 
 function updateTarget(state,i){
   const g=state.graphics||{};
-  if(g.master===false || g.target===false || state.inningsNo!==2 || i.target==null){ hide($("targetStrip")); return; }
-  const target=number(i.target); const need=Math.max(0, target-number(i.runs)); const ballsUsed=number(i.overNo)*6+number(i.legalBalls); const totalBalls=number(state.meta.maxOvers)*6; const ballsLeft=Math.max(0, totalBalls-ballsUsed);
+  // FIXED: Use currentInnings (0 or 1)
+  const isChase = state.currentInnings === 1;
+  if(g.master===false || g.target===false || !isChase || i.target==null){ hide($("targetStrip")); return; }
+  
+  const target=number(i.target); 
+  const need=Math.max(0, target-number(i.runs)); 
+  const ballsUsed=number(i.legalBalls); 
+  const totalBalls=number(state.meta.maxOvers)*6; 
+  const ballsLeft=Math.max(0, totalBalls-ballsUsed);
   let rrr="0.00"; if(ballsLeft>0){ rrr=(need/(ballsLeft/6)).toFixed(2); }
-  setText("targetMain", `TARGET ${target}  •  NEED ${need}`); setText("targetSecondary", `BALLS ${ballsLeft}  •  REQUIRED RUN RATE ${rrr}`);
+  
+  setText("targetMain", `TARGET ${target}  •  NEED ${need}`); 
+  setText("targetSecondary", `BALLS ${ballsLeft}  •  REQUIRED RUN RATE ${rrr}`);
   show($("targetStrip"));
 }
 
 function updateBatter(state,i){
   const g=state.graphics||{};
-  if(g.master===false || g.lowerThird===false || i.striker==null || i.striker<0){ hide($("lowerThird")); return; }
-  const b=i.batting?.[i.striker]; if(!b){ hide($("lowerThird")); return; }
-  setText("batterName", b.name||"—"); setText("batterRuns", `${number(b.runs)}${b.out?"":"*"}`); setText("batterBalls", `${number(b.balls)} BALLS • ${number(b.fours)}x4 • ${number(b.sixes)}x6`);
+  if(g.master===false || g.batting===false || !i.striker){ hide($("lowerThird")); return; }
+  const b=i.battingStats?.[i.striker]; if(!b){ hide($("lowerThird")); return; }
+  
+  // FIXED: Correctly matching player ID to get Name
+  const team = state.teams[i.battingTeam];
+  const player = team?.players.find(p => p.id === i.striker);
+  
+  setText("batterName", player?.name||"—"); 
+  setText("batterRuns", `${number(b.runs)}${b.out?"":"*"}`); 
+  setText("batterBalls", `${number(b.balls)} BALLS • ${number(b.fours)}x4 • ${number(b.sixes)}x6`);
   show($("lowerThird"));
 }
 
 function updateBowler(state,i){
   const g=state.graphics||{};
-  if(g.master===false || g.bowling===false){ hide($("bowlerCard")); return; }
-  const b=i.bowling?.[i.bowler]; if(!b){ hide($("bowlerCard")); return; }
-  setText("bowlerName", b.name||"—"); setText("bowlerOvers", oversFromBalls(b.balls)); setText("bowlerFigures", `${number(b.wickets)}/${number(b.runs)}`);
+  if(g.master===false || g.bowling===false || !i.bowler){ hide($("bowlerCard")); return; }
+  const b=i.bowlingStats?.[i.bowler]; if(!b){ hide($("bowlerCard")); return; }
+  
+  // FIXED: Correctly matching player ID to get Name
+  const team = state.teams[i.bowlingTeam];
+  const player = team?.players.find(p => p.id === i.bowler);
+  
+  setText("bowlerName", player?.name||"—"); 
+  setText("bowlerOvers", oversFromBalls(b.balls) + " OV"); 
+  setText("bowlerFigures", `${number(b.wickets)}/${number(b.runs)}`);
   show($("bowlerCard"));
 }
 
 function updatePartnership(state,i){
   const g=state.graphics||{};
   if(g.master===false || g.partnership===false){ hide($("partnership")); return; }
-  let runs=0;
-  if(Array.isArray(i.fallOfWickets) && i.fallOfWickets.length){ const last=i.fallOfWickets[i.fallOfWickets.length-1]; runs=Math.max(0, number(i.runs)-number(last.score)); }else{ runs=number(i.runs); }
-  setText("partRuns", runs); setText("partBalls", number(i.legalBalls)+number(i.overNo)*6);
+  setText("partRuns", i.currentPartnership?.runs || 0); 
+  setText("partBalls", i.currentPartnership?.balls || 0);
   show($("partnership"));
 }
 
 function updatePowerplay(state,i){
   const g=state.graphics||{};
-  if(g.master===false || g.powerplay===false || !i.powerplay?.enabled){ hide($("powerplay")); return; }
-  if(number(i.overNo)<number(i.powerplay.overs)){ show($("powerplay")); }else{ hide($("powerplay")); }
+  if(g.master===false || g.powerplay===false || !i.powerplay){ hide($("powerplay")); return; }
+  show($("powerplay"));
 }
 
 function updateCommentary(state){
   const g=state.graphics||{};
-  if(g.master===false || g.commentary===false || !state.lastEvent?.text){ hide($("commentary")); return; }
-  setText("commentaryText", state.lastEvent.text); show($("commentary"));
+  if(g.master===false || g.commentary===false || !state.events || state.events.length===0){ hide($("commentary")); return; }
+  setText("commentaryText", state.events[0].text); show($("commentary"));
   clearTimeout(commentaryTimer); commentaryTimer=setTimeout(()=>{ hide($("commentary")); },4500);
 }
 
@@ -283,45 +329,55 @@ function eventData(state,i){
   $("eventLabel").style.background = "#0ea5e9";
 
   switch(event){
-    case"FOUR": label="BOUNDARY"; main="FOUR"; sub=`${i.batting?.[i.striker]?.name||""}`; break;
-    case"SIX": label="MAXIMUM"; main="SIX"; sub=`${i.batting?.[i.striker]?.name||""}`; 
-      evBox.style.borderColor = "#059669"; evBox.style.boxShadow = "0 0 50px rgba(5, 150, 105, 0.4)"; $("eventLabel").style.background = "#059669"; break;
-    case"WICKET": label="WICKET"; main="WICKET"; sub="A wicket has fallen"; 
-      evBox.style.borderColor = "#ef4444"; evBox.style.boxShadow = "0 0 50px rgba(239, 68, 68, 0.4)"; $("eventLabel").style.background = "#ef4444"; break;
+    case"FOUR": label="BOUNDARY"; main="FOUR"; break;
+    case"SIX": label="MAXIMUM"; main="SIX"; evBox.style.borderColor = "#10b981"; evBox.style.boxShadow = "0 0 50px rgba(16, 185, 129, 0.4)"; $("eventLabel").style.background = "#10b981"; break;
+    case"WICKET": label="WICKET"; main="WICKET"; sub="MASSIVE BREAKTHROUGH"; evBox.style.borderColor = "#ef4444"; evBox.style.boxShadow = "0 0 50px rgba(239, 68, 68, 0.4)"; $("eventLabel").style.background = "#ef4444"; break;
     case"FIFTY": label="MILESTONE"; main="FIFTY"; break;
     case"HUNDRED": label="MILESTONE"; main="HUNDRED"; break;
     case"PARTNERSHIP": label="PARTNERSHIP"; main="PARTNERSHIP"; break;
-    case"SCORECARD": label="MATCH"; main="SCORECARD"; break;
-    case"RESULT": label="MATCH"; main="RESULT"; break;
     case"MILESTONE": label="MILESTONE"; main=g.eventText||"MILESTONE"; break;
     default: main=g.eventText||event;
   }
   setText("eventLabel",label); setText("eventMain",main); setText("eventSub",sub||"MB LIVE SCORE"); show($("event"));
-  clearTimeout(eventTimer); eventTimer=setTimeout(()=>{ hide($("event")); },5000);
+  clearTimeout(eventTimer); eventTimer=setTimeout(()=>{ hide($("event")); },4000);
 }
 
 function updateInningsBreak(state,i){
-  if(!i.finished || state.inningsNo!==1){ hide($("inningsBreak")); return; }
+  // FIXED: Ensure it only triggers if first innings is completed
+  if(!i.completed || state.currentInnings !== 0){ hide($("inningsBreak")); return; }
   const g=state.graphics||{}; if(g.master===false || g.inningsBreak===false){ hide($("inningsBreak")); return; }
-  setText("breakScore", `${i.runs}/${i.wickets}`); setText("breakOvers", `${i.overNo}.${i.legalBalls}`); setText("breakExtras", extrasTotal(i)); setText("breakRR", runRate(i.runs, i.overNo*6+i.legalBalls));
-  show($("inningsBreak")); clearTimeout(breakTimer); breakTimer=setTimeout(()=>{ hide($("inningsBreak")); },8000);
+  
+  setText("breakScore", `${i.runs}/${i.wickets}`); 
+  setText("breakOvers", oversFromBalls(i.legalBalls)); 
+  setText("breakExtras", extrasTotal(i)); 
+  setText("breakRR", runRate(i.runs, i.legalBalls));
+  show($("inningsBreak")); 
+  clearTimeout(breakTimer); breakTimer=setTimeout(()=>{ hide($("inningsBreak")); },8000);
 }
 
 function updateResult(state){
-  if(state.status!=="WON"){ hide($("result")); return; }
+  if(state.result?.status !== "ended" && state.result?.status !== "completed"){ hide($("result")); return; }
   const g=state.graphics||{}; if(g.master===false || g.result===false){ hide($("result")); return; }
-  setText("resultTeam", state.meta[state.inningsNo===1?"teamA":"teamB"]||"WINNER"); setText("resultText", state.result||"MATCH COMPLETE"); show($("result"));
+  
+  // FIXED: Correct winner logic
+  const winnerKey = state.result?.winner;
+  const teamName = winnerKey ? state.teams[winnerKey]?.name : "MATCH COMPLETE";
+  
+  setText("resultTeam", teamName); 
+  setText("resultText", state.result?.text || ""); 
+  show($("result"));
 }
 
 let lastHistoryLength=0;
 function detectAutomaticEvent(state,i){
   const g=state.graphics||{}; if(!g.auto || g.master===false) return;
-  const history=state.ballHistory||[]; if(history.length<=lastHistoryLength){ lastHistoryLength=history.length; return; }
+  const history=i.ballHistory||[]; if(history.length<=lastHistoryLength){ lastHistoryLength=history.length; return; }
+  
   const latest=history[history.length-1]; lastHistoryLength=history.length;
-  const text=String(latest?.text||"").toUpperCase();
-  if(text==="4"){ g.activeEvent="FOUR"; renderEventFromState(state,i); return; }
-  if(text==="6"){ g.activeEvent="SIX"; renderEventFromState(state,i); return; }
-  if(text==="W"){ g.activeEvent="WICKET"; renderEventFromState(state,i); return; }
+  
+  if(latest.runsBat===4){ g.activeEvent="FOUR"; renderEventFromState(state,i); return; }
+  if(latest.runsBat===6){ g.activeEvent="SIX"; renderEventFromState(state,i); return; }
+  if(latest.wicket){ g.activeEvent="WICKET"; renderEventFromState(state,i); return; }
 }
 
 function renderEventFromState(state,i){
@@ -332,18 +388,21 @@ function renderEventFromState(state,i){
   evBox.style.borderColor = "#0ea5e9"; evBox.style.boxShadow = "0 0 50px rgba(14, 165, 233, 0.4)"; $("eventLabel").style.background = "#0ea5e9";
 
   if(event==="FOUR"){ label="BOUNDARY"; main="FOUR"; }
-  if(event==="SIX"){ label="MAXIMUM"; main="SIX"; evBox.style.borderColor = "#059669"; evBox.style.boxShadow = "0 0 50px rgba(5, 150, 105, 0.4)"; $("eventLabel").style.background = "#059669"; }
+  if(event==="SIX"){ label="MAXIMUM"; main="SIX"; evBox.style.borderColor = "#10b981"; evBox.style.boxShadow = "0 0 50px rgba(16, 185, 129, 0.4)"; $("eventLabel").style.background = "#10b981"; }
   if(event==="WICKET"){ label="WICKET"; main="WICKET"; evBox.style.borderColor = "#ef4444"; evBox.style.boxShadow = "0 0 50px rgba(239, 68, 68, 0.4)"; $("eventLabel").style.background = "#ef4444"; }
   if(event==="MILESTONE"){ label="MILESTONE"; main=g.eventText||"MILESTONE"; }
+  
   setText("eventLabel",label); setText("eventMain",main); setText("eventSub",sub||"MB LIVE SCORE"); show($("event"));
   clearTimeout(eventTimer); eventTimer=setTimeout(()=>{ hide($("event")); },4500);
 }
 
 function render(state){
-  if(!state?.meta?.teamA) return;
-  const innings=state.innings?.[number(state.inningsNo)-1];
+  if(!state?.teams?.A) return;
+  const idx = state.currentInnings !== undefined ? state.currentInnings : 0;
+  const innings = state.innings?.[idx];
   if(!innings) return;
-  updateScorebug(state,innings); updateTarget(state,innings); updateBatter(state,innings); updateBowler(state,innings); updatePartnership(state,innings); updatePowerplay(state,innings); updateCommentary(state); eventData(state,innings); updateInningsBreak(state,innings); updateResult(state); detectAutomaticEvent(state,innings);
+  
+  updateScorebug(state, innings); updateTarget(state, innings); updateBatter(state, innings); updateBowler(state, innings); updatePartnership(state, innings); updatePowerplay(state, innings); updateCommentary(state); eventData(state, innings); updateInningsBreak(state, innings); updateResult(state); detectAutomaticEvent(state, innings);
 }
 
 onValue(matchRef, snapshot=>{
