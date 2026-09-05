@@ -20,11 +20,23 @@
   .scorebug {
     position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: stretch; min-width: 920px;
-    opacity: 0; transition: opacity .35s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
+    opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
   }
   .scorebug.show { opacity: 1; }
-  .brand-bar { align-self: flex-start; margin-left: 22px; background: var(--gold); color: var(--navy-deep); font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 13px; padding: 4px 18px; letter-spacing: 3px; border-radius: 5px 5px 0 0; }
-  .main-strip { display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%); border: 1px solid var(--line); border-bottom: none; overflow: hidden; height: 100px; border-radius: 8px 8px 0 0; }
+
+  .brand-bar {
+    align-self: flex-start; margin-left: 22px; background: var(--gold); color: var(--navy-deep);
+    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 13px; padding: 4px 18px; letter-spacing: 3px; border-radius: 5px 5px 0 0;
+  }
+
+  .main-strip {
+    display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    border: 1px solid var(--line); border-bottom: none; overflow: hidden; height: 100px; border-radius: 8px 8px 0 0;
+  }
+
+  #bugNormal { display: flex; align-items: stretch; width: 100%; }
+  #bugResult { display: none; justify-content: center; align-items: center; width: 100%; background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); letter-spacing: 2px; }
+
   .team-block { background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 1px; padding: 0 24px; display: flex; align-items: center; border-right: 3px solid var(--crimson); min-width: 140px; justify-content: center; }
   .score-block { display: flex; align-items: center; padding: 0 24px; border-right: 1px solid var(--line); }
   .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 58px; line-height: 0.9; transform: translateY(4px); }
@@ -43,7 +55,8 @@
   .bowler-info .fig { font-size: 16px; color: var(--muted); margin-left: auto; }
   .over-track { display: flex; flex-wrap: wrap; gap: 5px; max-width: 220px; }
   .ball-pill { min-width: 24px; height: 24px; padding: 0 4px; border-radius: 50%; background: var(--navy-3); color: var(--ink); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
-  .bottom-strip { background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-2) 100%); color: #fff; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 30px; text-align: center; opacity: 0; transition: opacity .3s; }
+
+  .bottom-strip { background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-2) 100%); color: #fff; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 30px; text-align: center; opacity: 0; transition: opacity .15s; }
   .bottom-strip.show { opacity: 1; }
 
   /* ================= CENTER GRAPHICS ================= */
@@ -51,7 +64,7 @@
     position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
     background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
     border: 2px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
-    opacity: 0; pointer-events: none; transition: all .4s ease; z-index: 5;
+    opacity: 0; pointer-events: none; transition: all .15s ease; z-index: 5;
     display: flex; flex-direction: column; overflow: hidden;
   }
   .center-panel.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
@@ -96,7 +109,7 @@
   .popup-event {
     position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
     background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
-    padding: 22px 70px; border: 3px solid var(--gold); border-radius: 14px; text-align: center; opacity: 0; transition: all .35s; filter: drop-shadow(0 18px 34px rgba(0,0,0,0.7)); z-index: 20;
+    padding: 22px 70px; border: 3px solid var(--gold); border-radius: 14px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 18px 34px rgba(0,0,0,0.7)); z-index: 20;
   }
   .popup-event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 96px; line-height: 0.9; color: #fff; letter-spacing: 2px; }
@@ -108,31 +121,41 @@
 <div class="scorebug" id="scorebug">
   <div class="brand-bar">M.B. LIVE STUDIO</div>
   <div class="main-strip">
-    <div class="team-block" id="ovTeam">IND</div>
-    <div class="score-block">
-      <div class="runs num" id="ovScore">0/0</div>
-      <div class="overs" id="ovOvers">(0.0)</div>
-    </div>
-    <div class="rate-block">
-      <div class="label">CRR</div>
-      <div class="value" id="ovCrr">0.00</div>
-      <div id="ovProjWrap" style="display:none; margin-top:4px;">
-        <div class="label">PROJ</div>
-        <div class="value" id="ovProj" style="color:var(--gold-2); font-size:16px;">0</div>
+      
+      <!-- Normal Scorebug View -->
+      <div id="bugNormal">
+        <div class="team-block" id="ovTeam">IND</div>
+        <div class="score-block">
+          <div class="runs num" id="ovScore">0/0</div>
+          <div class="overs" id="ovOvers">(0.0)</div>
+        </div>
+        <div class="rate-block">
+          <div class="label">CRR</div>
+          <div class="value" id="ovCrr">0.00</div>
+          <div id="ovProjWrap" style="display:none; margin-top:4px;">
+            <div class="label">PROJ</div>
+            <div class="value" id="ovProj" style="color:var(--gold-2); font-size:16px;">0</div>
+          </div>
+          <div id="ovRrrWrap" style="display:none; margin-top:4px;">
+            <div class="label">REQ</div>
+            <div class="value" id="ovRrr" style="color:var(--crimson-2); font-size:16px;">0.00</div>
+          </div>
+        </div>
+        <div class="batters-block">
+          <div class="batter-row" id="ovStrikerRow"><span id="ovStrikerName">—</span><span class="fig" id="ovStrikerFig"></span></div>
+          <div class="batter-row" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span><span class="fig" id="ovNonStrikerFig"></span></div>
+        </div>
+        <div class="bowler-block">
+          <div class="bowler-info"><span class="label">BOWLER</span><span class="name" id="ovBowlerName">—</span><span class="fig" id="ovBowlerFig">0-0-0-0</span></div>
+          <div class="over-track" id="ovBalls"></div>
+        </div>
       </div>
-      <div id="ovRrrWrap" style="display:none; margin-top:4px;">
-        <div class="label">REQ</div>
-        <div class="value" id="ovRrr" style="color:var(--crimson-2); font-size:16px;">0.00</div>
+      
+      <!-- Match Result View (Hides everything else when active) -->
+      <div id="bugResult">
+          <span id="bugResultText"></span>
       </div>
-    </div>
-    <div class="batters-block">
-      <div class="batter-row" id="ovStrikerRow"><span id="ovStrikerName">—</span><span class="fig" id="ovStrikerFig"></span></div>
-      <div class="batter-row" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span><span class="fig" id="ovNonStrikerFig"></span></div>
-    </div>
-    <div class="bowler-block">
-      <div class="bowler-info"><span class="label">BOWLER</span><span class="name" id="ovBowlerName">—</span><span class="fig" id="ovBowlerFig">0-0-0-0</span></div>
-      <div class="over-track" id="ovBalls"></div>
-    </div>
+
   </div>
   <div class="bottom-strip" id="bottomStrip"></div>
 </div>
@@ -196,7 +219,7 @@
 <div class="center-panel" id="graphic-result">
   <div class="center-title">MATCH RESULT</div>
   <div style="padding: 40px; text-align:center; font-family:'Bebas Neue', sans-serif; font-size: 54px; letter-spacing: 2px; color: var(--gold-2); line-height:1;">
-      <span id="resultText">IND WON BY 5 WICKETS</span>
+      <span id="resultText"></span>
   </div>
 </div>
 
@@ -214,18 +237,22 @@ const db = getDatabase(app);
 
 function fmtOvers(balls) { return `${Math.floor(balls/6)}.${balls%6}`; }
 
-// Helper for dynamic graph scaling
 function getNiceMax(maxVal, ticks) {
     if(maxVal <= 0) return 10;
     let unrounded = maxVal / ticks;
     let mag = Math.pow(10, Math.floor(Math.log10(unrounded)));
     let norm = unrounded / mag;
-    let step;
-    if(norm <= 1) step = 1 * mag;
-    else if(norm <= 2) step = 2 * mag;
-    else if(norm <= 5) step = 5 * mag;
-    else step = 10 * mag;
+    let step = (norm <= 1) ? 1 * mag : (norm <= 2) ? 2 * mag : (norm <= 5) ? 5 * mag : 10 * mag;
     return step * ticks;
+}
+
+function getMatchResultText(st) {
+    if(!st.firstInnings) return "INNINGS COMPLETE";
+    const batName = st.meta.batTeam === 'A' ? st.meta.tA : st.meta.tB;
+    const bowlName = st.firstInnings.team === 'A' ? st.meta.tA : st.meta.tB;
+    if(st.score >= st.target) return `${batName} WON BY ${(st.meta.squadSize - 1) - st.wickets} WICKETS`;
+    if(st.score === st.target - 1) return "MATCH TIED";
+    return `${bowlName} WON BY ${st.target - 1 - st.score} RUNS`;
 }
 
 onValue(ref(db, "current_match"), snap => {
@@ -238,6 +265,16 @@ onValue(ref(db, "current_match"), snap => {
 
   const bug = document.getElementById('scorebug');
   if(g.scorebug) bug.classList.add('show'); else bug.classList.remove('show');
+  
+  // Transform Scorebug if Match Over
+  if(state.innings === 2 && state.inningsOver) {
+      document.getElementById('bugNormal').style.display = 'none';
+      document.getElementById('bugResult').style.display = 'flex';
+      document.getElementById('bugResultText').innerText = getMatchResultText(state);
+  } else {
+      document.getElementById('bugNormal').style.display = 'flex';
+      document.getElementById('bugResult').style.display = 'none';
+  }
   
   document.getElementById('ovTeam').innerText = batTeamName;
   document.getElementById('ovScore').innerText = `${state.score}/${state.wickets}`;
@@ -311,12 +348,7 @@ onValue(ref(db, "current_match"), snap => {
 
   // RESULT
   if(g.centerGraphic === 'result' && state.inningsOver) {
-      let winText = "MATCH TIED";
-      if(state.innings === 2) {
-         if(state.score >= state.target) winText = `${batTeamName} WON BY ${(state.meta.squadSize - 1) - state.wickets} WICKETS`;
-         else if(state.score < state.target - 1) winText = `${state.firstInnings.team === 'A' ? state.meta.tA : state.meta.tB} WON BY ${state.target - 1 - state.score} RUNS`;
-      } else { winText = "INNINGS COMPLETE"; }
-      document.getElementById('resultText').innerText = winText;
+      document.getElementById('resultText').innerText = getMatchResultText(state);
   }
 
   // PARTNERSHIP
@@ -381,7 +413,7 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score}</span></div>`).join('');
   }
 
-  // 6. SVG BAR CHART (Runs per over with vertically stacked Ws and dynamic axis)
+  // 6. SVG BAR CHART (2 OVER GAP)
   if(renderTarget === 'chart') {
       document.getElementById('chartTitle').innerText = `RUNS PER OVER${isRecall?' (1ST INN)':''}`;
       let hist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
@@ -396,20 +428,18 @@ onValue(ref(db, "current_match"), snap => {
 
       let displayOvers = oversData.slice(-20);
       let rawMax = Math.max(10, ...displayOvers);
-      let maxVal = getNiceMax(rawMax, 4); // Divide by 4 ticks dynamically
+      let maxVal = getNiceMax(rawMax, 4);
 
       let w = 700, h = 230, padX = 40, padY = 30;
       let graphW = w - padX - 10;
       let graphH = h - padY - 20;
       let svgHtml = '';
       
-      // Axes Lines
       svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
       svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-10}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
       svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
       svgHtml += `<text x="${w-40}" y="${h-2}" fill="var(--gold)" font-size="12" font-weight="bold">OVERS</text>`;
 
-      // Dynamic Y-axis Ticks
       for(let i=0; i<=4; i++) {
          let val = Math.round((maxVal / 4) * i);
          let y = 20 + graphH - (val/maxVal * graphH);
@@ -427,25 +457,24 @@ onValue(ref(db, "current_match"), snap => {
          let y = 20 + graphH - barH;
          let isCurrent = (!isRecall && idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
          
-         // Bar
          svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="3" ry="3"/>`;
-         // Run Value
          svgHtml += `<text x="${x + barW/2}" y="${y - 5}" fill="var(--ink)" font-size="14" font-weight="bold" text-anchor="middle">${val}</text>`;
          
-         // Vertically Stacked Wickets
          let wCount = wktsPerOver[actualOvIndex] || 0;
          for(let wc=0; wc<wCount; wc++) {
              svgHtml += `<text x="${x + barW/2}" y="${y - 20 - (wc*15)}" fill="var(--crimson-2)" font-size="16" font-weight="900" text-anchor="middle">W</text>`;
          }
          
-         // X-axis Overs Label
-         svgHtml += `<text x="${x + barW/2}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`;
+         // 2-OVER GAP LABEL LOGIC
+         if ((actualOvIndex + 1) % 2 === 0) {
+             svgHtml += `<text x="${x + barW/2}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`;
+         }
       });
 
       document.getElementById('chartSvg').innerHTML = svgHtml;
   }
 
-  // 7. WORM GRAPH (Dynamic scaling & Comparison)
+  // 7. WORM GRAPH (2 OVER GAP)
   if(renderTarget === 'worm') {
       document.getElementById('wormTitle').innerText = `WORM GRAPH (CUMULATIVE SCORE)${isRecall?' (1ST INN)':''}`;
       let maxOvers = state.meta.maxOvers;
@@ -465,7 +494,7 @@ onValue(ref(db, "current_match"), snap => {
       
       let rawTotal = Math.max(state.score, state.target || 0, 50); 
       if(isRecall) rawTotal = Math.max(state.firstInnings.score, 50);
-      let maxTotal = getNiceMax(rawTotal, 5); // Dynamic 5 ticks
+      let maxTotal = getNiceMax(rawTotal, 5);
 
       let svgHtml = '';
       svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
@@ -479,7 +508,9 @@ onValue(ref(db, "current_match"), snap => {
          svgHtml += `<text x="${padX-5}" y="${y+4}" fill="var(--muted)" font-size="12" text-anchor="end">${val}</text>`;
          svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
       }
-      for(let i=5; i<=maxOvers; i+=5) {
+      
+      // 2-OVER GAP TICKS
+      for(let i=2; i<=maxOvers; i+=2) {
          let x = padX + (i/maxOvers * graphW);
          svgHtml += `<text x="${x}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" text-anchor="middle">${i}</text>`;
          svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+5}" stroke="var(--muted)"/>`;
