@@ -406,6 +406,7 @@ onValue(ref(db, "current_match"), snap => {
       }
   }
 
+  // FALL OF WICKETS (With Overs added)
   if(renderTarget === 'fow') {
     document.getElementById('fowTitle').innerText = `FALL OF WICKETS${isRecall?' (1ST INN)':''}`;
     document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score} <span style="color:var(--muted); font-size:15px; margin-left:6px;">(${f.overs} Ov)</span></span></div>`).join('');
