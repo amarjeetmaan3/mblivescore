@@ -161,6 +161,7 @@
     </div>
   </div>
 
+  <!-- CENTER GRAPHICS -->
   <div class="card">
     <div class="card-title">
       <span>CENTER GRAPHICS (16:9)</span>
@@ -302,7 +303,11 @@ const app = initializeApp({ apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY", a
 const db = getDatabase(app);
 const liveRef = ref(db, "current_match");
 
-window.state = null; window.timelineHistory = []; window.tempExtraType = ""; window.tempWicketType = ""; window.graphicInningsMode = 'curr';
+window.state = null;
+window.timelineHistory = [];
+window.tempExtraType = "";
+window.tempWicketType = "";
+window.graphicInningsMode = 'curr';
 
 function fmtOvers(balls) { return `${Math.floor(balls/6)}.${balls%6}`; }
 function getOrdinal(n) { const s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
@@ -362,6 +367,9 @@ window.loadMatch = async function(id) {
     if(!loadedState.pastPartnerships) loadedState.pastPartnerships = [];
     if(typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
     
+    // FIX FOR STUCK POPUPS: Always clear active event when loading a match
+    if(loadedState.graphics) { loadedState.graphics.activeEvent = null; }
+    
     state = loadedState;
     const tlSnap = await get(ref(db, `mb_match_timeline/${id}`)); timelineHistory = tlSnap.exists() ? tlSnap.val() : [];
     startController();
@@ -405,6 +413,8 @@ function getBowlerStats(id) { if(!state.bowlerStats[id]) state.bowlerStats[id] =
 
 window.processBall = function(runs) {
   if(state.inningsOver) return; pushSnapshot(`${runs} runs scored`);
+  state.graphics.activeEvent = null; // Clear any old popup instantly
+
   const tBat = state.meta.batTeam; const striker = state.squads[tBat].find(p => p.id === state.striker);
   
   state.score += runs; state.currentOverRuns += runs; state.legalBalls += 1; state.overBalls.push(runs); 
@@ -428,6 +438,7 @@ window.openExtraModal = function(t) {
 
 window.submitExtra = function() {
   closeModal('extraModal'); if(state.inningsOver) return; 
+  state.graphics.activeEvent = null; // Clear old popup
   const extraRuns = parseInt(document.getElementById('extraRunsInput').value) || 0; 
   pushSnapshot(`Extra: ${tempExtraType} + ${extraRuns}`);
   
@@ -501,6 +512,8 @@ window.submitWicket = function() {
 
 window.processRunOut = function(delivery, runs, who, fielderId) {
     if(state.inningsOver) return; pushSnapshot(`Run Out (${delivery}): +${runs}`);
+    state.graphics.activeEvent = null;
+
     const tBat = state.meta.batTeam; const striker = state.squads[tBat].find(p => p.id === state.striker); const bs = getBowlerStats(state.bowler);
     const outId = who === "STRIKER" ? state.striker : state.nonStriker;
     
@@ -528,8 +541,8 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
     const outBatter = state.squads[tBat].find(p => p.id === outId); outBatter.isOut = true;
     const fielder = state.squads[state.meta.bowlTeam].find(p => p.id === fielderId);
     outBatter.dismissalInfo = `run out (${fielder ? fielder.name : ''})`;
-    state.fow.push({ wktNo: state.wickets + 1, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); 
-    state.wickets += 1;
+    state.wickets += 1; 
+    state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); 
     
     let p1B = state.squads[tBat].find(p => p.id === state.partnership.p1); let p2B = state.squads[tBat].find(p => p.id === state.partnership.p2);
     state.pastPartnerships.push({ wktNo: state.wickets, p1Name: p1B ? p1B.name : '', p1Runs: state.partnership.p1Runs, p1Balls: state.partnership.p1Balls, p2Name: p2B ? p2B.name : '', p2Runs: state.partnership.p2Runs, p2Balls: state.partnership.p2Balls, runs: state.partnership.runs, balls: state.partnership.balls });
@@ -547,6 +560,7 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
 
 window.processWicket = function(type, who = "STRIKER", fielderId = null) {
   if(state.inningsOver) return; pushSnapshot(`Wicket: ${type}`); if(type === 'CAUGHT' && !fielderId) openWicketModal('CAUGHT'); if(type === 'CAUGHT' && !fielderId) return; 
+  state.graphics.activeEvent = null;
   state.wickets += 1; state.legalBalls += 1; state.overBalls.push('W');
 
   const batTeam = state.meta.batTeam; const outId = who === "STRIKER" ? state.striker : state.nonStriker; const outBatter = state.squads[batTeam].find(p => p.id === outId); outBatter.isOut = true; outBatter.balls += 1;
@@ -611,6 +625,8 @@ function checkInningsEnd() {
 
 window.startSecondInnings = function() {
   pushSnapshot("Start 2nd Innings"); let finalOverHistory = [...state.overHistory]; if (state.legalBalls % 6 !== 0) finalOverHistory.push(state.currentOverRuns);
+  state.graphics.activeEvent = null; // Clear Popups
+  
   state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory, fow: [...state.fow], batters: JSON.parse(JSON.stringify(state.squads[state.meta.batTeam])), bowlers: JSON.parse(JSON.stringify(state.squads[state.meta.bowlTeam])), bowlerStats: JSON.parse(JSON.stringify(state.bowlerStats)), extras: state.extras, pastPartnerships: [...state.pastPartnerships] };
   const newBat = state.meta.bowlTeam; const newBowl = state.meta.batTeam; state.meta.batTeam = newBat; state.meta.bowlTeam = newBowl;
   state.target = state.firstInnings.score + 1; state.innings = 2; state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = []; state.currentOverRuns = 0; state.overHistory = []; state.fow = []; state.pastPartnerships = []; state.inningsOver = false; state.lastBowler = null; state.striker = state.squads[newBat][0].id; state.nonStriker = state.squads[newBat][1].id; state.bowler = state.squads[newBowl][0].id;
@@ -654,7 +670,22 @@ window.manualPlayerChange = function() {
   if(state.partnership.p2 !== state.striker && state.partnership.p2 !== state.nonStriker) state.partnership.p2 = state.nonStriker;
   syncLiveAndSave(); 
 };
-function triggerAutoGraphic(type) { if(!type) return; state.graphics.activeEvent = type; setTimeout(() => { if(state && state.graphics) { state.graphics.activeEvent = null; set(liveRef, state); } }, 2500); }
+
+// AUTO GRAPHIC BUG FIX (Timer Reset Logic)
+let autoEventTimer = null;
+function triggerAutoGraphic(type) { 
+  if(!type) return; 
+  state.graphics.activeEvent = type; 
+  set(liveRef, state); // Instant Show
+  clearTimeout(autoEventTimer);
+  autoEventTimer = setTimeout(() => { 
+      if(state && state.graphics) { 
+          state.graphics.activeEvent = null; 
+          set(liveRef, state); // Instant Hide
+      } 
+  }, 3500); 
+}
+
 window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); };
 
 function updateUI() {
