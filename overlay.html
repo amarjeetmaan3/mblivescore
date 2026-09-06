@@ -302,6 +302,7 @@ onValue(ref(db, "current_match"), snap => {
       document.getElementById('bugNormal').style.display = 'flex'; document.getElementById('bugResult').style.display = 'none';
   }
   
+  // DYNAMIC TEAM FONT SIZING
   const teamEl = document.getElementById('ovTeam');
   teamEl.innerText = batTeamName;
   if(batTeamName.length > 9) teamEl.style.fontSize = '26px';
@@ -366,6 +367,7 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('partP2Name').innerText = p2Obj ? p2Obj.name + (p2Obj.id===state.striker?'*':'') : '—'; document.getElementById('partP2Score').innerText = `${state.partnership.p2Runs || 0} (${state.partnership.p2Balls || 0})`; 
   }
 
+  // ALL PARTNERSHIPS
   if(renderTarget === 'allpart') {
       document.getElementById('allpartTitle').innerText = `ALL PARTNERSHIPS${isRecall?' (1ST INN)':''}`;
       let pastParts = isRecall ? (state.firstInnings.pastPartnerships || []) : (state.pastPartnerships || []);
