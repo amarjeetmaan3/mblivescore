@@ -24,6 +24,7 @@
   .btn-blue { background: var(--navy-3); border-color: var(--line); color: var(--ink); }
   .btn-accent { background: #3d2c00; border-color: var(--gold); color: var(--gold-2); }
   
+  /* ACTIVE GREEN HIGHLIGHT */
   .btn-active { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
   .btn-disabled { opacity: 0.3 !important; cursor: not-allowed !important; pointer-events: none !important; }
 
@@ -124,6 +125,7 @@
     <div class="card-title">
       <span>CREASE CONTROL</span>
       <div>
+        <!-- FIX BAT/BOWL LOCK BUTTON -->
         <button class="btn-danger" id="btnFixTeamSwap" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="fixTeamSwap()">FIX BAT/BOWL</button>
         <button class="btn-accent" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="openEditPlayers()">EDIT TEAMS</button>
         <button class="btn-blue" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="swapStrike()"><i class="fas fa-exchange-alt"></i> SWAP</button>
@@ -358,7 +360,7 @@ window.createNewMatch = function() {
     bowlerStats: {}, fow: [],
     striker: (batTeam === "A" ? rosterA : rosterB)[0].id, nonStriker: (batTeam === "A" ? rosterA : rosterB)[1].id,
     bowler: (batTeam === "A" ? rosterB : rosterA)[0].id, lastBowler: null,
-    graphics: { scorebug: true, bottomStrip: true, centerGraphic: null, dynamicText: "M.B. LIVE STUDIO", activeEvent: null }
+    graphics: { scorebug: true, bottomStrip: true, centerGraphic: null, dynamicText: "M.B. LIVE STUDIO", activeEvent: null, singlePlayer: null }
   };
   if(batTeam === "B"){ state.striker = rosterB[0].id; state.nonStriker = rosterB[1].id; state.bowler = rosterA[0].id; state.partnership.p1 = rosterB[0].id; state.partnership.p2 = rosterB[1].id; }
   timelineHistory = []; pushSnapshot("Match Created"); startController();
@@ -385,7 +387,6 @@ window.loadMatch = async function(id) {
   if(snap.exists()) {
     let loadedState = snap.val();
     
-    // NORMALIZE FIREBASE DATA
     if(!loadedState.overBalls) loadedState.overBalls = []; if(!loadedState.overHistory) loadedState.overHistory = []; if(!loadedState.fow) loadedState.fow = [];
     if(!loadedState.bowlerStats) loadedState.bowlerStats = {}; if(!loadedState.squads) loadedState.squads = {A:[], B:[]};
     if(!loadedState.squads.A) loadedState.squads.A = []; if(!loadedState.squads.B) loadedState.squads.B = [];
@@ -506,6 +507,7 @@ window.submitWicket = function() {
 
 window.processRunOut = function(delivery, runs, who, fielderId) {
     if(state.inningsOver) return; pushSnapshot(`Run Out (${delivery}): +${runs}`); state.graphics.activeEvent = null;
+
     const tBat = state.meta.batTeam; const striker = state.squads[tBat].find(p => p.id === state.striker); const bs = getBowlerStats(state.bowler); const outId = who === "STRIKER" ? state.striker : state.nonStriker;
     
     let isLegal = false; let batRuns = 0; let extraAdd = 0; let bowlRuns = 0; let ballLabel = '';
@@ -537,7 +539,9 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
     let nextId = nextBatter ? nextBatter.id : null; let nP1 = state.partnership.p1; let nP2 = state.partnership.p2;
     if(nP1 === outId) nP1 = nextId; else nP2 = nextId; state.partnership = { runs: 0, balls: 0, p1: nP1, p2: nP2, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
     
-    if(state.striker === outId) { if(nextBatter) state.striker = nextBatter.id; } else if(state.nonStriker === outId) { if(nextBatter) state.nonStriker = nextBatter.id; }
+    if(state.striker === outId) { if(nextBatter) state.striker = nextBatter.id; } 
+    else if(state.nonStriker === outId) { if(nextBatter) state.nonStriker = nextBatter.id; }
+
     if(isLegal) checkOverEnd(); triggerAutoGraphic("WICKET"); checkInningsEnd(); syncLiveAndSave();
 };
 
@@ -699,7 +703,7 @@ function updateUI() {
   const availableBatters = state.squads[tBat].filter(p => !p.isOut && !p.isAbsent);
   document.getElementById('strikerSelect').innerHTML = availableBatters.map(p => `<option value="${p.id}" ${state.striker===p.id?'selected':''}>${p.name} (${p.runs})</option>`).join('');
   document.getElementById('nonStrikerSelect').innerHTML = availableBatters.map(p => `<option value="${p.id}" ${state.nonStriker===p.id?'selected':''}>${p.name} (${p.runs})</option>`).join('');
-  document.getElementById('bowlerSelect').innerHTML = state.squads[tBowl].filter(p => p.id !== state.lastBowler).map(p => { const bs = state.bowlerStats[p.id]; return `<option value="${p.id}" ${state.bowler===p.id?'selected':''}>${p.name} (${bs ? `${fmtOvers(bs.balls)}-${bs.runs}-${bs.wickets}` : "0.0-0-0"})</option>`; }).join('');
+  document.getElementById('bowlerSelect').innerHTML = state.squads[tBowl].map(p => { const bs = state.bowlerStats[p.id]; return `<option value="${p.id}" ${state.bowler===p.id?'selected':''}>${p.name} (${bs ? `${fmtOvers(bs.balls)}-${bs.runs}-${bs.wickets}` : "0.0-0-0"})</option>`; }).join('');
   document.getElementById('timelineList').innerHTML = timelineHistory.map(t => `<div class="timeline-item"><span>${t.desc}</span><button onclick="undoToSnapshot(${t.id})">UNDO</button></div>`).join('');
 }
 renderSavedMatches();
