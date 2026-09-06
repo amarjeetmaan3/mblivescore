@@ -14,40 +14,17 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html,body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; font-family: 'Rajdhani', sans-serif; color: var(--ink); }
   
-  /* ================= AUTO-SCALING CANVAS ================= */
-  #overlay-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 1280px; 
-    height: 720px; 
-    transform-origin: top left;
-  }
-
+  #overlay-canvas { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; transform-origin: top left; }
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
   .mark { font-family: 'Orbitron', sans-serif; }
 
   /* ================= MAIN SCOREBUG ================= */
-  .scorebug {
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: stretch; 
-    width: 1150px; 
-    opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
-  }
+  .scorebug { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; width: 1150px; max-width: 96vw; opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10; }
   .scorebug.show { opacity: 1; }
-
-  .brand-bar {
-    align-self: flex-start; margin-left: 22px; background: var(--gold); color: var(--navy-deep);
-    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 13px; padding: 4px 18px; letter-spacing: 3px; border-radius: 5px 5px 0 0;
-  }
-
-  .main-strip {
-    display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
-    border: 1px solid var(--line); border-bottom: none; overflow: hidden; height: 100px; border-radius: 8px 8px 0 0;
-  }
-
+  .brand-bar { align-self: flex-start; margin-left: 22px; background: var(--gold); color: var(--navy-deep); font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 13px; padding: 4px 18px; letter-spacing: 3px; border-radius: 5px 5px 0 0; }
+  .main-strip { display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%); border: 1px solid var(--line); border-bottom: none; overflow: hidden; height: 100px; border-radius: 8px 8px 0 0; }
   #bugNormal { display: flex; align-items: stretch; width: 100%; justify-content: space-between; }
   #bugResult { display: none; justify-content: center; align-items: center; width: 100%; background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); letter-spacing: 2px; }
-
   .team-block { background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; padding: 0 24px; display: flex; align-items: center; border-right: 3px solid var(--crimson); min-width: 150px; justify-content: center; text-align:center; white-space:nowrap; }
   .score-block { display: flex; align-items: center; padding: 0 24px; border-right: 1px solid var(--line); }
   .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 58px; line-height: 0.9; transform: translateY(4px); }
@@ -66,7 +43,6 @@
   .bowler-info .fig { font-size: 16px; color: var(--muted); margin-left: auto; }
   .over-track { display: flex; flex-wrap: wrap; gap: 5px; max-width: 260px; }
   .ball-pill { min-width: 24px; height: 24px; padding: 0 4px; border-radius: 50%; background: var(--navy-3); color: var(--ink); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
-
   .bottom-strip { background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-2) 100%); color: #fff; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 30px; text-align: center; opacity: 0; transition: opacity .15s; }
   .bottom-strip.show { opacity: 1; }
 
@@ -80,6 +56,24 @@
   }
   .center-panel.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
   .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 3px; padding: 6px; }
+
+  /* SINGLE PLAYER GRAPHIC */
+  #graphic-singlePlayer { width: 700px; padding-bottom: 15px; }
+  .sp-name { font-size: 42px; font-weight: 700; color: var(--gold-2); text-align: center; margin: 15px 0 10px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; line-height:1;}
+  .sp-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 15px; }
+  .sp-table th { background: rgba(255,255,255,0.05); color: var(--muted); font-size: 15px; padding: 8px; border-bottom: 1px solid var(--line); letter-spacing:1px; }
+  .sp-table td { padding: 10px; font-size: 28px; font-weight: 700; font-family: 'Bebas Neue', sans-serif; color: var(--ink); }
+  .sp-section-title { font-size: 15px; color: var(--gold); background: var(--navy-3); text-align: left; padding: 6px 20px; font-weight: 700; letter-spacing: 2px; }
+
+  /* PLAYING 11 (SQUADS) */
+  #graphic-squads { width: 850px; }
+  .squads-container { display: flex; align-items: stretch; max-height: 400px; overflow-y: auto; }
+  .squad-col { flex: 1; padding: 15px 25px; }
+  .squad-col:first-child { border-right: 1px solid var(--line); }
+  .squad-team-name { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold-2); margin-bottom: 12px; letter-spacing: 2px; }
+  .squad-list { display: flex; flex-direction: column; gap: 8px; }
+  .squad-player { font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: flex-start; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .squad-player .idx { color: var(--muted); font-size: 14px; width: 25px; font-weight: 600; }
 
   #graphic-part { width: 650px; }
   .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 15px 35px; }
@@ -124,11 +118,7 @@
   #graphic-worm { width: 750px; }
   #graphic-result { width: 650px; }
   
-  .popup-event {
-    position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
-    background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
-    padding: 22px 70px; border: 3px solid var(--gold); border-radius: 14px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 18px 34px rgba(0,0,0,0.7)); z-index: 20;
-  }
+  .popup-event { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); padding: 22px 70px; border: 3px solid var(--gold); border-radius: 14px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 18px 34px rgba(0,0,0,0.7)); z-index: 20; }
   .popup-event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 96px; line-height: 0.9; color: #fff; letter-spacing: 2px; }
   .pop-sub { font-size: 13px; letter-spacing: 3px; color: var(--gold-2); margin-top: 6px; font-weight: 700; }
@@ -176,6 +166,30 @@
     </div>
 
     <!-- GRAPHICS PANELS -->
+    
+    <!-- 1. SINGLE PLAYER -->
+    <div class="center-panel" id="graphic-singlePlayer">
+      <div class="center-title">PLAYER PROFILE</div>
+      <div class="sp-name" id="spName">PLAYER NAME</div>
+      <div id="spContent"></div>
+    </div>
+
+    <!-- 2. PLAYING 11 (SQUADS) -->
+    <div class="center-panel" id="graphic-squads">
+      <div class="center-title">PLAYING SQUADS</div>
+      <div class="squads-container">
+        <div class="squad-col">
+          <div class="squad-team-name" id="sqTeam1Name">TEAM 1</div>
+          <div class="squad-list" id="sqTeam1List"></div>
+        </div>
+        <div class="squad-col">
+          <div class="squad-team-name" id="sqTeam2Name">TEAM 2</div>
+          <div class="squad-list" id="sqTeam2List"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXISTING PANELS -->
     <div class="center-panel" id="graphic-part">
       <div class="center-title" id="partTitle">PARTNERSHIP</div>
       <div class="part-flex">
@@ -302,7 +316,6 @@ onValue(ref(db, "current_match"), snap => {
       document.getElementById('bugNormal').style.display = 'flex'; document.getElementById('bugResult').style.display = 'none';
   }
   
-  // DYNAMIC TEAM FONT SIZING
   const teamEl = document.getElementById('ovTeam');
   teamEl.innerText = batTeamName;
   if(batTeamName.length > 9) teamEl.style.fontSize = '26px';
@@ -341,7 +354,7 @@ onValue(ref(db, "current_match"), snap => {
   const bStrip = document.getElementById('bottomStrip');
   if(g.bottomStrip && g.dynamicText) { bStrip.classList.add('show'); bStrip.innerText = g.dynamicText; } else bStrip.classList.remove('show');
 
-  const panels = ['part', 'allpart', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm', 'result'];
+  const panels = ['part', 'allpart', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm', 'result', 'singlePlayer', 'squads'];
   panels.forEach(p => { document.getElementById(`graphic-${p}`).classList.remove('show'); });
 
   let renderTarget = g.centerGraphic; let isRecall = false;
@@ -359,6 +372,37 @@ onValue(ref(db, "current_match"), snap => {
 
   if(g.centerGraphic === 'result' && state.inningsOver) { document.getElementById('resultText').innerText = getMatchResultText(state); }
 
+  // 1. SINGLE PLAYER GRAPHIC
+  if(renderTarget === 'singlePlayer' && g.singlePlayer) {
+      let pObj = state.squads.A.find(x => x.id === g.singlePlayer.id) || state.squads.B.find(x => x.id === g.singlePlayer.id);
+      if(pObj) {
+          document.getElementById('spName').innerText = pObj.name.toUpperCase();
+          let html = '';
+          if(g.singlePlayer.type === 'BAT' || g.singlePlayer.type === 'BOTH') {
+              let sr = pObj.balls > 0 ? ((pObj.runs / pObj.balls) * 100).toFixed(1) : "0.0";
+              html += `<div class="sp-section-title">BATTING</div>
+                       <table class="sp-table"><tr><th>RUNS</th><th>BALLS</th><th>4s</th><th>6s</th><th>S.R.</th></tr>
+                       <tr><td>${pObj.runs}</td><td>${pObj.balls}</td><td>${pObj.fours}</td><td>${pObj.sixes}</td><td>${sr}</td></tr></table>`;
+          }
+          if(g.singlePlayer.type === 'BOWL' || g.singlePlayer.type === 'BOTH') {
+              let bStat = state.bowlerStats[pObj.id] || { balls:0, runs:0, wickets:0, maidens:0, dots:0 };
+              let eco = bStat.balls > 0 ? ((bStat.runs / bStat.balls) * 6).toFixed(1) : "0.0";
+              html += `<div class="sp-section-title">BOWLING</div>
+                       <table class="sp-table"><tr><th>OVERS</th><th>MAIDENS</th><th>RUNS</th><th>WKTS</th><th>ECON</th></tr>
+                       <tr><td>${fmtOvers(bStat.balls)}</td><td>${bStat.maidens}</td><td>${bStat.runs}</td><td style="color:var(--gold-2);">${bStat.wickets}</td><td>${eco}</td></tr></table>`;
+          }
+          document.getElementById('spContent').innerHTML = html;
+      }
+  }
+
+  // 2. PLAYING 11 (SQUADS) GRAPHIC
+  if(renderTarget === 'squads') {
+      document.getElementById('sqTeam1Name').innerText = state.meta.tA;
+      document.getElementById('sqTeam2Name').innerText = state.meta.tB;
+      document.getElementById('sqTeam1List').innerHTML = state.squads.A.map((p,i) => `<div class="squad-player"><span class="idx">${i+1}</span> <span>${p.name}</span></div>`).join('');
+      document.getElementById('sqTeam2List').innerHTML = state.squads.B.map((p,i) => `<div class="squad-player"><span class="idx">${i+1}</span> <span>${p.name}</span></div>`).join('');
+  }
+
   if(g.centerGraphic === 'part' && state.partnership) {
     document.getElementById('partTitle').innerText = `${getOrdinal(state.pastPartnerships ? state.pastPartnerships.length + 1 : state.wickets + 1).toUpperCase()} WICKET PARTNERSHIP`;
     document.getElementById('partTotalRuns').innerText = state.partnership.runs; document.getElementById('partTotalBalls').innerText = `(${state.partnership.balls})`;
@@ -367,7 +411,6 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('partP2Name').innerText = p2Obj ? p2Obj.name + (p2Obj.id===state.striker?'*':'') : '—'; document.getElementById('partP2Score').innerText = `${state.partnership.p2Runs || 0} (${state.partnership.p2Balls || 0})`; 
   }
 
-  // ALL PARTNERSHIPS
   if(renderTarget === 'allpart') {
       document.getElementById('allpartTitle').innerText = `ALL PARTNERSHIPS${isRecall?' (1ST INN)':''}`;
       let pastParts = isRecall ? (state.firstInnings.pastPartnerships || []) : (state.pastPartnerships || []);
