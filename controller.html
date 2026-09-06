@@ -419,52 +419,84 @@ window.processBall = function(runs) {
 };
 
 window.openExtraModal = function(t) { 
-  tempExtraType = t; document.getElementById('extraTitle').innerText = t === 'WD' ? 'Wide Ball' : t === 'NB' ? 'No Ball' : t === 'B' ? 'Byes' : 'Leg Byes'; 
-  document.getElementById('extraRunsInput').value = 0; document.getElementById('nbTypeDiv').style.display = t === 'NB' ? 'block' : 'none';
+  tempExtraType = t; 
+  document.getElementById('extraTitle').innerText = t === 'WD' ? 'Wide Ball' : t === 'NB' ? 'No Ball' : t === 'B' ? 'Byes' : 'Leg Byes'; 
+  document.getElementById('extraRunsInput').value = 0; 
+  document.getElementById('nbTypeDiv').style.display = t === 'NB' ? 'block' : 'none';
   document.getElementById('extraModal').classList.add('active'); 
 };
+
 window.submitExtra = function() {
-  closeModal('extraModal'); if(state.inningsOver) return; const extraRuns = parseInt(document.getElementById('extraRunsInput').value) || 0; pushSnapshot(`Extra: ${tempExtraType} + ${extraRuns}`);
+  closeModal('extraModal'); if(state.inningsOver) return; 
+  const extraRuns = parseInt(document.getElementById('extraRunsInput').value) || 0; 
+  pushSnapshot(`Extra: ${tempExtraType} + ${extraRuns}`);
+  
   const tBat = state.meta.batTeam; const striker = state.squads[tBat].find(p => p.id === state.striker); const bs = getBowlerStats(state.bowler);
   
   let isLegal = false; let penalty = 0; let batRuns = 0; let extraAdd = 0; let bowlRuns = 0;
-  if(tempExtraType === 'B' || tempExtraType === 'LB') { isLegal = true; extraAdd = extraRuns; bowlRuns = 0; } 
-  else if(tempExtraType === 'WD') { isLegal = false; penalty = 1; extraAdd = extraRuns + 1; bowlRuns = extraRuns + 1; } 
-  else if(tempExtraType === 'NB') {
-      isLegal = false; penalty = 1; let nbType = document.getElementById('nbRunType').value;
-      if(nbType === 'BAT') { batRuns = extraRuns; extraAdd = 1; bowlRuns = extraRuns + 1; } else { extraAdd = extraRuns + 1; bowlRuns = 1; }
+  
+  if(tempExtraType === 'B' || tempExtraType === 'LB') {
+      isLegal = true; extraAdd = extraRuns; bowlRuns = 0;
+  } else if(tempExtraType === 'WD') {
+      isLegal = false; penalty = 1; extraAdd = extraRuns + 1; bowlRuns = extraRuns + 1;
+  } else if(tempExtraType === 'NB') {
+      isLegal = false; penalty = 1; 
+      let nbType = document.getElementById('nbRunType').value;
+      if(nbType === 'BAT') { batRuns = extraRuns; extraAdd = 1; bowlRuns = extraRuns + 1; }
+      else { extraAdd = extraRuns + 1; bowlRuns = 1; } 
   }
 
   const total = batRuns + extraAdd;
-  state.score += total; state.currentOverRuns += total; state.extras += extraAdd; state.partnership.runs += total; state.overBalls.push(`${tempExtraType}${extraRuns > 0 ? '+' + extraRuns : ''}`);
+  state.score += total; state.currentOverRuns += total; state.extras += extraAdd; state.partnership.runs += total; 
+  state.overBalls.push(`${tempExtraType}${extraRuns > 0 ? '+' + extraRuns : ''}`);
   
   if(tempExtraType === 'NB') { 
       striker.balls += 1; 
       if(striker.id === state.partnership.p1) { state.partnership.p1Balls += 1; if(batRuns > 0) { striker.runs += batRuns; state.partnership.p1Runs += batRuns; } }
       else { state.partnership.p2Balls += 1; if(batRuns > 0) { striker.runs += batRuns; state.partnership.p2Runs += batRuns; } }
   }
-  if(tempExtraType === 'WD' || tempExtraType === 'NB') { bs.runs += bowlRuns; bs.ovRunsTracker += bowlRuns; }
+
+  bs.runs += bowlRuns; bs.ovRunsTracker += bowlRuns;
+  
   if(isLegal) { 
       state.legalBalls += 1; state.partnership.balls += 1; striker.balls += 1; bs.balls += 1; if(extraRuns === 0) bs.dots += 1; 
       if(striker.id === state.partnership.p1) state.partnership.p1Balls += 1; else state.partnership.p2Balls += 1;
   }
+  
   if(extraRuns % 2 !== 0) swapStrikeInternal(); if(isLegal) checkOverEnd(); checkInningsEnd(); syncLiveAndSave();
 };
 
 window.openWicketModal = function(type) {
   tempWicketType = type; document.getElementById('wicketTitle').innerText = type.replace('_', ' '); 
-  if(type === 'RUN_OUT') { document.getElementById('runOutExtrasDiv').style.display = 'block'; document.getElementById('roRuns').value = 0; } 
-  else { document.getElementById('runOutExtrasDiv').style.display = 'none'; }
+  
+  if(type === 'RUN_OUT') {
+      document.getElementById('runOutExtrasDiv').style.display = 'block';
+      document.getElementById('roRuns').value = 0;
+  } else {
+      document.getElementById('runOutExtrasDiv').style.display = 'none';
+  }
+
   const batterDiv = document.getElementById('outBatterDiv');
-  if(type === 'CAUGHT' || type === 'STUMPED') { batterDiv.style.display = 'none'; document.getElementById('outBatterSelect').value = 'STRIKER'; } else { batterDiv.style.display = 'block'; }
+  if(type === 'CAUGHT' || type === 'STUMPED') { batterDiv.style.display = 'none'; document.getElementById('outBatterSelect').value = 'STRIKER'; } 
+  else { batterDiv.style.display = 'block'; }
+  
   document.getElementById('fielderLabel').innerText = type === 'STUMPED' ? 'Select Keeper' : type === 'RUN_OUT' ? 'Select Fielder' : 'Select Catcher';
   const select = document.getElementById('fielderSelect'); select.innerHTML = '<option value="">-- None / Direct --</option>'; state.squads[state.meta.bowlTeam].forEach(p => { select.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
   document.getElementById('wicketModal').classList.add('active');
 };
+
 window.submitWicket = function() { 
-  const who = document.getElementById('outBatterSelect').value; const fielderId = document.getElementById('fielderSelect').value; closeModal('wicketModal'); 
-  if(tempWicketType === 'RUN_OUT') { const delType = document.getElementById('roDelivery').value; const rRuns = parseInt(document.getElementById('roRuns').value) || 0; processRunOut(delType, rRuns, who, fielderId); } 
-  else { processWicket(tempWicketType, who, fielderId); }
+  const who = document.getElementById('outBatterSelect').value; 
+  const fielderId = document.getElementById('fielderSelect').value; 
+  closeModal('wicketModal'); 
+  
+  if(tempWicketType === 'RUN_OUT') {
+      const delType = document.getElementById('roDelivery').value;
+      const rRuns = parseInt(document.getElementById('roRuns').value) || 0;
+      processRunOut(delType, rRuns, who, fielderId);
+  } else {
+      processWicket(tempWicketType, who, fielderId); 
+  }
 };
 
 window.processRunOut = function(delivery, runs, who, fielderId) {
@@ -473,6 +505,7 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
     const outId = who === "STRIKER" ? state.striker : state.nonStriker;
     
     let isLegal = false; let batRuns = 0; let extraAdd = 0; let bowlRuns = 0; let ballLabel = '';
+    
     if(delivery === 'LEGAL') { isLegal = true; batRuns = runs; bowlRuns = runs; ballLabel = runs+'W'; }
     else if(delivery === 'WD') { extraAdd = runs + 1; bowlRuns = runs + 1; ballLabel = 'WD+'+runs+'W'; }
     else if(delivery === 'NB_BAT') { batRuns = runs; extraAdd = 1; bowlRuns = runs + 1; ballLabel = 'NB+'+runs+'W'; }
@@ -493,9 +526,10 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
     if(runs % 2 !== 0) swapStrikeInternal();
 
     const outBatter = state.squads[tBat].find(p => p.id === outId); outBatter.isOut = true;
-    const fielder = state.squads[state.meta.bowlTeam].find(p => p.id === fielderId); outBatter.dismissalInfo = `run out (${fielder ? fielder.name : ''})`;
-    state.wickets += 1; 
-    state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); 
+    const fielder = state.squads[state.meta.bowlTeam].find(p => p.id === fielderId);
+    outBatter.dismissalInfo = `run out (${fielder ? fielder.name : ''})`;
+    state.fow.push({ wktNo: state.wickets + 1, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); 
+    state.wickets += 1;
     
     let p1B = state.squads[tBat].find(p => p.id === state.partnership.p1); let p2B = state.squads[tBat].find(p => p.id === state.partnership.p2);
     state.pastPartnerships.push({ wktNo: state.wickets, p1Name: p1B ? p1B.name : '', p1Runs: state.partnership.p1Runs, p1Balls: state.partnership.p1Balls, p2Name: p2B ? p2B.name : '', p2Runs: state.partnership.p2Runs, p2Balls: state.partnership.p2Balls, runs: state.partnership.runs, balls: state.partnership.balls });
@@ -505,7 +539,9 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
     if(nP1 === outId) nP1 = nextId; else nP2 = nextId;
     state.partnership = { runs: 0, balls: 0, p1: nP1, p2: nP2, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
     
-    if(state.striker === outId) { if(nextBatter) state.striker = nextBatter.id; } else if(state.nonStriker === outId) { if(nextBatter) state.nonStriker = nextBatter.id; }
+    if(state.striker === outId) { if(nextBatter) state.striker = nextBatter.id; } 
+    else if(state.nonStriker === outId) { if(nextBatter) state.nonStriker = nextBatter.id; }
+
     if(isLegal) checkOverEnd(); triggerAutoGraphic("WICKET"); checkInningsEnd(); syncLiveAndSave();
 };
 
@@ -534,6 +570,7 @@ window.processWicket = function(type, who = "STRIKER", fielderId = null) {
 
 window.markRetiredHurt = function() {
   if(state.inningsOver) return; const batTeam = state.meta.batTeam; const p = state.squads[batTeam].find(x => x.id === state.striker); if(!confirm(`Mark ${p.name} as Retired Hurt?`)) return; pushSnapshot("Retired Hurt"); p.isRetired = true; p.dismissalInfo = "retired hurt";
+  
   let p1B = state.squads[batTeam].find(b => b.id === state.partnership.p1); let p2B = state.squads[batTeam].find(b => b.id === state.partnership.p2);
   state.pastPartnerships.push({ wktNo: state.wickets, p1Name: p1B ? p1B.name : '', p1Runs: state.partnership.p1Runs, p1Balls: state.partnership.p1Balls, p2Name: p2B ? p2B.name : '', p2Runs: state.partnership.p2Runs, p2Balls: state.partnership.p2Balls, runs: state.partnership.runs, balls: state.partnership.balls });
   
