@@ -24,9 +24,7 @@
   .btn-blue { background: var(--navy-3); border-color: var(--line); color: var(--ink); }
   .btn-accent { background: #3d2c00; border-color: var(--gold); color: var(--gold-2); }
   
-  /* ACTIVE GREEN HIGHLIGHT */
   .btn-active { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
-  .btn-disabled { opacity: 0.3 !important; cursor: not-allowed !important; pointer-events: none !important; }
 
   .screen { display: none; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 8px 30px; }
   .screen.active { display: flex; flex-direction: column; }
@@ -42,7 +40,7 @@
   .hud { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); border: 1px solid var(--gold); padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
   .hud-team { font-size: 13px; font-weight: 700; color: #cbd5e1; }
   .hud-score { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold-2); line-height: 1; }
-  .hud-overs { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .hud-overs { font-size: 12px; font-weight: 700; color: var(--muted); }
   .hud-stat { font-size: 11px; font-weight: 600; }
 
   .score-pad button { height: 38px; font-size: 18px; font-weight: 900; background: var(--navy-3); border-radius: 4px; }
@@ -104,7 +102,8 @@
     <div>
       <div class="hud-team" id="hudTeam">IND</div>
       <div class="hud-score"><span id="hudRuns">0</span>/<span id="hudWickets">0</span></div>
-      <div class="hud-overs">Ovs: <span id="hudOvers">0.0</span></div>
+      <!-- HUD OVERS UPDATE -->
+      <div class="hud-overs">Ovs: <span id="hudOvers">0.0</span> <span style="color:var(--gold-2);">/ <span id="hudMaxOvers">20</span></span></div>
     </div>
     <div style="text-align: right; display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
       <button class="btn-danger" style="padding:2px 8px; font-size:10px; height:22px;" onclick="exitToHome()">EXIT</button>
@@ -125,8 +124,8 @@
     <div class="card-title">
       <span>CREASE CONTROL</span>
       <div>
-        <!-- FIX BAT/BOWL LOCK BUTTON -->
-        <button class="btn-danger" id="btnFixTeamSwap" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="fixTeamSwap()">FIX BAT/BOWL</button>
+        <!-- ALWAYS UNLOCKED SETTINGS BUTTON -->
+        <button class="btn-danger" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="openMatchSettings()">MATCH SETTINGS</button>
         <button class="btn-accent" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="openEditPlayers()">EDIT TEAMS</button>
         <button class="btn-blue" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="swapStrike()"><i class="fas fa-exchange-alt"></i> SWAP</button>
       </div>
@@ -226,6 +225,34 @@
 </div>
 
 <!-- ================= MODALS ================= -->
+<div class="modal-overlay" id="matchSettingsModal">
+  <div class="modal">
+    <h3>Match Settings</h3>
+    <div style="margin-bottom:10px;">
+      <span class="small-label">Max Overs (Editable anytime in 1st Innings)</span>
+      <input type="number" id="editMaxOvers" style="width:100%; font-size:18px;">
+    </div>
+    <!-- THIS DIV WILL HIDE AFTER THE 1ST OVER -->
+    <div id="tossEditDiv" style="margin-bottom:10px;">
+      <span class="small-label">Toss Winner</span>
+      <select id="editTossWinner" style="width:100%; margin-bottom:5px;"></select>
+      <span class="small-label">Toss Decision</span>
+      <select id="editTossDecision" style="width:100%;">
+         <option value="BAT">Batting</option>
+         <option value="BOWL">Bowling</option>
+      </select>
+      <div style="font-size:10px; color:var(--crimson-2); margin-top:6px; font-weight:700;">*Toss / Bat / Bowl can only be changed before the 2nd over of the 1st Innings.</div>
+    </div>
+    <div class="grid-2">
+      <button class="btn-primary" onclick="saveMatchSettings()">SAVE</button>
+      <button class="btn-blue" onclick="closeModal('matchSettingsModal')">CANCEL</button>
+    </div>
+    <hr style="border-color: var(--line); margin: 15px 0;">
+    <!-- RESET SCORE BUTTON -->
+    <button class="btn-danger" style="width: 100%;" onclick="resetMatchData()">RESET SCORE (KEEP PLAYERS)</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="extraModal">
   <div class="modal">
     <h3 id="extraTitle">Extra Ball</h3>
@@ -351,7 +378,7 @@ window.createNewMatch = function() {
 
   state = {
     id: "MB_" + Date.now(), title: `${tA} vs ${tB}`,
-    meta: { tA, tB, squadSize, maxOvers, batTeam, bowlTeam },
+    meta: { tA, tB, squadSize, maxOvers, batTeam, bowlTeam, tossWinner: tossW, tossDecision: tossD },
     squads: { A: rosterA, B: rosterB },
     innings: 1, score: 0, wickets: 0, legalBalls: 0, extras: 0, overBalls: [], currentOverRuns: 0, overHistory: [],
     target: null, firstInnings: null, inningsOver: false,
@@ -387,6 +414,7 @@ window.loadMatch = async function(id) {
   if(snap.exists()) {
     let loadedState = snap.val();
     
+    // NORMALIZE FIREBASE DATA
     if(!loadedState.overBalls) loadedState.overBalls = []; if(!loadedState.overHistory) loadedState.overHistory = []; if(!loadedState.fow) loadedState.fow = [];
     if(!loadedState.bowlerStats) loadedState.bowlerStats = {}; if(!loadedState.squads) loadedState.squads = {A:[], B:[]};
     if(!loadedState.squads.A) loadedState.squads.A = []; if(!loadedState.squads.B) loadedState.squads.B = [];
@@ -395,6 +423,9 @@ window.loadMatch = async function(id) {
     if(!loadedState.partnership.p2) loadedState.partnership.p2 = loadedState.nonStriker;
     if(!loadedState.pastPartnerships) loadedState.pastPartnerships = [];
     if(typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
+    
+    if(!loadedState.meta.tossWinner) loadedState.meta.tossWinner = "A";
+    if(!loadedState.meta.tossDecision) loadedState.meta.tossDecision = "BAT";
     
     if(loadedState.graphics) { loadedState.graphics.activeEvent = null; }
     
@@ -440,13 +471,50 @@ window.saveEditPlayers = function() {
   closeModal('editPlayersModal'); pushSnapshot("Edited Teams & Players"); syncLiveAndSave();
 };
 
-window.fixTeamSwap = function() {
-    if(!confirm("Are you sure you want to SWAP Batting and Bowling Teams? (Use this only if you made a mistake at Toss)")) return;
-    pushSnapshot("Fixed Bat/Bowl Teams");
-    let temp = state.meta.batTeam; state.meta.batTeam = state.meta.bowlTeam; state.meta.bowlTeam = temp;
-    state.striker = state.squads[state.meta.batTeam][0].id; state.nonStriker = state.squads[state.meta.batTeam][1].id; state.bowler = state.squads[state.meta.bowlTeam][0].id;
-    state.partnership = { runs: 0, balls: 0, p1: state.striker, p2: state.nonStriker, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
-    syncLiveAndSave();
+window.openMatchSettings = function() {
+  document.getElementById('editMaxOvers').value = state.meta.maxOvers;
+  document.getElementById('editMaxOvers').disabled = (state.innings > 1);
+  const tossDiv = document.getElementById('tossEditDiv');
+  if(state.innings === 1 && state.legalBalls < 6) {
+      tossDiv.style.display = 'block';
+      document.getElementById('editTossWinner').innerHTML = `<option value="A">${state.meta.tA}</option><option value="B">${state.meta.tB}</option>`;
+      document.getElementById('editTossWinner').value = state.meta.tossWinner || "A";
+      document.getElementById('editTossDecision').value = state.meta.tossDecision || "BAT";
+  } else { tossDiv.style.display = 'none'; }
+  document.getElementById('matchSettingsModal').classList.add('active');
+};
+
+window.saveMatchSettings = function() {
+  if(state.innings === 1) { state.meta.maxOvers = parseInt(document.getElementById('editMaxOvers').value) || state.meta.maxOvers; }
+  if(state.innings === 1 && state.legalBalls < 6) {
+      let tw = document.getElementById('editTossWinner').value; let td = document.getElementById('editTossDecision').value;
+      state.meta.tossWinner = tw; state.meta.tossDecision = td;
+      let newBat = (tw === "A" && td === "BAT") || (tw === "B" && td === "BOWL") ? "A" : "B"; let newBowl = newBat === "A" ? "B" : "A";
+      if(state.meta.batTeam !== newBat) {
+          state.meta.batTeam = newBat; state.meta.bowlTeam = newBowl;
+          state.striker = state.squads[newBat][0].id; state.nonStriker = state.squads[newBat][1].id; state.bowler = state.squads[newBowl][0].id;
+          state.partnership = { runs: 0, balls: 0, p1: state.striker, p2: state.nonStriker, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
+      }
+  }
+  closeModal('matchSettingsModal'); pushSnapshot("Match Settings Updated"); syncLiveAndSave();
+};
+
+window.resetMatchData = function() {
+  if(!confirm("Are you sure you want to RESET the match score to 0? Player and Team names will be safe.")) return;
+  state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0;
+  state.overBalls = []; state.currentOverRuns = 0; state.overHistory = [];
+  state.target = null; state.firstInnings = null; state.inningsOver = false;
+  state.innings = 1; state.fow = []; state.pastPartnerships = []; state.bowlerStats = {};
+  state.squads.A.forEach(p => { p.runs=0; p.balls=0; p.fours=0; p.sixes=0; p.isOut=false; p.isAbsent=false; p.isRetired=false; p.dismissalInfo=""; });
+  state.squads.B.forEach(p => { p.runs=0; p.balls=0; p.fours=0; p.sixes=0; p.isOut=false; p.isAbsent=false; p.isRetired=false; p.dismissalInfo=""; });
+  
+  let batTeam = state.meta.batTeam; let bowlTeam = state.meta.bowlTeam;
+  state.striker = state.squads[batTeam][0].id; state.nonStriker = state.squads[batTeam][1].id; state.bowler = state.squads[bowlTeam][0].id;
+  state.partnership = { runs: 0, balls: 0, p1: state.striker, p2: state.nonStriker, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
+  
+  state.graphics.activeEvent = null; state.graphics.dynamicText = "M.B. LIVE STUDIO";
+  
+  timelineHistory = []; pushSnapshot("Match Reset"); syncLiveAndSave(); closeModal('matchSettingsModal');
 };
 
 function getBowlerStats(id) { if(!state.bowlerStats[id]) state.bowlerStats[id] = { balls: 0, runs: 0, wickets: 0, maidens: 0, dots: 0, ovRunsTracker: 0 }; return state.bowlerStats[id]; }
@@ -507,7 +575,6 @@ window.submitWicket = function() {
 
 window.processRunOut = function(delivery, runs, who, fielderId) {
     if(state.inningsOver) return; pushSnapshot(`Run Out (${delivery}): +${runs}`); state.graphics.activeEvent = null;
-
     const tBat = state.meta.batTeam; const striker = state.squads[tBat].find(p => p.id === state.striker); const bs = getBowlerStats(state.bowler); const outId = who === "STRIKER" ? state.striker : state.nonStriker;
     
     let isLegal = false; let batRuns = 0; let extraAdd = 0; let bowlRuns = 0; let ballLabel = '';
@@ -676,7 +743,7 @@ window.closeModal = function(id) { document.getElementById(id).classList.remove(
 
 function updateUI() {
   if(!state) return; const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
-  document.getElementById('hudTeam').innerText = state.meta[tBat === 'A' ? 'tA' : 'tB']; document.getElementById('hudRuns').innerText = state.score; document.getElementById('hudWickets').innerText = state.wickets; document.getElementById('hudOvers').innerText = fmtOvers(state.legalBalls); document.getElementById('hudCrr').innerText = state.legalBalls > 0 ? ((state.score / state.legalBalls) * 6).toFixed(2) : "0.00"; document.getElementById('hudTarget').innerText = state.target != null ? state.target : "—";
+  document.getElementById('hudTeam').innerText = state.meta[tBat === 'A' ? 'tA' : 'tB']; document.getElementById('hudRuns').innerText = state.score; document.getElementById('hudWickets').innerText = state.wickets; document.getElementById('hudOvers').innerText = fmtOvers(state.legalBalls); document.getElementById('hudMaxOvers').innerText = state.meta.maxOvers; document.getElementById('hudCrr').innerText = state.legalBalls > 0 ? ((state.score / state.legalBalls) * 6).toFixed(2) : "0.00"; document.getElementById('hudTarget').innerText = state.target != null ? state.target : "—";
   
   const banner = document.getElementById('inningsOverBanner'); const bText = document.getElementById('inningsOverText'); const bBtn = document.getElementById('inningsOverBtn');
   if(state.inningsOver) { banner.style.display = 'block'; if(state.innings === 1) { bText.innerText = `INNINGS 1 COMPLETE — ${state.meta[tBat === 'A' ? 'tA' : 'tB']} ${state.score}/${state.wickets}`; bBtn.style.display = 'block'; } else { bText.innerText = computeResult(); bBtn.style.display = 'none'; } } else { banner.style.display = 'none'; }
@@ -684,11 +751,6 @@ function updateUI() {
   const btnCurr = document.getElementById('btnInnCurr'); const btnPrev = document.getElementById('btnInnPrev');
   if(state.firstInnings) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; } else { btnPrev.style.opacity = '0.4'; btnPrev.style.pointerEvents = 'none'; graphicInningsMode = 'curr'; }
   if(graphicInningsMode === 'curr') { btnCurr.classList.add('btn-active'); btnPrev.classList.remove('btn-active'); } else { btnPrev.classList.add('btn-active'); btnCurr.classList.remove('btn-active'); }
-
-  // FIX BAT/BOWL LOCK LOGIC
-  const btnSwap = document.getElementById('btnFixTeamSwap');
-  if(state.legalBalls > 0 || state.innings > 1) { btnSwap.classList.add('btn-disabled'); btnSwap.innerText = 'LOCKED'; } 
-  else { btnSwap.classList.remove('btn-disabled'); btnSwap.innerText = 'FIX BAT/BOWL'; }
 
   document.querySelectorAll('.btn-graphic').forEach(btn => {
       let target = btn.dataset.graphic;
@@ -701,9 +763,9 @@ function updateUI() {
   if(state.graphics.bottomStrip) btnStrip.classList.add('btn-active'); else btnStrip.classList.remove('btn-active');
 
   const availableBatters = state.squads[tBat].filter(p => !p.isOut && !p.isAbsent);
-  document.getElementById('strikerSelect').innerHTML = availableBatters.map(p => `<option value="${p.id}" ${state.striker===p.id?'selected':''}>${p.name} (${p.runs})</option>`).join('');
-  document.getElementById('nonStrikerSelect').innerHTML = availableBatters.map(p => `<option value="${p.id}" ${state.nonStriker===p.id?'selected':''}>${p.name} (${p.runs})</option>`).join('');
-  document.getElementById('bowlerSelect').innerHTML = state.squads[tBowl].map(p => { const bs = state.bowlerStats[p.id]; return `<option value="${p.id}" ${state.bowler===p.id?'selected':''}>${p.name} (${bs ? `${fmtOvers(bs.balls)}-${bs.runs}-${bs.wickets}` : "0.0-0-0"})</option>`; }).join('');
+  document.getElementById('strikerSelect').innerHTML = availableBatters.map(p => `<option value="${p.id}" ${state.striker===p.id?'selected':''}>${p.name} (${p.runs} R / ${p.balls} B)</option>`).join('');
+  document.getElementById('nonStrikerSelect').innerHTML = availableBatters.map(p => `<option value="${p.id}" ${state.nonStriker===p.id?'selected':''}>${p.name} (${p.runs} R / ${p.balls} B)</option>`).join('');
+  document.getElementById('bowlerSelect').innerHTML = state.squads[tBowl].filter(p => p.id !== state.lastBowler).map(p => { const bs = state.bowlerStats[p.id]; return `<option value="${p.id}" ${state.bowler===p.id?'selected':''}>${p.name} (${bs ? `${fmtOvers(bs.balls)}-${bs.runs}-${bs.wickets}` : "0.0-0-0"})</option>`; }).join('');
   document.getElementById('timelineList').innerHTML = timelineHistory.map(t => `<div class="timeline-item"><span>${t.desc}</span><button onclick="undoToSnapshot(${t.id})">UNDO</button></div>`).join('');
 }
 renderSavedMatches();
