@@ -66,6 +66,7 @@
 </head>
 <body>
 
+<!-- ================= 1. HOME SCREEN ================= -->
 <div id="screen-home" class="screen active">
   <h2 style="color: var(--gold); font-family:'Bebas Neue',sans-serif; font-size:24px; text-align:center; margin-bottom:8px; letter-spacing:1px;">M.B. LIVE STUDIO</h2>
 
@@ -92,8 +93,12 @@
     </div>
     <button class="btn-primary" style="width:100%; margin-top:8px; height:36px;" onclick="createNewMatch()">START MATCH</button>
   </div>
+  
+  <button class="btn-danger" style="width:100%; margin-top:10px; height:36px;" onclick="forceClearOverlay()">CLEAR LIVE OVERLAY (RESET)</button>
+
 </div>
 
+<!-- ================= 2. LIVE CONTROLLER ================= -->
 <div id="screen-live" class="screen">
 
   <div class="hud">
@@ -312,6 +317,14 @@ window.graphicInningsMode = 'curr';
 function fmtOvers(balls) { return `${Math.floor(balls/6)}.${balls%6}`; }
 function getOrdinal(n) { const s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
 
+// FORCED RESET OF LIVE OVERLAY
+window.forceClearOverlay = function() {
+  if(confirm("Are you sure you want to completely clear the live overlay?")) {
+      set(liveRef, null);
+      alert("Overlay Cleared!");
+  }
+};
+
 window.createNewMatch = function() {
   const tA = document.getElementById('tA_name').value.trim() || "IND"; const tB = document.getElementById('tB_name').value.trim() || "AUS";
   const squadSize = parseInt(document.getElementById('squadSize').value) || 11; const maxOvers = parseInt(document.getElementById('maxOvers').value) || 20;
@@ -358,6 +371,8 @@ window.loadMatch = async function(id) {
   const snap = await get(ref(db, `mb_match_data/${id}`));
   if(snap.exists()) {
     let loadedState = snap.val();
+    
+    // NORMALIZE FIREBASE DATA
     if(!loadedState.overBalls) loadedState.overBalls = []; if(!loadedState.overHistory) loadedState.overHistory = []; if(!loadedState.fow) loadedState.fow = [];
     if(!loadedState.bowlerStats) loadedState.bowlerStats = {}; if(!loadedState.squads) loadedState.squads = {A:[], B:[]};
     if(!loadedState.squads.A) loadedState.squads.A = []; if(!loadedState.squads.B) loadedState.squads.B = [];
@@ -367,8 +382,7 @@ window.loadMatch = async function(id) {
     if(!loadedState.pastPartnerships) loadedState.pastPartnerships = [];
     if(typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
     
-    // FIX FOR STUCK POPUPS: Always clear active event when loading a match
-    if(loadedState.graphics) { loadedState.graphics.activeEvent = null; }
+    if(loadedState.graphics) { loadedState.graphics.activeEvent = null; } // Clear stuck popups
     
     state = loadedState;
     const tlSnap = await get(ref(db, `mb_match_timeline/${id}`)); timelineHistory = tlSnap.exists() ? tlSnap.val() : [];
@@ -413,7 +427,7 @@ function getBowlerStats(id) { if(!state.bowlerStats[id]) state.bowlerStats[id] =
 
 window.processBall = function(runs) {
   if(state.inningsOver) return; pushSnapshot(`${runs} runs scored`);
-  state.graphics.activeEvent = null; // Clear any old popup instantly
+  state.graphics.activeEvent = null;
 
   const tBat = state.meta.batTeam; const striker = state.squads[tBat].find(p => p.id === state.striker);
   
@@ -429,64 +443,46 @@ window.processBall = function(runs) {
 };
 
 window.openExtraModal = function(t) { 
-  tempExtraType = t; 
-  document.getElementById('extraTitle').innerText = t === 'WD' ? 'Wide Ball' : t === 'NB' ? 'No Ball' : t === 'B' ? 'Byes' : 'Leg Byes'; 
-  document.getElementById('extraRunsInput').value = 0; 
-  document.getElementById('nbTypeDiv').style.display = t === 'NB' ? 'block' : 'none';
+  tempExtraType = t; document.getElementById('extraTitle').innerText = t === 'WD' ? 'Wide Ball' : t === 'NB' ? 'No Ball' : t === 'B' ? 'Byes' : 'Leg Byes'; 
+  document.getElementById('extraRunsInput').value = 0; document.getElementById('nbTypeDiv').style.display = t === 'NB' ? 'block' : 'none';
   document.getElementById('extraModal').classList.add('active'); 
 };
-
 window.submitExtra = function() {
   closeModal('extraModal'); if(state.inningsOver) return; 
-  state.graphics.activeEvent = null; // Clear old popup
+  state.graphics.activeEvent = null;
   const extraRuns = parseInt(document.getElementById('extraRunsInput').value) || 0; 
   pushSnapshot(`Extra: ${tempExtraType} + ${extraRuns}`);
   
   const tBat = state.meta.batTeam; const striker = state.squads[tBat].find(p => p.id === state.striker); const bs = getBowlerStats(state.bowler);
-  
   let isLegal = false; let penalty = 0; let batRuns = 0; let extraAdd = 0; let bowlRuns = 0;
   
-  if(tempExtraType === 'B' || tempExtraType === 'LB') {
-      isLegal = true; extraAdd = extraRuns; bowlRuns = 0;
-  } else if(tempExtraType === 'WD') {
-      isLegal = false; penalty = 1; extraAdd = extraRuns + 1; bowlRuns = extraRuns + 1;
-  } else if(tempExtraType === 'NB') {
-      isLegal = false; penalty = 1; 
-      let nbType = document.getElementById('nbRunType').value;
-      if(nbType === 'BAT') { batRuns = extraRuns; extraAdd = 1; bowlRuns = extraRuns + 1; }
-      else { extraAdd = extraRuns + 1; bowlRuns = 1; } 
+  if(tempExtraType === 'B' || tempExtraType === 'LB') { isLegal = true; extraAdd = extraRuns; bowlRuns = 0; } 
+  else if(tempExtraType === 'WD') { isLegal = false; penalty = 1; extraAdd = extraRuns + 1; bowlRuns = extraRuns + 1; } 
+  else if(tempExtraType === 'NB') {
+      isLegal = false; penalty = 1; let nbType = document.getElementById('nbRunType').value;
+      if(nbType === 'BAT') { batRuns = extraRuns; extraAdd = 1; bowlRuns = extraRuns + 1; } else { extraAdd = extraRuns + 1; bowlRuns = 1; } 
   }
 
   const total = batRuns + extraAdd;
-  state.score += total; state.currentOverRuns += total; state.extras += extraAdd; state.partnership.runs += total; 
-  state.overBalls.push(`${tempExtraType}${extraRuns > 0 ? '+' + extraRuns : ''}`);
+  state.score += total; state.currentOverRuns += total; state.extras += extraAdd; state.partnership.runs += total; state.overBalls.push(`${tempExtraType}${extraRuns > 0 ? '+' + extraRuns : ''}`);
   
   if(tempExtraType === 'NB') { 
       striker.balls += 1; 
       if(striker.id === state.partnership.p1) { state.partnership.p1Balls += 1; if(batRuns > 0) { striker.runs += batRuns; state.partnership.p1Runs += batRuns; } }
       else { state.partnership.p2Balls += 1; if(batRuns > 0) { striker.runs += batRuns; state.partnership.p2Runs += batRuns; } }
   }
-
-  bs.runs += bowlRuns; bs.ovRunsTracker += bowlRuns;
-  
+  if(tempExtraType === 'WD' || tempExtraType === 'NB') { bs.runs += bowlRuns; bs.ovRunsTracker += bowlRuns; }
   if(isLegal) { 
       state.legalBalls += 1; state.partnership.balls += 1; striker.balls += 1; bs.balls += 1; if(extraRuns === 0) bs.dots += 1; 
       if(striker.id === state.partnership.p1) state.partnership.p1Balls += 1; else state.partnership.p2Balls += 1;
   }
-  
   if(extraRuns % 2 !== 0) swapStrikeInternal(); if(isLegal) checkOverEnd(); checkInningsEnd(); syncLiveAndSave();
 };
 
 window.openWicketModal = function(type) {
   tempWicketType = type; document.getElementById('wicketTitle').innerText = type.replace('_', ' '); 
-  
-  if(type === 'RUN_OUT') {
-      document.getElementById('runOutExtrasDiv').style.display = 'block';
-      document.getElementById('roRuns').value = 0;
-  } else {
-      document.getElementById('runOutExtrasDiv').style.display = 'none';
-  }
-
+  if(type === 'RUN_OUT') { document.getElementById('runOutExtrasDiv').style.display = 'block'; document.getElementById('roRuns').value = 0; } 
+  else { document.getElementById('runOutExtrasDiv').style.display = 'none'; }
   const batterDiv = document.getElementById('outBatterDiv');
   if(type === 'CAUGHT' || type === 'STUMPED') { batterDiv.style.display = 'none'; document.getElementById('outBatterSelect').value = 'STRIKER'; } 
   else { batterDiv.style.display = 'block'; }
@@ -495,19 +491,10 @@ window.openWicketModal = function(type) {
   const select = document.getElementById('fielderSelect'); select.innerHTML = '<option value="">-- None / Direct --</option>'; state.squads[state.meta.bowlTeam].forEach(p => { select.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
   document.getElementById('wicketModal').classList.add('active');
 };
-
 window.submitWicket = function() { 
-  const who = document.getElementById('outBatterSelect').value; 
-  const fielderId = document.getElementById('fielderSelect').value; 
-  closeModal('wicketModal'); 
-  
-  if(tempWicketType === 'RUN_OUT') {
-      const delType = document.getElementById('roDelivery').value;
-      const rRuns = parseInt(document.getElementById('roRuns').value) || 0;
-      processRunOut(delType, rRuns, who, fielderId);
-  } else {
-      processWicket(tempWicketType, who, fielderId); 
-  }
+  const who = document.getElementById('outBatterSelect').value; const fielderId = document.getElementById('fielderSelect').value; closeModal('wicketModal'); 
+  if(tempWicketType === 'RUN_OUT') { const delType = document.getElementById('roDelivery').value; const rRuns = parseInt(document.getElementById('roRuns').value) || 0; processRunOut(delType, rRuns, who, fielderId); } 
+  else { processWicket(tempWicketType, who, fielderId); }
 };
 
 window.processRunOut = function(delivery, runs, who, fielderId) {
@@ -539,10 +526,8 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
     if(runs % 2 !== 0) swapStrikeInternal();
 
     const outBatter = state.squads[tBat].find(p => p.id === outId); outBatter.isOut = true;
-    const fielder = state.squads[state.meta.bowlTeam].find(p => p.id === fielderId);
-    outBatter.dismissalInfo = `run out (${fielder ? fielder.name : ''})`;
-    state.wickets += 1; 
-    state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); 
+    const fielder = state.squads[state.meta.bowlTeam].find(p => p.id === fielderId); outBatter.dismissalInfo = `run out (${fielder ? fielder.name : ''})`;
+    state.wickets += 1; state.fow.push({ wktNo: state.wickets, score: state.score, overs: fmtOvers(state.legalBalls), batterName: outBatter.name }); 
     
     let p1B = state.squads[tBat].find(p => p.id === state.partnership.p1); let p2B = state.squads[tBat].find(p => p.id === state.partnership.p2);
     state.pastPartnerships.push({ wktNo: state.wickets, p1Name: p1B ? p1B.name : '', p1Runs: state.partnership.p1Runs, p1Balls: state.partnership.p1Balls, p2Name: p2B ? p2B.name : '', p2Runs: state.partnership.p2Runs, p2Balls: state.partnership.p2Balls, runs: state.partnership.runs, balls: state.partnership.balls });
@@ -552,9 +537,7 @@ window.processRunOut = function(delivery, runs, who, fielderId) {
     if(nP1 === outId) nP1 = nextId; else nP2 = nextId;
     state.partnership = { runs: 0, balls: 0, p1: nP1, p2: nP2, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
     
-    if(state.striker === outId) { if(nextBatter) state.striker = nextBatter.id; } 
-    else if(state.nonStriker === outId) { if(nextBatter) state.nonStriker = nextBatter.id; }
-
+    if(state.striker === outId) { if(nextBatter) state.striker = nextBatter.id; } else if(state.nonStriker === outId) { if(nextBatter) state.nonStriker = nextBatter.id; }
     if(isLegal) checkOverEnd(); triggerAutoGraphic("WICKET"); checkInningsEnd(); syncLiveAndSave();
 };
 
@@ -584,7 +567,6 @@ window.processWicket = function(type, who = "STRIKER", fielderId = null) {
 
 window.markRetiredHurt = function() {
   if(state.inningsOver) return; const batTeam = state.meta.batTeam; const p = state.squads[batTeam].find(x => x.id === state.striker); if(!confirm(`Mark ${p.name} as Retired Hurt?`)) return; pushSnapshot("Retired Hurt"); p.isRetired = true; p.dismissalInfo = "retired hurt";
-  
   let p1B = state.squads[batTeam].find(b => b.id === state.partnership.p1); let p2B = state.squads[batTeam].find(b => b.id === state.partnership.p2);
   state.pastPartnerships.push({ wktNo: state.wickets, p1Name: p1B ? p1B.name : '', p1Runs: state.partnership.p1Runs, p1Balls: state.partnership.p1Balls, p2Name: p2B ? p2B.name : '', p2Runs: state.partnership.p2Runs, p2Balls: state.partnership.p2Balls, runs: state.partnership.runs, balls: state.partnership.balls });
   
@@ -625,8 +607,7 @@ function checkInningsEnd() {
 
 window.startSecondInnings = function() {
   pushSnapshot("Start 2nd Innings"); let finalOverHistory = [...state.overHistory]; if (state.legalBalls % 6 !== 0) finalOverHistory.push(state.currentOverRuns);
-  state.graphics.activeEvent = null; // Clear Popups
-  
+  state.graphics.activeEvent = null; 
   state.firstInnings = { team: state.meta.batTeam, score: state.score, wickets: state.wickets, legalBalls: state.legalBalls, overHistory: finalOverHistory, fow: [...state.fow], batters: JSON.parse(JSON.stringify(state.squads[state.meta.batTeam])), bowlers: JSON.parse(JSON.stringify(state.squads[state.meta.bowlTeam])), bowlerStats: JSON.parse(JSON.stringify(state.bowlerStats)), extras: state.extras, pastPartnerships: [...state.pastPartnerships] };
   const newBat = state.meta.bowlTeam; const newBowl = state.meta.batTeam; state.meta.batTeam = newBat; state.meta.bowlTeam = newBowl;
   state.target = state.firstInnings.score + 1; state.innings = 2; state.score = 0; state.wickets = 0; state.legalBalls = 0; state.extras = 0; state.overBalls = []; state.currentOverRuns = 0; state.overHistory = []; state.fow = []; state.pastPartnerships = []; state.inningsOver = false; state.lastBowler = null; state.striker = state.squads[newBat][0].id; state.nonStriker = state.squads[newBat][1].id; state.bowler = state.squads[newBowl][0].id;
@@ -670,22 +651,11 @@ window.manualPlayerChange = function() {
   if(state.partnership.p2 !== state.striker && state.partnership.p2 !== state.nonStriker) state.partnership.p2 = state.nonStriker;
   syncLiveAndSave(); 
 };
-
-// AUTO GRAPHIC BUG FIX (Timer Reset Logic)
 let autoEventTimer = null;
 function triggerAutoGraphic(type) { 
-  if(!type) return; 
-  state.graphics.activeEvent = type; 
-  set(liveRef, state); // Instant Show
-  clearTimeout(autoEventTimer);
-  autoEventTimer = setTimeout(() => { 
-      if(state && state.graphics) { 
-          state.graphics.activeEvent = null; 
-          set(liveRef, state); // Instant Hide
-      } 
-  }, 3500); 
+  if(!type) return; state.graphics.activeEvent = type; set(liveRef, state); 
+  clearTimeout(autoEventTimer); autoEventTimer = setTimeout(() => { if(state && state.graphics) { state.graphics.activeEvent = null; set(liveRef, state); } }, 3500); 
 }
-
 window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); };
 
 function updateUI() {
