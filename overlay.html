@@ -13,6 +13,16 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html,body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; font-family: 'Rajdhani', sans-serif; color: var(--ink); }
+  
+  /* ================= AUTO-SCALING CANVAS ================= */
+  #overlay-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1280px;  /* BASE 16:9 WIDTH */
+    height: 720px;  /* BASE 16:9 HEIGHT */
+    transform-origin: top left;
+  }
+
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
   .mark { font-family: 'Orbitron', sans-serif; }
 
@@ -20,7 +30,7 @@
   .scorebug {
     position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: stretch; 
-    width: 1150px; max-width: 96vw;
+    width: 1150px; /* FIXED WIDTH RELATIVE TO CANVAS */
     opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
   }
   .scorebug.show { opacity: 1; }
@@ -127,115 +137,132 @@
 </head>
 <body>
 
-<div class="scorebug" id="scorebug">
-  <div class="brand-bar">M.B. LIVE STUDIO</div>
-  <div class="main-strip">
-      <div id="bugNormal">
-        <div class="team-block" id="ovTeam">IND</div>
-        <div class="score-block">
-          <div class="runs num" id="ovScore">0/0</div>
-          <div class="overs" id="ovOvers">(0.0)</div>
-        </div>
-        <div class="rate-block">
-          <div class="label">CRR</div>
-          <div class="value" id="ovCrr">0.00</div>
-          <div id="ovProjWrap" style="display:none; margin-top:4px;">
-            <div class="label">PROJ</div>
-            <div class="value" id="ovProj" style="color:var(--gold-2); font-size:16px;">0</div>
+<div id="overlay-canvas">
+
+    <div class="scorebug" id="scorebug">
+      <div class="brand-bar">M.B. LIVE STUDIO</div>
+      <div class="main-strip">
+          <div id="bugNormal">
+            <div class="team-block" id="ovTeam">IND</div>
+            <div class="score-block">
+              <div class="runs num" id="ovScore">0/0</div>
+              <div class="overs" id="ovOvers">(0.0)</div>
+            </div>
+            <div class="rate-block">
+              <div class="label">CRR</div>
+              <div class="value" id="ovCrr">0.00</div>
+              <div id="ovProjWrap" style="display:none; margin-top:4px;">
+                <div class="label">PROJ</div>
+                <div class="value" id="ovProj" style="color:var(--gold-2); font-size:16px;">0</div>
+              </div>
+              <div id="ovRrrWrap" style="display:none; margin-top:4px;">
+                <div class="label">REQ</div>
+                <div class="value" id="ovRrr" style="color:var(--crimson-2); font-size:16px;">0.00</div>
+              </div>
+            </div>
+            <div class="batters-block">
+              <div class="batter-row" id="ovStrikerRow"><span id="ovStrikerName">—</span><span class="fig" id="ovStrikerFig"></span></div>
+              <div class="batter-row" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span><span class="fig" id="ovNonStrikerFig"></span></div>
+            </div>
+            <div class="bowler-block">
+              <div class="bowler-info"><span class="label">BOWLER</span><span class="name" id="ovBowlerName">—</span><span class="fig" id="ovBowlerFig">0-0-0-0</span></div>
+              <div class="over-track" id="ovBalls"></div>
+            </div>
           </div>
-          <div id="ovRrrWrap" style="display:none; margin-top:4px;">
-            <div class="label">REQ</div>
-            <div class="value" id="ovRrr" style="color:var(--crimson-2); font-size:16px;">0.00</div>
+          <div id="bugResult">
+              <span id="bugResultText"></span>
           </div>
-        </div>
-        <div class="batters-block">
-          <div class="batter-row" id="ovStrikerRow"><span id="ovStrikerName">—</span><span class="fig" id="ovStrikerFig"></span></div>
-          <div class="batter-row" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span><span class="fig" id="ovNonStrikerFig"></span></div>
-        </div>
-        <div class="bowler-block">
-          <div class="bowler-info"><span class="label">BOWLER</span><span class="name" id="ovBowlerName">—</span><span class="fig" id="ovBowlerFig">0-0-0-0</span></div>
-          <div class="over-track" id="ovBalls"></div>
-        </div>
       </div>
-      <div id="bugResult">
-          <span id="bugResultText"></span>
+      <div class="bottom-strip" id="bottomStrip"></div>
+    </div>
+
+    <!-- GRAPHICS PANELS -->
+    <div class="center-panel" id="graphic-part">
+      <div class="center-title" id="partTitle">PARTNERSHIP</div>
+      <div class="part-flex">
+        <div class="part-player"><div class="part-name" id="partP1Name">—</div><div class="part-contrib" id="partP1Score">0 (0)</div></div>
+        <div class="part-center"><div class="part-total" id="partTotalRuns">0</div><div class="part-balls" id="partTotalBalls">(0)</div></div>
+        <div class="part-player"><div class="part-name" id="partP2Name">—</div><div class="part-contrib" id="partP2Score">0 (0)</div></div>
       </div>
-  </div>
-  <div class="bottom-strip" id="bottomStrip"></div>
-</div>
+    </div>
 
-<!-- GRAPHICS PANELS -->
-<div class="center-panel" id="graphic-part">
-  <div class="center-title" id="partTitle">PARTNERSHIP</div>
-  <div class="part-flex">
-    <div class="part-player"><div class="part-name" id="partP1Name">—</div><div class="part-contrib" id="partP1Score">0 (0)</div></div>
-    <div class="part-center"><div class="part-total" id="partTotalRuns">0</div><div class="part-balls" id="partTotalBalls">(0)</div></div>
-    <div class="part-player"><div class="part-name" id="partP2Name">—</div><div class="part-contrib" id="partP2Score">0 (0)</div></div>
-  </div>
-</div>
+    <div class="center-panel" id="graphic-allpart">
+      <div class="center-title" id="allpartTitle">ALL PARTNERSHIPS</div>
+      <div class="allpart-list" id="allpartListBody"></div>
+    </div>
 
-<div class="center-panel" id="graphic-allpart">
-  <div class="center-title" id="allpartTitle">ALL PARTNERSHIPS</div>
-  <div class="allpart-list" id="allpartListBody"></div>
-</div>
+    <div class="center-panel" id="graphic-bat">
+      <div class="center-title" id="batTitle">BATTING SCORECARD</div>
+      <table class="sc-table"><thead><tr><th>BATTER</th><th></th><th>R</th><th>B</th><th>4s</th><th>6s</th></tr></thead><tbody id="batTableBody"></tbody></table>
+      <div class="sc-footer"><div id="batExtras">Extras: 0</div><div id="batTotal">Total: 0/0 (0.0 Overs)</div></div>
+    </div>
 
-<div class="center-panel" id="graphic-bat">
-  <div class="center-title" id="batTitle">BATTING SCORECARD</div>
-  <table class="sc-table"><thead><tr><th>BATTER</th><th></th><th>R</th><th>B</th><th>4s</th><th>6s</th></tr></thead><tbody id="batTableBody"></tbody></table>
-  <div class="sc-footer"><div id="batExtras">Extras: 0</div><div id="batTotal">Total: 0/0 (0.0 Overs)</div></div>
-</div>
+    <div class="center-panel" id="graphic-bowl">
+      <div class="center-title" id="bowlTitle">BOWLING SCORECARD</div>
+      <table class="sc-table bowl"><thead><tr><th>BOWLER</th><th>O</th><th>M</th><th>R</th><th>W</th><th>DOTS</th><th>ECON</th></tr></thead><tbody id="bowlTableBody"></tbody></table>
+      <div class="fow-strip" id="bowlFowStrip">Fall of Wickets: —</div>
+    </div>
 
-<div class="center-panel" id="graphic-bowl">
-  <div class="center-title" id="bowlTitle">BOWLING SCORECARD</div>
-  <table class="sc-table bowl"><thead><tr><th>BOWLER</th><th>O</th><th>M</th><th>R</th><th>W</th><th>DOTS</th><th>ECON</th></tr></thead><tbody id="bowlTableBody"></tbody></table>
-  <div class="fow-strip" id="bowlFowStrip">Fall of Wickets: —</div>
-</div>
-
-<div class="center-panel" id="graphic-proj">
-  <div class="center-title" id="projTitle">PROJECTED SCORE</div>
-  <div id="projInns1">
-      <div class="proj-row highlight"><span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span><span id="projCrrTotal" class="num" style="font-size:32px;">0</span></div>
-      <div class="proj-row"><span>Run Rate <span id="projR1L">8.0</span></span><span id="projR1T" class="num">0</span></div>
-      <div class="proj-row"><span>Run Rate <span id="projR2L">10.0</span></span><span id="projR2T" class="num">0</span></div>
-      <div class="proj-row"><span>Run Rate <span id="projR3L">12.0</span></span><span id="projR3T" class="num">0</span></div>
-  </div>
-  <div id="projInns2" style="display:none; text-align:center; padding: 25px 20px;">
-      <div id="projNeed" style="font-size:42px; font-weight:900; font-family:'Bebas Neue',sans-serif; color:var(--gold-2); margin-bottom:15px; letter-spacing:1px; line-height:1;">NEED 0 RUNS FROM 0 BALLS</div>
-      <div style="display:flex; justify-content: space-around; font-size:22px; font-weight:700;">
-          <div>Target: <span id="projTargetVal" class="num" style="font-size:28px;">0</span></div>
-          <div>CRR: <span id="projCrrInns2" class="num" style="font-size:28px;">0.00</span></div>
-          <div>RRR: <span id="projRrrInns2" class="num" style="font-size:28px; color:var(--crimson-2);">0.00</span></div>
+    <div class="center-panel" id="graphic-proj">
+      <div class="center-title" id="projTitle">PROJECTED SCORE</div>
+      <div id="projInns1">
+          <div class="proj-row highlight"><span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span><span id="projCrrTotal" class="num" style="font-size:32px;">0</span></div>
+          <div class="proj-row"><span>Run Rate <span id="projR1L">8.0</span></span><span id="projR1T" class="num">0</span></div>
+          <div class="proj-row"><span>Run Rate <span id="projR2L">10.0</span></span><span id="projR2T" class="num">0</span></div>
+          <div class="proj-row"><span>Run Rate <span id="projR3L">12.0</span></span><span id="projR3T" class="num">0</span></div>
       </div>
-  </div>
+      <div id="projInns2" style="display:none; text-align:center; padding: 25px 20px;">
+          <div id="projNeed" style="font-size:42px; font-weight:900; font-family:'Bebas Neue',sans-serif; color:var(--gold-2); margin-bottom:15px; letter-spacing:1px; line-height:1;">NEED 0 RUNS FROM 0 BALLS</div>
+          <div style="display:flex; justify-content: space-around; font-size:22px; font-weight:700;">
+              <div>Target: <span id="projTargetVal" class="num" style="font-size:28px;">0</span></div>
+              <div>CRR: <span id="projCrrInns2" class="num" style="font-size:28px;">0.00</span></div>
+              <div>RRR: <span id="projRrrInns2" class="num" style="font-size:28px; color:var(--crimson-2);">0.00</span></div>
+          </div>
+      </div>
+    </div>
+
+    <div class="center-panel" id="graphic-fow">
+      <div class="center-title" id="fowTitle">FALL OF WICKETS</div>
+      <div class="fow-list" id="fowListBody"></div>
+    </div>
+
+    <div class="center-panel" id="graphic-chart">
+      <div class="center-title" id="chartTitle">RUNS PER OVER</div>
+      <div style="padding: 20px;"><svg id="chartSvg" width="700" height="230"></svg></div>
+    </div>
+
+    <div class="center-panel" id="graphic-worm">
+      <div class="center-title" id="wormTitle">WORM GRAPH (CUMULATIVE SCORE)</div>
+      <div style="padding: 20px;"><svg id="wormSvg" width="700" height="230"></svg></div>
+      <div id="wormLegend" style="display:flex; justify-content:center; gap:30px; padding-bottom:15px; font-weight:700; font-size:16px;"></div>
+    </div>
+
+    <div class="center-panel" id="graphic-result">
+      <div class="center-title">MATCH RESULT</div>
+      <div style="padding: 40px; text-align:center; font-family:'Bebas Neue', sans-serif; font-size: 54px; letter-spacing: 2px; color: var(--gold-2); line-height:1;">
+          <span id="resultText"></span>
+      </div>
+    </div>
+
+    <div class="popup-event" id="popupEvent">
+      <div class="pop-title num" id="popTitle">WICKET</div>
+      <div class="pop-sub" id="popSub"></div>
+    </div>
+
 </div>
 
-<div class="center-panel" id="graphic-fow">
-  <div class="center-title" id="fowTitle">FALL OF WICKETS</div>
-  <div class="fow-list" id="fowListBody"></div>
-</div>
-
-<div class="center-panel" id="graphic-chart">
-  <div class="center-title" id="chartTitle">RUNS PER OVER</div>
-  <div style="padding: 20px;"><svg id="chartSvg" width="700" height="230"></svg></div>
-</div>
-
-<div class="center-panel" id="graphic-worm">
-  <div class="center-title" id="wormTitle">WORM GRAPH (CUMULATIVE SCORE)</div>
-  <div style="padding: 20px;"><svg id="wormSvg" width="700" height="230"></svg></div>
-  <div id="wormLegend" style="display:flex; justify-content:center; gap:30px; padding-bottom:15px; font-weight:700; font-size:16px;"></div>
-</div>
-
-<div class="center-panel" id="graphic-result">
-  <div class="center-title">MATCH RESULT</div>
-  <div style="padding: 40px; text-align:center; font-family:'Bebas Neue', sans-serif; font-size: 54px; letter-spacing: 2px; color: var(--gold-2); line-height:1;">
-      <span id="resultText"></span>
-  </div>
-</div>
-
-<div class="popup-event" id="popupEvent">
-  <div class="pop-title num" id="popTitle">WICKET</div>
-  <div class="pop-sub" id="popSub"></div>
-</div>
+<script>
+  // AUTO-SCALING SCRIPT TO FIX PHONE/WEBVIEW SIZING ISSUES
+  function resizeCanvas() {
+      const canvas = document.getElementById('overlay-canvas');
+      const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      canvas.style.transform = `scale(${scale})`;
+      canvas.style.left = `${(window.innerWidth - 1280 * scale) / 2}px`;
+      canvas.style.top = `${(window.innerHeight - 720 * scale) / 2}px`;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas(); // Initial call
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -406,7 +433,6 @@ onValue(ref(db, "current_match"), snap => {
       }
   }
 
-  // FALL OF WICKETS (With Overs added)
   if(renderTarget === 'fow') {
     document.getElementById('fowTitle').innerText = `FALL OF WICKETS${isRecall?' (1ST INN)':''}`;
     document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score} <span style="color:var(--muted); font-size:15px; margin-left:6px;">(${f.overs} Ov)</span></span></div>`).join('');
