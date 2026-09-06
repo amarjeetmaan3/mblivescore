@@ -18,8 +18,8 @@
   #overlay-canvas {
     position: absolute;
     top: 0; left: 0;
-    width: 1280px;  /* BASE 16:9 WIDTH */
-    height: 720px;  /* BASE 16:9 HEIGHT */
+    width: 1280px; 
+    height: 720px; 
     transform-origin: top left;
   }
 
@@ -30,7 +30,7 @@
   .scorebug {
     position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: stretch; 
-    width: 1150px; /* FIXED WIDTH RELATIVE TO CANVAS */
+    width: 1150px; 
     opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10;
   }
   .scorebug.show { opacity: 1; }
@@ -90,7 +90,6 @@
   .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 72px; color: var(--gold-2); line-height: 1; }
   .part-balls { font-size: 24px; font-weight: 700; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
 
-  /* ALL PARTNERSHIPS */
   #graphic-allpart { width: 950px; }
   .allpart-list { padding: 10px 25px; max-height: 380px; overflow-y: auto; }
   .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-bottom: 1px dotted var(--line); font-size: 20px; font-weight: 600; }
@@ -252,7 +251,6 @@
 </div>
 
 <script>
-  // AUTO-SCALING SCRIPT TO FIX PHONE/WEBVIEW SIZING ISSUES
   function resizeCanvas() {
       const canvas = document.getElementById('overlay-canvas');
       const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
@@ -261,7 +259,7 @@
       canvas.style.top = `${(window.innerHeight - 720 * scale) / 2}px`;
   }
   window.addEventListener('resize', resizeCanvas);
-  resizeCanvas(); // Initial call
+  resizeCanvas(); 
 </script>
 
 <script type="module">
@@ -304,7 +302,6 @@ onValue(ref(db, "current_match"), snap => {
       document.getElementById('bugNormal').style.display = 'flex'; document.getElementById('bugResult').style.display = 'none';
   }
   
-  // DYNAMIC TEAM FONT SIZING
   const teamEl = document.getElementById('ovTeam');
   teamEl.innerText = batTeamName;
   if(batTeamName.length > 9) teamEl.style.fontSize = '26px';
@@ -369,7 +366,6 @@ onValue(ref(db, "current_match"), snap => {
     document.getElementById('partP2Name').innerText = p2Obj ? p2Obj.name + (p2Obj.id===state.striker?'*':'') : '—'; document.getElementById('partP2Score').innerText = `${state.partnership.p2Runs || 0} (${state.partnership.p2Balls || 0})`; 
   }
 
-  // ALL PARTNERSHIPS
   if(renderTarget === 'allpart') {
       document.getElementById('allpartTitle').innerText = `ALL PARTNERSHIPS${isRecall?' (1ST INN)':''}`;
       let pastParts = isRecall ? (state.firstInnings.pastPartnerships || []) : (state.pastPartnerships || []);
