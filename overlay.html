@@ -18,33 +18,99 @@
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
   .mark { font-family: 'Orbitron', sans-serif; }
 
+  /* ================= CORNER BRANDING ================= */
+  .corner-brand {
+    position: absolute;
+    top: 25px;
+    left: 35px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--gold);
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8));
+    z-index: 20;
+    line-height: 1;
+  }
+  .corner-brand .mb-text {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-shadow: 2px 2px 0 var(--navy-deep);
+  }
+  .corner-brand .studio-text {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: var(--ink);
+    background: var(--crimson);
+    padding: 2px 8px;
+    margin-top: 2px;
+    border-radius: 2px;
+  }
+
   /* ================= MAIN SCOREBUG ================= */
-  .scorebug { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; width: 1150px; max-width: 96vw; opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 14px 28px rgba(0,0,0,0.65)); z-index: 10; }
+  .scorebug { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; width: 100%; max-width: 1280px; opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 -5px 20px rgba(0,0,0,0.5)); z-index: 10; }
   .scorebug.show { opacity: 1; }
-  .brand-bar { align-self: flex-start; margin-left: 22px; background: var(--gold); color: var(--navy-deep); font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 13px; padding: 4px 18px; letter-spacing: 3px; border-radius: 5px 5px 0 0; }
-  .main-strip { display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%); border: 1px solid var(--line); border-bottom: none; overflow: hidden; height: 100px; border-radius: 8px 8px 0 0; }
+  
+  .main-strip { display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%); border-top: 2px solid var(--gold); height: 85px; }
   #bugNormal { display: flex; align-items: stretch; width: 100%; justify-content: space-between; }
   #bugResult { display: none; justify-content: center; align-items: center; width: 100%; background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); letter-spacing: 2px; }
-  .team-block { background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; padding: 0 24px; display: flex; align-items: center; border-right: 3px solid var(--crimson); min-width: 150px; justify-content: center; text-align:center; white-space:nowrap; }
-  .score-block { display: flex; align-items: center; padding: 0 24px; border-right: 1px solid var(--line); }
-  .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 58px; line-height: 0.9; transform: translateY(4px); }
-  .score-block .overs { font-size: 20px; font-weight: 700; color: var(--muted); margin-left: 12px; align-self: center; }
-  .rate-block { display:flex; flex-direction:column; justify-content:center; padding: 0 20px; border-right: 1px solid var(--line); gap: 2px; }
-  .rate-block .label { font-size: 12px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
-  .rate-block .value { font-size: 22px; font-weight: 700; line-height: 1; }
-  .batters-block { display:flex; flex-direction:column; justify-content:center; padding: 0 22px; border-right: 1px solid var(--line); gap: 4px; min-width: 250px; flex:1; }
-  .batter-row { display:flex; justify-content: space-between; font-size: 18px; font-weight: 700; }
+  
+  .team-block { background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; padding: 0 30px; display: flex; align-items: center; border-right: 4px solid var(--crimson); min-width: 160px; justify-content: center; text-align:center; white-space:nowrap; font-weight:900; }
+  
+  .score-block { display: flex; align-items: center; padding: 0 30px; border-right: 1px solid var(--line); }
+  .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 64px; line-height: 0.9; transform: translateY(3px); font-weight:900; }
+  .score-block .overs { font-size: 24px; font-weight: 700; color: var(--muted); margin-left: 15px; align-self: center; }
+  
+  .rate-block { display:flex; flex-direction:column; justify-content:center; align-items:center; padding: 0 25px; border-right: 1px solid var(--line); gap: 2px; min-width:110px;}
+  .rate-block .label { font-size: 14px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
+  .rate-block .value { font-size: 26px; font-weight: 700; line-height: 1; }
+  
+  .batters-block { display:flex; flex-direction:column; justify-content:center; padding: 0 30px; border-right: 1px solid var(--line); gap: 6px; flex:1; min-width:320px;}
+  .batter-row { display:flex; justify-content: space-between; align-items:baseline; font-size: 22px; font-weight: 700; }
   .batter-row.on-strike { color: var(--gold-2); }
-  .batter-row .fig { color: var(--muted); font-size: 16px; margin-left: 10px; }
-  .bowler-block { display:flex; flex-direction:column; justify-content:center; padding: 0 22px; min-width: 280px; }
-  .bowler-info { display:flex; align-items:baseline; gap: 8px; margin-bottom: 6px; }
-  .bowler-info .label { font-size: 12px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
-  .bowler-info .name { font-size: 18px; font-weight: 700; }
-  .bowler-info .fig { font-size: 16px; color: var(--muted); margin-left: auto; }
-  .over-track { display: flex; flex-wrap: wrap; gap: 5px; max-width: 260px; }
-  .ball-pill { min-width: 24px; height: 24px; padding: 0 4px; border-radius: 50%; background: var(--navy-3); color: var(--ink); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
-  .bottom-strip { background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-2) 100%); color: #fff; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 30px; text-align: center; opacity: 0; transition: opacity .15s; }
-  .bottom-strip.show { opacity: 1; }
+  .batter-row .fig { color: var(--muted); font-size: 18px; margin-left: 15px; font-weight:600;}
+  
+  .bowler-block { display:flex; flex-direction:column; justify-content:center; padding: 0 30px; min-width: 320px; }
+  .bowler-info { display:flex; align-items:baseline; gap: 10px; margin-bottom: 8px; }
+  .bowler-info .name { font-size: 22px; font-weight: 700; color: var(--gold-2); }
+  .bowler-info .fig { font-size: 18px; color: var(--ink); margin-left: auto; font-weight:700;}
+
+  /* BOTTOM STRIP / MESSAGE BAR RE-DESIGNED TO FIT INSIDE */
+  .bottom-info-area {
+    display: flex;
+    align-items: center;
+    background: var(--navy-3);
+    border-top: 1px solid var(--line);
+    height: 38px;
+    overflow: hidden;
+  }
+  
+  /* The dynamic message section */
+  .message-strip { 
+      flex: 1;
+      padding: 0 25px; 
+      font-size: 18px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      text-transform: uppercase;
+  }
+  
+  /* The balls tracker section now lives in the bottom strip */
+  .over-track { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      padding: 0 25px;
+      background: rgba(0,0,0,0.3);
+      height: 100%;
+      border-left: 1px solid var(--line);
+  }
+  .ball-pill { min-width: 26px; height: 26px; padding: 0 4px; border-radius: 4px; background: var(--navy-2); color: var(--ink); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
 
   /* ================= CENTER GRAPHICS ================= */
   .center-panel {
@@ -126,8 +192,13 @@
 
 <div id="overlay-canvas">
 
+    <!-- NEW CORNER BRANDING -->
+    <div class="corner-brand">
+        <div class="mb-text">MB</div>
+        <div class="studio-text">LIVE STUDIO</div>
+    </div>
+
     <div class="scorebug" id="scorebug">
-      <div class="brand-bar">M.B. LIVE STUDIO</div>
       <div class="main-strip">
           <div id="bugNormal">
             <div class="team-block" id="ovTeam">IND</div>
@@ -152,15 +223,19 @@
               <div class="batter-row" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span><span class="fig" id="ovNonStrikerFig"></span></div>
             </div>
             <div class="bowler-block">
-              <div class="bowler-info"><span class="label">BOWLER</span><span class="name" id="ovBowlerName">—</span><span class="fig" id="ovBowlerFig">0-0-0-0</span></div>
-              <div class="over-track" id="ovBalls"></div>
+              <div class="bowler-info"><span class="name" id="ovBowlerName">—</span><span class="fig" id="ovBowlerFig">0.0-0-0-0</span></div>
             </div>
           </div>
           <div id="bugResult">
               <span id="bugResultText"></span>
           </div>
       </div>
-      <div class="bottom-strip" id="bottomStrip"></div>
+      
+      <!-- REDESIGNED BOTTOM AREA -->
+      <div class="bottom-info-area">
+          <div class="message-strip" id="bottomStripText">M.B. LIVE STUDIO</div>
+          <div class="over-track" id="ovBalls"></div>
+      </div>
     </div>
 
     <!-- GRAPHICS PANELS -->
@@ -312,9 +387,9 @@ onValue(ref(db, "current_match"), snap => {
   
   const teamEl = document.getElementById('ovTeam');
   teamEl.innerText = batTeamName;
-  if(batTeamName.length > 9) teamEl.style.fontSize = '26px';
-  else if(batTeamName.length > 5) teamEl.style.fontSize = '32px';
-  else teamEl.style.fontSize = '40px';
+  if(batTeamName.length > 9) teamEl.style.fontSize = '28px';
+  else if(batTeamName.length > 5) teamEl.style.fontSize = '36px';
+  else teamEl.style.fontSize = '46px';
 
   document.getElementById('ovScore').innerText = `${state.score}/${state.wickets}`;
   document.getElementById('ovOvers').innerText = `(${fmtOvers(state.legalBalls)})`;
@@ -345,8 +420,13 @@ onValue(ref(db, "current_match"), snap => {
     return `<div class="ball-pill" style="background:${color}">${text}</div>`;
   }).join('');
 
-  const bStrip = document.getElementById('bottomStrip');
-  if(g.bottomStrip && g.dynamicText) { bStrip.classList.add('show'); bStrip.innerText = g.dynamicText; } else bStrip.classList.remove('show');
+  if(g.bottomStrip && g.dynamicText) { 
+      document.getElementById('bottomStripText').innerText = g.dynamicText;
+      document.getElementById('bottomStripText').style.color = "var(--gold-2)";
+  } else { 
+      document.getElementById('bottomStripText').innerText = "M.B. LIVE STUDIO";
+      document.getElementById('bottomStripText').style.color = "var(--ink)";
+  }
 
   const panels = ['part', 'allpart', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm', 'result', 'singlePlayer', 'squads'];
   panels.forEach(p => { document.getElementById(`graphic-${p}`).classList.remove('show'); });
