@@ -25,6 +25,7 @@
   .btn-accent { background: #3d2c00; border-color: var(--gold); color: var(--gold-2); }
   
   .btn-active { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
+  .btn-disabled { opacity: 0.3 !important; cursor: not-allowed !important; pointer-events: none !important; }
 
   .screen { display: none; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 8px 30px; }
   .screen.active { display: flex; flex-direction: column; }
@@ -66,15 +67,12 @@
 </head>
 <body>
 
-<!-- ================= 1. HOME SCREEN ================= -->
 <div id="screen-home" class="screen active">
   <h2 style="color: var(--gold); font-family:'Bebas Neue',sans-serif; font-size:24px; text-align:center; margin-bottom:8px; letter-spacing:1px;">M.B. LIVE STUDIO</h2>
-
   <div class="card">
     <div class="card-title">Cloud Saved Matches</div>
     <div id="savedMatchesList">Loading...</div>
   </div>
-
   <div class="card">
     <div class="card-title">Create New Match</div>
     <div class="grid-2">
@@ -95,14 +93,11 @@
   </div>
 </div>
 
-<!-- ================= 2. LIVE CONTROLLER ================= -->
 <div id="screen-live" class="screen">
-
   <div class="hud">
     <div>
       <div class="hud-team" id="hudTeam">IND</div>
       <div class="hud-score"><span id="hudRuns">0</span>/<span id="hudWickets">0</span></div>
-      <!-- HUD OVERS UPDATE -->
       <div class="hud-overs">Ovs: <span id="hudOvers">0.0</span> <span style="color:var(--gold-2);">/ <span id="hudMaxOvers">20</span></span></div>
     </div>
     <div style="text-align: right; display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
@@ -124,7 +119,6 @@
     <div class="card-title">
       <span>CREASE CONTROL</span>
       <div>
-        <!-- ALWAYS UNLOCKED SETTINGS BUTTON -->
         <button class="btn-danger" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="openMatchSettings()">MATCH SETTINGS</button>
         <button class="btn-accent" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="openEditPlayers()">EDIT TEAMS</button>
         <button class="btn-blue" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="swapStrike()"><i class="fas fa-exchange-alt"></i> SWAP</button>
@@ -166,36 +160,30 @@
     </div>
   </div>
 
-  <!-- CENTER GRAPHICS -->
   <div class="card">
     <div class="card-title">
       <span>CENTER GRAPHICS (16:9)</span>
       <button class="btn-danger" style="padding:1px 6px; font-size:9px;" onclick="handleGraphicClick(null)">CLEAR ALL</button>
     </div>
-    
     <div class="grid-2" style="margin-bottom:6px;">
         <button id="btnInnCurr" class="btn-blue btn-active" onclick="setGraphicInnings('curr')" style="font-size:10px;">CURRENT INNINGS</button>
         <button id="btnInnPrev" class="btn-blue" onclick="setGraphicInnings('prev')" style="font-size:10px;">1ST INNINGS RECALL</button>
     </div>
-    
     <div class="grid-4" style="margin-bottom:8px;">
       <button class="btn-blue btn-graphic" data-graphic="squads" onclick="handleGraphicClick('squads')" style="background:#4a3406; color:#f2d878;">PLAYING 11</button>
       <button class="btn-blue btn-graphic" data-graphic="part" onclick="handleGraphicClick('part')">PARTNER</button>
       <button class="btn-blue btn-graphic" data-graphic="allpart" onclick="handleGraphicClick('allpart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">ALL PARTS</button>
       <button class="btn-blue btn-graphic" data-graphic="singlePlayer" onclick="toggleSinglePlayer()" style="background:#16304f; color:#f2d878;">PLAYER STATS</button>
-      
       <button class="btn-blue btn-graphic" data-graphic="bat" onclick="handleGraphicClick('bat')">BAT CARD</button>
       <button class="btn-blue btn-graphic" data-graphic="bowl" onclick="handleGraphicClick('bowl')">BOWL CARD</button>
       <button class="btn-blue btn-graphic" data-graphic="proj" onclick="handleGraphicClick('proj')">PROJ / EQ</button>
       <button class="btn-blue btn-graphic" data-graphic="fow" onclick="handleGraphicClick('fow')">FALL OF WKT</button>
     </div>
-
     <div class="card-title"><span style="color:#f2d878;">CHARTS & GRAPHS</span></div>
     <div class="grid-2" style="margin-bottom:6px;">
       <button class="btn-blue btn-graphic" data-graphic="chart" onclick="handleGraphicClick('chart')" style="background:#5b4413; color:#f2d878; border-color:var(--gold);">BAR CHART</button>
       <button class="btn-blue btn-graphic" data-graphic="worm" onclick="handleGraphicClick('worm')" style="background:#16304f; color:#f2d878; border-color:var(--gold);">WORM GRAPH</button>
     </div>
-
     <button class="btn-blue" id="btnBugToggle" style="width:100%; height:30px; margin-top:4px;" onclick="toggleGraphic('scorebug')">TOGGLE BOTTOM SCOREBUG</button>
   </div>
 
@@ -221,7 +209,6 @@
     <div class="card-title">TIMELINE & DEEP UNDO</div>
     <div class="timeline" id="timelineList"></div>
   </div>
-
 </div>
 
 <!-- ================= MODALS ================= -->
@@ -232,7 +219,6 @@
       <span class="small-label">Max Overs (Editable anytime in 1st Innings)</span>
       <input type="number" id="editMaxOvers" style="width:100%; font-size:18px;">
     </div>
-    <!-- THIS DIV WILL HIDE AFTER THE 1ST OVER -->
     <div id="tossEditDiv" style="margin-bottom:10px;">
       <span class="small-label">Toss Winner</span>
       <select id="editTossWinner" style="width:100%; margin-bottom:5px;"></select>
@@ -248,7 +234,6 @@
       <button class="btn-blue" onclick="closeModal('matchSettingsModal')">CANCEL</button>
     </div>
     <hr style="border-color: var(--line); margin: 15px 0;">
-    <!-- RESET SCORE BUTTON -->
     <button class="btn-danger" style="width: 100%;" onclick="resetMatchData()">RESET SCORE (KEEP PLAYERS)</button>
   </div>
 </div>
@@ -331,7 +316,6 @@
   </div>
 </div>
 
-<!-- SINGLE PLAYER MODAL -->
 <div class="modal-overlay" id="singlePlayerModal">
   <div class="modal">
     <h3 style="margin-top:0;">Single Player Graphic</h3>
@@ -413,8 +397,6 @@ window.loadMatch = async function(id) {
   const snap = await get(ref(db, `mb_match_data/${id}`));
   if(snap.exists()) {
     let loadedState = snap.val();
-    
-    // NORMALIZE FIREBASE DATA
     if(!loadedState.overBalls) loadedState.overBalls = []; if(!loadedState.overHistory) loadedState.overHistory = []; if(!loadedState.fow) loadedState.fow = [];
     if(!loadedState.bowlerStats) loadedState.bowlerStats = {}; if(!loadedState.squads) loadedState.squads = {A:[], B:[]};
     if(!loadedState.squads.A) loadedState.squads.A = []; if(!loadedState.squads.B) loadedState.squads.B = [];
@@ -423,10 +405,8 @@ window.loadMatch = async function(id) {
     if(!loadedState.partnership.p2) loadedState.partnership.p2 = loadedState.nonStriker;
     if(!loadedState.pastPartnerships) loadedState.pastPartnerships = [];
     if(typeof loadedState.currentOverRuns === 'undefined') loadedState.currentOverRuns = 0;
-    
     if(!loadedState.meta.tossWinner) loadedState.meta.tossWinner = "A";
     if(!loadedState.meta.tossDecision) loadedState.meta.tossDecision = "BAT";
-    
     if(loadedState.graphics) { loadedState.graphics.activeEvent = null; }
     
     state = loadedState;
@@ -513,7 +493,6 @@ window.resetMatchData = function() {
   state.partnership = { runs: 0, balls: 0, p1: state.striker, p2: state.nonStriker, p1Runs: 0, p1Balls: 0, p2Runs: 0, p2Balls: 0 };
   
   state.graphics.activeEvent = null; state.graphics.dynamicText = "M.B. LIVE STUDIO";
-  
   timelineHistory = []; pushSnapshot("Match Reset"); syncLiveAndSave(); closeModal('matchSettingsModal');
 };
 
@@ -751,6 +730,10 @@ function updateUI() {
   const btnCurr = document.getElementById('btnInnCurr'); const btnPrev = document.getElementById('btnInnPrev');
   if(state.firstInnings) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; } else { btnPrev.style.opacity = '0.4'; btnPrev.style.pointerEvents = 'none'; graphicInningsMode = 'curr'; }
   if(graphicInningsMode === 'curr') { btnCurr.classList.add('btn-active'); btnPrev.classList.remove('btn-active'); } else { btnPrev.classList.add('btn-active'); btnCurr.classList.remove('btn-active'); }
+
+  const btnSwap = document.getElementById('btnFixTeamSwap');
+  if(state.legalBalls > 0 || state.innings > 1) { btnSwap.classList.add('btn-disabled'); btnSwap.innerText = 'LOCKED'; } 
+  else { btnSwap.classList.remove('btn-disabled'); btnSwap.innerText = 'FIX BAT/BOWL'; }
 
   document.querySelectorAll('.btn-graphic').forEach(btn => {
       let target = btn.dataset.graphic;
