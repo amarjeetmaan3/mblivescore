@@ -14,21 +14,21 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html,body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; font-family: 'Rajdhani', sans-serif; color: var(--ink); }
   
-  #overlay-canvas { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; transform-origin: top left; }
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
 
-  /* ================= CORNER BRANDING ================= */
+  /* ================= CORNER BRANDING (ABSOLUTE CORNER POSITIONING) ================= */
   .corner-brand {
-    position: absolute; top: 25px; left: 35px; display: flex; flex-direction: column; align-items: flex-start;
-    font-family: 'Orbitron', sans-serif; color: var(--gold); z-index: 20; line-height: 1;
+    position: absolute; top: 3vh; left: 2vw; display: flex; flex-direction: column; align-items: flex-start;
+    font-family: 'Orbitron', sans-serif; color: var(--gold); z-index: 20; line-height: 1; filter: none; /* No shadow */
   }
-  .corner-brand .mb-text { font-size: 38px; font-weight: 900; letter-spacing: 4px; text-shadow: 2px 2px 0 var(--navy-deep); }
-  .corner-brand .studio-text { font-size: 14px; font-weight: 700; letter-spacing: 6px; color: var(--ink); background: var(--crimson); padding: 2px 8px; margin-top: 2px; border-radius: 2px; }
+  .corner-brand .mb-text { font-size: 42px; font-weight: 900; letter-spacing: 4px; }
+  .corner-brand .studio-text { font-size: 16px; font-weight: 700; letter-spacing: 6px; color: var(--ink); background: var(--crimson); padding: 2px 8px; margin-top: 2px; border-radius: 2px; }
 
-  /* ================= NEW PREMIUM SCOREBUG ================= */
+  /* ================= NEW PREMIUM SCOREBUG (FULL WIDTH, NO WRAP) ================= */
   .scorebug {
-    position: absolute; bottom: 0; left: 0; width: 100%; max-width: 1280px;
+    position: absolute; bottom: 0; left: 0; width: 100%; 
     display: flex; flex-direction: column; opacity: 0; transition: opacity 0.3s ease; z-index: 10;
+    filter: none; /* Absolutely No Shadow */
   }
   .scorebug.show { opacity: 1; }
 
@@ -37,69 +37,75 @@
   #bugResult { 
       display: none; justify-content: center; align-items: center; width: 100%; height: 96px; 
       background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); 
-      font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); 
+      font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: var(--gold-2); 
       letter-spacing: 2px; border-top: 2px solid var(--gold); 
   }
 
   /* TOP ROW */
   .bug-top-row {
-    display: flex; align-items: stretch; height: 60px;
+    display: flex; flex-wrap: nowrap; align-items: stretch; height: 65px;
     background: linear-gradient(90deg, var(--navy-deep) 0%, var(--navy) 100%);
     border-top: 2px solid var(--gold);
   }
   
   .team-block {
     background: linear-gradient(135deg, var(--gold) 0%, #eab308 100%); color: #000;
-    font-family: 'Bebas Neue', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 2px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 46px; font-weight: 900; letter-spacing: 2px;
     padding: 0 25px; display: flex; align-items: center; justify-content: center; min-width: 120px;
+    white-space: nowrap; flex-shrink: 0;
   }
   
   .score-block {
     display: flex; flex-direction: column; justify-content: center; padding: 0 25px; border-right: 1px solid var(--line); min-width: 180px;
+    white-space: nowrap; flex-shrink: 0;
   }
-  .main-score { font-family: 'Bebas Neue', sans-serif; font-size: 52px; font-weight: 900; color: var(--ink); line-height: 0.9; display: flex; align-items: baseline; gap: 10px;}
-  .main-score .overs { font-size: 24px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 700;}
-  .target-score { font-size: 15px; color: var(--gold-2); font-weight: 800; letter-spacing: 1px; line-height: 1; margin-top: 2px;}
+  .main-score { font-family: 'Bebas Neue', sans-serif; font-size: 56px; font-weight: 900; color: var(--ink); line-height: 0.9; display: flex; align-items: baseline; gap: 10px;}
+  .main-score .overs { font-size: 26px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 700;}
+  .target-score { font-size: 16px; color: var(--gold-2); font-weight: 800; letter-spacing: 1px; line-height: 1; margin-top: 2px;}
 
   .rate-block {
-    display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 20px; border-right: 1px solid var(--line); min-width: 110px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 20px; border-right: 1px solid var(--line); min-width: 120px;
+    white-space: nowrap; flex-shrink: 0;
   }
-  .rate-label { font-size: 13px; letter-spacing: 1.5px; color: var(--gold); font-weight: 800; }
-  .rate-val { font-size: 26px; font-weight: 900; line-height: 1; color: var(--ink); transition: color 0.3s ease; }
+  .rate-label { font-size: 14px; letter-spacing: 1.5px; color: var(--gold); font-weight: 800; }
+  .rate-val { font-size: 28px; font-weight: 900; line-height: 1; color: var(--ink); transition: color 0.3s ease; }
 
   .batters-inline {
-    display: flex; align-items: center; padding: 0 25px; border-right: 1px solid var(--line); gap: 25px; flex: 1;
+    display: flex; align-items: center; padding: 0 20px; border-right: 1px solid var(--line); gap: 20px; flex: 1;
+    overflow: hidden; white-space: nowrap; /* Prevents wrapping */
   }
-  .batter-item { display: flex; align-items: baseline; gap: 8px; font-size: 22px; font-weight: 800; }
+  .batter-item { display: flex; align-items: baseline; gap: 6px; font-size: 24px; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
   .batter-item.on-strike { color: var(--gold-2); }
-  .batter-item .fig { color: var(--muted); font-size: 18px; font-weight: 700; }
+  .batter-item .fig { color: var(--muted); font-size: 20px; font-weight: 700; }
 
   .bowler-inline {
-    display: flex; align-items: center; padding: 0 25px; gap: 12px; font-size: 22px; font-weight: 800; color: var(--ink); min-width: 280px; justify-content: flex-end;
+    display: flex; align-items: center; padding: 0 25px; gap: 12px; font-size: 24px; font-weight: 800; color: var(--ink); min-width: 300px; justify-content: flex-end;
+    white-space: nowrap; flex-shrink: 0;
   }
-  .bowler-inline .fig { color: var(--gold-2); font-size: 20px; }
+  .bowler-inline .fig { color: var(--gold-2); font-size: 22px; }
 
   /* BOTTOM ROW */
   .bug-bottom-row {
-    display: flex; align-items: stretch; height: 36px;
+    display: flex; flex-wrap: nowrap; align-items: stretch; height: 38px;
     background: var(--navy-3); border-top: 1px solid var(--line); overflow: hidden;
   }
   
   .message-bar {
     flex: 1; display: flex; align-items: center; padding: 0 25px;
-    color: var(--ink); font-size: 16px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--ink); font-size: 18px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   .timeline-bar {
-    display: flex; align-items: center; gap: 5px; padding: 0 15px;
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 5px; padding: 0 15px;
     background: rgba(0,0,0,0.4); border-left: 1px solid var(--line);
-    flex-shrink: 0;
+    flex-shrink: 0; /* Forces timeline to stay in one line and push message bar */
   }
   .ball-pill {
-    min-width: 24px; height: 24px; padding: 0 4px; border-radius: 4px;
-    background: #1e293b; color: var(--ink); font-size: 13px; font-weight: 900;
+    min-width: 26px; height: 26px; padding: 0 4px; border-radius: 4px;
+    background: #1e293b; color: var(--ink); font-size: 14px; font-weight: 900;
     display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);
+    white-space: nowrap; flex-shrink: 0;
   }
   .ball-pill.four { color: var(--gold-2); border-color: var(--gold-2); }
   .ball-pill.six { color: #fff; background: var(--crimson); border-color: var(--crimson); }
@@ -185,7 +191,7 @@
         <div class="studio-text">LIVE STUDIO</div>
     </div>
 
-    <!-- CLEAN, BUG-FREE SCOREBUG -->
+    <!-- NEW FULL WIDTH SCOREBUG (NO SHADOW, NO WRAPPING) -->
     <div class="scorebug" id="scorebug">
       <div id="bugNormalContainer">
           <div class="bug-top-row">
@@ -216,7 +222,6 @@
           </div>
       </div>
       
-      <!-- FIXED: Added bugResult block back to HTML -->
       <div id="bugResult">
           <span id="bugResultText"></span>
       </div>
@@ -310,18 +315,7 @@
 
 </div>
 
-<script>
-  function resizeCanvas() {
-      const canvas = document.getElementById('overlay-canvas');
-      const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
-      canvas.style.transform = `scale(${scale})`;
-      canvas.style.left = `${(window.innerWidth - 1280 * scale) / 2}px`;
-      canvas.style.top = `${(window.innerHeight - 720 * scale) / 2}px`;
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas(); 
-</script>
-
+<!-- NATIVE SCALING APPLIED VIA CSS - NO JAVASCRIPT RESIZER NEEDED ANYMORE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -390,7 +384,6 @@ onValue(ref(db, "current_match"), snap => {
   const bug = document.getElementById('scorebug');
   if(g.scorebug) bug.classList.add('show'); else bug.classList.remove('show');
   
-  // FIX: Safe check for result logic using the new bugNormalContainer ID
   if(state.innings === 2 && state.inningsOver) {
       document.getElementById('bugNormalContainer').style.display = 'none'; 
       document.getElementById('bugResult').style.display = 'flex';
