@@ -13,7 +13,6 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
-  /* 1920x1080 Fixed Canvas - No Text Inflation */
   html,body { 
       width: 1920px; height: 1080px; position: relative; background: transparent; overflow: hidden; 
       font-family: 'Rajdhani', sans-serif; color: var(--ink); 
@@ -22,7 +21,7 @@
   
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
 
-  /* ================= CORNER BRANDING (15px Safe Zone) ================= */
+  /* ================= CORNER BRANDING ================= */
   .corner-brand {
     position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; align-items: flex-start;
     font-family: 'Orbitron', sans-serif; color: var(--gold); z-index: 20; line-height: 1; filter: none; 
@@ -30,142 +29,140 @@
   .corner-brand .mb-text { font-size: 52px; font-weight: 900; letter-spacing: 4px; }
   .corner-brand .studio-text { font-size: 20px; font-weight: 700; letter-spacing: 6px; color: var(--ink); background: var(--crimson); padding: 3px 10px; margin-top: 2px; border-radius: 3px; }
 
-  /* ================= NEW SCOREBUG (PILLAR DESIGN) ================= */
+  /* ================= BOTTOM SCOREBUG (BIGGER FONTS & HEIGHT) ================= */
   .scorebug {
     position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; 
     opacity: 0; transition: opacity 0.3s ease; z-index: 10; filter: none; 
   }
   .scorebug.show { opacity: 1; }
 
-  /* Result Bug */
   #bugResult { 
-      display: none; justify-content: center; align-items: center; width: 100%; height: 110px; 
+      display: none; justify-content: center; align-items: center; width: 100%; height: 135px; 
       background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); 
-      font-family: 'Bebas Neue', sans-serif; font-size: 64px; color: var(--gold-2); 
-      letter-spacing: 2px; border-top: 3px solid var(--gold); 
+      font-family: 'Bebas Neue', sans-serif; font-size: 80px; color: var(--gold-2); 
+      letter-spacing: 3px; border-top: 3px solid var(--gold); 
   }
 
-  /* Main Scorebug Container */
+  /* Height increased from 110px to 135px to fit massive fonts */
   #bugNormalContainer { 
-      display: flex; width: 100%; height: 110px; background: var(--navy-3); border-top: 3px solid var(--gold); 
+      display: flex; width: 100%; height: 135px; background: var(--navy-3); border-top: 3px solid var(--gold); 
   }
 
-  /* Full-Height Team Pillars */
   .team-pillar {
       background: linear-gradient(135deg, var(--gold) 0%, #eab308 100%); color: #000;
-      font-family: 'Bebas Neue', sans-serif; font-size: 58px; font-weight: 900; letter-spacing: 2px;
-      width: 190px; display: flex; align-items: center; justify-content: center; text-align: center;
+      font-family: 'Bebas Neue', sans-serif; font-size: 76px; font-weight: 900; letter-spacing: 3px;
+      width: 220px; display: flex; align-items: center; justify-content: center; text-align: center;
       flex-shrink: 0; line-height: 1; padding: 0 10px;
   }
-  .left-pillar { border-right: 2px solid var(--navy-deep); }
-  .right-pillar { border-left: 2px solid var(--navy-deep); }
+  .left-pillar { border-right: 3px solid var(--navy-deep); }
+  .right-pillar { border-left: 3px solid var(--navy-deep); }
 
-  /* Middle Section (Rows) */
   .bug-middle-section { 
       flex: 1; display: flex; flex-direction: column; overflow: hidden; 
       background: linear-gradient(90deg, var(--navy-deep) 0%, var(--navy) 100%); 
   }
 
-  .bug-top-row { display: flex; flex: 1; align-items: stretch; border-bottom: 1px solid var(--line); }
-  .bug-bottom-row { height: 44px; display: flex; align-items: stretch; background: var(--navy-3); }
+  .bug-top-row { display: flex; flex: 1; align-items: stretch; border-bottom: 2px solid var(--line); }
+  .bug-bottom-row { height: 50px; display: flex; align-items: stretch; background: var(--navy-3); }
 
-  /* Top Row Elements (Bigger Fonts) */
-  .score-block { display: flex; flex-direction: column; justify-content: center; padding: 0 35px; border-right: 1px solid var(--line); flex-shrink: 0; }
-  .main-score { font-family: 'Bebas Neue', sans-serif; font-size: 74px; font-weight: 900; color: var(--ink); line-height: 0.9; display: flex; align-items: baseline; gap: 12px;}
-  .main-score .overs { font-size: 34px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 700;}
-  .target-score { font-size: 20px; color: var(--gold-2); font-weight: 800; letter-spacing: 1.5px; line-height: 1; margin-top: 2px;}
+  /* SCOREBUG TOP ROW FONTS */
+  .score-block { display: flex; flex-direction: column; justify-content: center; padding: 0 30px; border-right: 2px solid var(--line); flex-shrink: 0; }
+  .main-score { font-family: 'Bebas Neue', sans-serif; font-size: 96px; font-weight: 900; color: var(--ink); line-height: 0.9; display: flex; align-items: baseline; gap: 15px;}
+  .main-score .overs { font-size: 42px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 700;}
+  .target-score { font-size: 26px; color: var(--gold-2); font-weight: 800; letter-spacing: 2px; line-height: 1; margin-top: 4px;}
 
-  .rate-block { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 25px; border-right: 1px solid var(--line); flex-shrink: 0; min-width: 150px;}
-  .rate-label { font-size: 18px; letter-spacing: 1.5px; color: var(--gold); font-weight: 800; }
-  .rate-val { font-size: 36px; font-weight: 900; line-height: 1; color: var(--ink); transition: color 0.3s ease; }
+  .rate-block { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 25px; border-right: 2px solid var(--line); flex-shrink: 0; min-width: 170px;}
+  .rate-label { font-size: 22px; letter-spacing: 2px; color: var(--gold); font-weight: 800; }
+  .rate-val { font-size: 48px; font-weight: 900; line-height: 1; color: var(--ink); transition: color 0.3s ease; }
 
-  .batters-inline { display: flex; align-items: center; padding: 0 30px; border-right: 1px solid var(--line); gap: 30px; flex: 1; overflow: hidden; white-space: nowrap; }
-  .batter-item { display: flex; align-items: baseline; gap: 8px; font-size: 32px; font-weight: 800; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+  .batters-inline { display: flex; align-items: center; padding: 0 30px; border-right: 2px solid var(--line); gap: 40px; flex: 1; overflow: hidden; white-space: nowrap; }
+  .batter-item { display: flex; align-items: baseline; gap: 10px; font-size: 46px; font-weight: 900; white-space: nowrap; flex-shrink: 1; min-width: 0; }
   .batter-item > span:first-child { overflow: hidden; text-overflow: ellipsis; }
   .batter-item.on-strike { color: var(--gold-2); }
-  .batter-item .fig { color: var(--muted); font-size: 26px; font-weight: 700; flex-shrink: 0; }
+  .batter-item .fig { color: var(--muted); font-size: 34px; font-weight: 700; flex-shrink: 0; }
 
-  .bowler-inline { display: flex; align-items: center; justify-content: flex-end; padding: 0 30px; gap: 15px; font-size: 32px; font-weight: 800; color: var(--ink); width: 420px; flex-shrink: 0; white-space: nowrap; }
-  .bowler-inline .fig { color: var(--gold-2); font-size: 28px; }
+  .bowler-inline { display: flex; align-items: center; justify-content: flex-end; padding: 0 30px; gap: 18px; font-size: 46px; font-weight: 900; color: var(--ink); width: 480px; flex-shrink: 0; white-space: nowrap; }
+  .bowler-inline .fig { color: var(--gold-2); font-size: 38px; }
 
-  /* Bottom Row Elements */
-  .message-bar { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 25px; color: var(--ink); font-size: 24px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+  /* SCOREBUG BOTTOM ROW FONTS */
+  .message-bar { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 25px; color: var(--ink); font-size: 32px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   
-  .timeline-bar { width: 420px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 30px; background: rgba(0,0,0,0.4); border-left: 1px solid var(--line); flex-shrink: 0; }
-  .ball-pill { min-width: 30px; height: 30px; padding: 0 5px; border-radius: 4px; background: #1e293b; color: var(--ink); font-size: 18px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+  .timeline-bar { width: 480px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 30px; background: rgba(0,0,0,0.4); border-left: 2px solid var(--line); flex-shrink: 0; }
+  .ball-pill { min-width: 38px; height: 38px; padding: 0 6px; border-radius: 6px; background: #1e293b; color: var(--ink); font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
   .ball-pill.four { color: var(--gold-2); border-color: var(--gold-2); }
   .ball-pill.six { color: #fff; background: var(--crimson); border-color: var(--crimson); }
   .ball-pill.wkt { color: #fff; background: var(--crimson-2); border-color: var(--crimson-2); }
 
-  /* ================= CENTER GRAPHICS (40% ENLARGED) ================= */
-  .center-panel { position: absolute; top: 52%; left: 50%; transform: translate(-50%, -50%); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); border: 3px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8)); opacity: 0; pointer-events: none; transition: all .15s ease; z-index: 5; display: flex; flex-direction: column; overflow: hidden; }
-  .center-panel.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-  .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 24px; letter-spacing: 3px; padding: 8px; }
+  /* ================= CENTER GRAPHICS (TOP: 8%, HUGE FONTS) ================= */
+  /* Top 8% and centered horizontally using translateX */
+  .center-panel { position: absolute; top: 8%; left: 50%; transform: translateX(-50%); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); border: 4px solid var(--gold); border-radius: 16px; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.8)); opacity: 0; pointer-events: none; transition: all .15s ease; z-index: 5; display: flex; flex-direction: column; overflow: hidden; }
+  .center-panel.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+  .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 38px; letter-spacing: 4px; padding: 12px; }
 
   /* SINGLE PLAYER GRAPHIC */
-  #graphic-singlePlayer { width: 1000px; padding-bottom: 20px; }
-  .sp-name { font-size: 58px; font-weight: 700; color: var(--gold-2); text-align: center; margin: 20px 0 15px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; line-height:1;}
-  .sp-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 20px; }
-  .sp-table th { background: rgba(255,255,255,0.05); color: var(--muted); font-size: 20px; padding: 12px; border-bottom: 1px solid var(--line); letter-spacing:1.5px; font-weight: 800;}
-  .sp-table td { padding: 15px; font-size: 38px; font-weight: 900; font-family: 'Bebas Neue', sans-serif; color: var(--ink); }
-  .sp-section-title { font-size: 20px; color: var(--gold); background: var(--navy-3); text-align: left; padding: 8px 25px; font-weight: 800; letter-spacing: 2px; }
+  #graphic-singlePlayer { width: 1100px; padding-bottom: 25px; }
+  .sp-name { font-size: 80px; font-weight: 700; color: var(--gold-2); text-align: center; margin: 25px 0 20px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 3px; line-height:1;}
+  .sp-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 25px; }
+  .sp-table th { background: rgba(255,255,255,0.05); color: var(--muted); font-size: 28px; padding: 15px; border-bottom: 2px solid var(--line); letter-spacing:2px; font-weight: 800;}
+  .sp-table td { padding: 20px; font-size: 52px; font-weight: 900; font-family: 'Bebas Neue', sans-serif; color: var(--ink); }
+  .sp-section-title { font-size: 28px; color: var(--gold); background: var(--navy-3); text-align: left; padding: 12px 30px; font-weight: 800; letter-spacing: 3px; }
 
   /* PLAYING 11 (SQUADS) */
-  #graphic-squads { width: 1250px; }
-  .squads-container { display: flex; align-items: stretch; max-height: 700px; overflow: hidden; } 
-  .squad-col { flex: 1; padding: 15px 35px; }
-  .squad-col:first-child { border-right: 1px solid var(--line); }
-  .squad-team-name { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); margin-bottom: 15px; letter-spacing: 2px; }
-  .squad-list { display: flex; flex-direction: column; gap: 8px; }
-  .squad-player { font-size: 24px; font-weight: 800; display: flex; align-items: center; justify-content: flex-start; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .squad-player .idx { color: var(--muted); font-size: 18px; width: 35px; font-weight: 800; }
+  #graphic-squads { width: 1300px; }
+  .squads-container { display: flex; align-items: stretch; max-height: 750px; overflow: hidden; } 
+  .squad-col { flex: 1; padding: 20px 40px; }
+  .squad-col:first-child { border-right: 2px solid var(--line); }
+  .squad-team-name { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 60px; color: var(--gold-2); margin-bottom: 20px; letter-spacing: 3px; }
+  .squad-list { display: flex; flex-direction: column; gap: 12px; }
+  .squad-player { font-size: 34px; font-weight: 800; display: flex; align-items: center; justify-content: flex-start; padding-bottom: 6px; border-bottom: 2px solid rgba(255,255,255,0.05); }
+  .squad-player .idx { color: var(--muted); font-size: 24px; width: 45px; font-weight: 800; }
 
-  #graphic-part { width: 1000px; }
-  .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 25px 45px; }
+  #graphic-part { width: 1100px; }
+  .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 35px 50px; }
   .part-player { text-align: center; flex: 1; }
-  .part-name { font-size: 32px; font-weight: 800; color: var(--ink); }
-  .part-contrib { font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--muted); margin-top: 5px; }
-  .part-center { text-align: center; flex: 1.5; border-left: 1px solid var(--line); border-right: 1px solid var(--line); display:flex; justify-content:center; align-items:baseline; gap:10px;}
-  .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 100px; color: var(--gold-2); line-height: 1; }
-  .part-balls { font-size: 34px; font-weight: 800; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
+  .part-name { font-size: 44px; font-weight: 800; color: var(--ink); }
+  .part-contrib { font-family: 'Bebas Neue', sans-serif; font-size: 60px; color: var(--muted); margin-top: 10px; }
+  .part-center { text-align: center; flex: 1.5; border-left: 2px solid var(--line); border-right: 2px solid var(--line); display:flex; justify-content:center; align-items:baseline; gap:15px;}
+  .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 130px; color: var(--gold-2); line-height: 1; }
+  .part-balls { font-size: 46px; font-weight: 800; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
 
-  #graphic-allpart { width: 1300px; }
-  .allpart-list { padding: 15px 35px; max-height: 500px; overflow-y: auto; }
-  .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px dotted var(--line); font-size: 26px; font-weight: 800; }
+  #graphic-allpart { width: 1400px; }
+  .allpart-list { padding: 20px 40px; max-height: 600px; overflow-y: auto; }
+  .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 25px; border-bottom: 2px dotted var(--line); font-size: 36px; font-weight: 800; }
   .ap-p1 { flex: 1.2; text-align: left; }
-  .ap-mid { flex: 0.8; text-align: center; color: var(--gold-2); font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; display:flex; justify-content:center; align-items:baseline; gap:10px;}
+  .ap-mid { flex: 0.8; text-align: center; color: var(--gold-2); font-family: 'Bebas Neue', sans-serif; font-size: 72px; line-height: 1; display:flex; justify-content:center; align-items:baseline; gap:12px;}
   .ap-p2 { flex: 1.2; text-align: right; }
 
-  #graphic-bat { width: 1200px; }
+  #graphic-bat { width: 1300px; }
   .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
-  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 18px; padding: 10px 25px; letter-spacing: 1.5px; font-weight:800;}
-  .sc-table td { padding: 8px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 24px; font-weight: 800; }
+  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 26px; padding: 15px 30px; letter-spacing: 2px; font-weight:800;}
+  .sc-table td { padding: 12px 30px; border-bottom: 2px solid rgba(255,255,255,0.05); font-size: 36px; font-weight: 800; }
   .sc-table tr:last-child td { border-bottom: none; }
-  .sc-status { font-size: 18px; color: var(--muted); font-weight: 700; }
+  .sc-status { font-size: 26px; color: var(--muted); font-weight: 700; }
   .sc-notout { color: var(--gold-2); font-weight: 800; }
-  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 12px 30px; font-weight: 800; font-size: 24px; border-top: 2px solid var(--gold); }
+  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 18px 35px; font-weight: 800; font-size: 36px; border-top: 3px solid var(--gold); }
 
-  #graphic-bowl { width: 1200px; }
+  #graphic-bowl { width: 1300px; }
   .sc-table.bowl th { text-align: center; }
   .sc-table.bowl td { text-align: center; }
   .sc-table.bowl td:first-child, .sc-table.bowl th:first-child { text-align: left; }
-  .fow-strip { background: var(--navy-deep); padding: 12px 25px; font-size: 20px; font-weight: 800; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
+  .fow-strip { background: var(--navy-deep); padding: 18px 30px; font-size: 28px; font-weight: 800; color: var(--muted); border-top: 2px solid var(--line); text-align: center; }
 
-  #graphic-proj { width: 800px; text-align: center; padding-bottom: 20px; }
-  .proj-row { display: flex; justify-content: space-between; padding: 12px 60px; border-bottom: 1px solid var(--line); font-size: 28px; font-weight: 700; }
-  .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 36px; padding: 18px 60px; }
+  #graphic-proj { width: 900px; text-align: center; padding-bottom: 30px; }
+  .proj-row { display: flex; justify-content: space-between; padding: 18px 70px; border-bottom: 2px solid var(--line); font-size: 38px; font-weight: 700; }
+  .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 48px; padding: 25px 70px; }
 
-  #graphic-fow { width: 800px; }
-  .fow-list { padding: 15px 35px; max-height: 450px; overflow: hidden; }
-  .fow-item { display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px dotted var(--line); font-size: 24px; font-weight: 800; }
+  #graphic-fow { width: 900px; }
+  .fow-list { padding: 20px 40px; max-height: 550px; overflow: hidden; }
+  .fow-item { display: flex; justify-content: space-between; padding: 15px 25px; border-bottom: 2px dotted var(--line); font-size: 34px; font-weight: 800; }
 
-  #graphic-chart { width: 1100px; }
-  #graphic-worm { width: 1100px; }
+  #graphic-chart { width: 1200px; }
+  #graphic-worm { width: 1200px; }
   
-  .popup-event { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.5); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); padding: 30px 90px; border: 4px solid var(--gold); border-radius: 16px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 25px 50px rgba(0,0,0,0.8)); z-index: 20; }
+  .popup-event { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.5); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); padding: 40px 110px; border: 5px solid var(--gold); border-radius: 20px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 35px 70px rgba(0,0,0,0.8)); z-index: 20; }
   .popup-event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 130px; line-height: 0.9; color: #fff; letter-spacing: 3px; }
-  .pop-sub { font-size: 18px; letter-spacing: 4px; color: var(--gold-2); margin-top: 8px; font-weight: 800; }
+  .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 160px; line-height: 0.9; color: #fff; letter-spacing: 4px; }
+  .pop-sub { font-size: 26px; letter-spacing: 5px; color: var(--gold-2); margin-top: 10px; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -223,7 +220,7 @@
       </div>
     </div>
 
-    <!-- GRAPHICS PANELS (40% BIGGER) -->
+    <!-- GRAPHICS PANELS (TOP 8%, MASSIVE FONTS) -->
     <div class="center-panel" id="graphic-singlePlayer">
       <div class="center-title">PLAYER PROFILE</div>
       <div class="sp-name" id="spName">PLAYER NAME</div>
@@ -273,17 +270,17 @@
     <div class="center-panel" id="graphic-proj">
       <div class="center-title" id="projTitle">PROJECTED SCORE</div>
       <div id="projInns1">
-          <div class="proj-row highlight"><span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span><span id="projCrrTotal" class="num" style="font-size:46px;">0</span></div>
+          <div class="proj-row highlight"><span>Current Run Rate (<span id="projCrrLabel">0.00</span>)</span><span id="projCrrTotal" class="num" style="font-size:56px;">0</span></div>
           <div class="proj-row"><span>Run Rate <span id="projR1L">8.0</span></span><span id="projR1T" class="num">0</span></div>
           <div class="proj-row"><span>Run Rate <span id="projR2L">10.0</span></span><span id="projR2T" class="num">0</span></div>
           <div class="proj-row"><span>Run Rate <span id="projR3L">12.0</span></span><span id="projR3T" class="num">0</span></div>
       </div>
-      <div id="projInns2" style="display:none; text-align:center; padding: 35px 25px;">
-          <div id="projNeed" style="font-size:58px; font-weight:900; font-family:'Bebas Neue',sans-serif; color:var(--gold-2); margin-bottom:20px; letter-spacing:1px; line-height:1;">NEED 0 RUNS FROM 0 BALLS</div>
-          <div style="display:flex; justify-content: space-around; font-size:30px; font-weight:700;">
-              <div>Target: <span id="projTargetVal" class="num" style="font-size:38px;">0</span></div>
-              <div>CRR: <span id="projCrrInns2" class="num" style="font-size:38px;">0.00</span></div>
-              <div>RRR: <span id="projRrrInns2" class="num" style="font-size:38px; color:var(--crimson-2);">0.00</span></div>
+      <div id="projInns2" style="display:none; text-align:center; padding: 45px 35px;">
+          <div id="projNeed" style="font-size:72px; font-weight:900; font-family:'Bebas Neue',sans-serif; color:var(--gold-2); margin-bottom:25px; letter-spacing:2px; line-height:1;">NEED 0 RUNS FROM 0 BALLS</div>
+          <div style="display:flex; justify-content: space-around; font-size:38px; font-weight:700;">
+              <div>Target: <span id="projTargetVal" class="num" style="font-size:46px;">0</span></div>
+              <div>CRR: <span id="projCrrInns2" class="num" style="font-size:46px;">0.00</span></div>
+              <div>RRR: <span id="projRrrInns2" class="num" style="font-size:46px; color:var(--crimson-2);">0.00</span></div>
           </div>
       </div>
     </div>
@@ -295,13 +292,13 @@
 
     <div class="center-panel" id="graphic-chart">
       <div class="center-title" id="chartTitle">RUNS PER OVER</div>
-      <div style="padding: 25px;"><svg id="chartSvg" width="1060" height="280"></svg></div>
+      <div style="padding: 30px;"><svg id="chartSvg" width="1140" height="320"></svg></div>
     </div>
 
     <div class="center-panel" id="graphic-worm">
       <div class="center-title" id="wormTitle">WORM GRAPH (CUMULATIVE SCORE)</div>
-      <div style="padding: 25px;"><svg id="wormSvg" width="1060" height="280"></svg></div>
-      <div id="wormLegend" style="display:flex; justify-content:center; gap:40px; padding-bottom:20px; font-weight:700; font-size:20px;"></div>
+      <div style="padding: 30px;"><svg id="wormSvg" width="1140" height="320"></svg></div>
+      <div id="wormLegend" style="display:flex; justify-content:center; gap:50px; padding-bottom:25px; font-weight:700; font-size:26px;"></div>
     </div>
 
     <div class="popup-event" id="popupEvent">
@@ -507,9 +504,9 @@ onValue(ref(db, "current_match"), snap => {
       
       pastParts.forEach((pt, idx) => {
          html += `<div class="allpart-item">
-            <div class="ap-p1"><span style="color:var(--muted); font-size:18px; margin-right:8px;">${getOrdinal(idx+1)}</span> ${pt.p1Name} <span style="color:var(--gold-2); margin-left:8px;">${pt.p1Runs}(${pt.p1Balls})</span></div>
-            <div class="ap-mid">${pt.runs} <span style="font-size:26px; color:var(--muted); font-family:'Rajdhani',sans-serif;">(${pt.balls})</span></div>
-            <div class="ap-p2"><span style="color:var(--gold-2); margin-right:8px;">${pt.p2Runs}(${pt.p2Balls})</span> ${pt.p2Name}</div>
+            <div class="ap-p1"><span style="color:var(--muted); font-size:24px; margin-right:10px;">${getOrdinal(idx+1)}</span> ${pt.p1Name} <span style="color:var(--gold-2); margin-left:10px;">${pt.p1Runs}(${pt.p1Balls})</span></div>
+            <div class="ap-mid">${pt.runs} <span style="font-size:32px; color:var(--muted); font-family:'Rajdhani',sans-serif;">(${pt.balls})</span></div>
+            <div class="ap-p2"><span style="color:var(--gold-2); margin-right:10px;">${pt.p2Runs}(${pt.p2Balls})</span> ${pt.p2Name}</div>
          </div>`;
       });
       
@@ -517,12 +514,12 @@ onValue(ref(db, "current_match"), snap => {
           let p1Obj = (actSquads[actBatTeam]||[]).find(p => p.id === currPart.p1); let p2Obj = (actSquads[actBatTeam]||[]).find(p => p.id === currPart.p2);
           let p1N = p1Obj ? p1Obj.name + (p1Obj.id===state.striker?'*':'') : ''; let p2N = p2Obj ? p2Obj.name + (p2Obj.id===state.striker?'*':'') : '';
           html += `<div class="allpart-item" style="background:rgba(212,175,55,0.15)">
-            <div class="ap-p1"><span style="color:var(--muted); font-size:18px; margin-right:8px;">${getOrdinal(pastParts.length + 1)}*</span> ${p1N} <span style="color:var(--gold-2); margin-left:8px;">${currPart.p1Runs}(${currPart.p1Balls})</span></div>
-            <div class="ap-mid">${currPart.runs} <span style="font-size:26px; color:var(--muted); font-family:'Rajdhani',sans-serif;">(${currPart.balls})</span></div>
-            <div class="ap-p2"><span style="color:var(--gold-2); margin-right:8px;">${currPart.p2Runs}(${currPart.p2Balls})</span> ${p2N}</div>
+            <div class="ap-p1"><span style="color:var(--muted); font-size:24px; margin-right:10px;">${getOrdinal(pastParts.length + 1)}*</span> ${p1N} <span style="color:var(--gold-2); margin-left:10px;">${currPart.p1Runs}(${currPart.p1Balls})</span></div>
+            <div class="ap-mid">${currPart.runs} <span style="font-size:32px; color:var(--muted); font-family:'Rajdhani',sans-serif;">(${currPart.balls})</span></div>
+            <div class="ap-p2"><span style="color:var(--gold-2); margin-right:10px;">${currPart.p2Runs}(${currPart.p2Balls})</span> ${p2N}</div>
          </div>`;
       }
-      if(html === '') html = `<div style="text-align:center; padding:30px; font-size:24px; color:var(--muted);">No partnerships yet.</div>`;
+      if(html === '') html = `<div style="text-align:center; padding:40px; font-size:32px; color:var(--muted);">No partnerships yet.</div>`;
       document.getElementById('allpartListBody').innerHTML = html;
   }
 
@@ -575,7 +572,7 @@ onValue(ref(db, "current_match"), snap => {
     let el = document.getElementById('fowTitle');
     if(el) {
         el.innerText = `FALL OF WICKETS${isRecall?' (1ST INN)':''}`;
-        document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score} <span style="color:var(--muted); font-size:20px; margin-left:10px;">(${f.overs} Ov)</span></span></div>`).join('');
+        document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score} <span style="color:var(--muted); font-size:26px; margin-left:12px;">(${f.overs} Ov)</span></span></div>`).join('');
     }
   }
 
@@ -587,26 +584,26 @@ onValue(ref(db, "current_match"), snap => {
           if(!isRecall && state.legalBalls % 6 !== 0) { oversData.push(state.currentOverRuns || 0); }
           let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
           let displayOvers = oversData.slice(-20); let rawMax = Math.max(10, ...displayOvers); let maxVal = getNiceMax(rawMax, 4);
-          let w = 1060, h = 280, padX = 50, padY = 40; let graphW = w - padX - 15; let graphH = h - padY - 20; let svgHtml = '';
-          svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-          svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-15}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-          svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="14" font-weight="bold">RUNS</text>`;
-          svgHtml += `<text x="${w-60}" y="${h-5}" fill="var(--gold)" font-size="14" font-weight="bold">OVERS</text>`;
+          let w = 1140, h = 320, padX = 60, padY = 50; let graphW = w - padX - 20; let graphH = h - padY - 20; let svgHtml = '';
+          svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
+          svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-20}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
+          svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="22" font-weight="bold">RUNS</text>`;
+          svgHtml += `<text x="${w-80}" y="${h-5}" fill="var(--gold)" font-size="22" font-weight="bold">OVERS</text>`;
           for(let i=0; i<=4; i++) {
              let val = Math.round((maxVal / 4) * i); let y = 20 + graphH - (val/maxVal * graphH);
-             svgHtml += `<text x="${padX-10}" y="${y+5}" fill="var(--muted)" font-size="16" text-anchor="end">${val}</text>`;
-             svgHtml += `<line x1="${padX}" y1="${y}" x2="${w-15}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
+             svgHtml += `<text x="${padX-15}" y="${y+8}" fill="var(--muted)" font-size="24" text-anchor="end">${val}</text>`;
+             svgHtml += `<line x1="${padX}" y1="${y}" x2="${w-20}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
           }
-          let barStep = graphW / Math.max(5, displayOvers.length); let barW = Math.min(35, barStep * 0.6);
+          let barStep = graphW / Math.max(5, displayOvers.length); let barW = Math.min(45, barStep * 0.6);
           displayOvers.forEach((val, idx) => {
              let actualOvIndex = (hist.length - displayOvers.length) + idx + (!isRecall && state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1 ? 0 : 0);
              let x = padX + (idx + 0.5) * barStep - barW/2; let barH = (val / maxVal) * graphH; let y = 20 + graphH - barH;
              let isCurrent = (!isRecall && idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
-             svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="4" ry="4"/>`;
-             svgHtml += `<text x="${x + barW/2}" y="${y - 8}" fill="var(--ink)" font-size="20" font-weight="bold" text-anchor="middle">${val}</text>`;
+             svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="6" ry="6"/>`;
+             svgHtml += `<text x="${x + barW/2}" y="${y - 10}" fill="var(--ink)" font-size="28" font-weight="bold" text-anchor="middle">${val}</text>`;
              let wCount = wktsPerOver[actualOvIndex] || 0;
-             for(let wc=0; wc<wCount; wc++) { svgHtml += `<text x="${x + barW/2}" y="${y - 25 - (wc*20)}" fill="var(--crimson-2)" font-size="22" font-weight="900" text-anchor="middle">W</text>`; }
-             if ((actualOvIndex + 1) % 2 === 0) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+22}" fill="var(--muted)" font-size="16" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
+             for(let wc=0; wc<wCount; wc++) { svgHtml += `<text x="${x + barW/2}" y="${y - 35 - (wc*25)}" fill="var(--crimson-2)" font-size="30" font-weight="900" text-anchor="middle">W</text>`; }
+             if ((actualOvIndex + 1) % 2 === 0) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+30}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
           });
           document.getElementById('chartSvg').innerHTML = svgHtml;
       }
@@ -616,7 +613,7 @@ onValue(ref(db, "current_match"), snap => {
       let el = document.getElementById('wormTitle');
       if(el) {
           el.innerText = `WORM GRAPH (CUMULATIVE SCORE)${isRecall?' (1ST INN)':''}`;
-          let maxOvers = state.meta.maxOvers; let w = 1060, h = 280, padX = 50, padY = 40; let graphW = w - padX - 25; let graphH = h - padY - 20;
+          let maxOvers = state.meta.maxOvers; let w = 1140, h = 320, padX = 60, padY = 50; let graphW = w - padX - 30; let graphH = h - padY - 20;
           let cRuns1 = [0]; let sum1 = 0; let targetHist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
           targetHist.forEach(r => { sum1 += r; cRuns1.push(sum1); }); if(!isRecall && state.legalBalls % 6 !== 0) { cRuns1.push(sum1 + (state.currentOverRuns||0)); }
           let cRuns2 = [];
@@ -624,21 +621,21 @@ onValue(ref(db, "current_match"), snap => {
           let rawTotal = Math.max(state.score, state.target || 0, 50); if(isRecall) rawTotal = Math.max(state.firstInnings.score, 50);
           let maxTotal = getNiceMax(rawTotal, 5);
           let svgHtml = '';
-          svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-          svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${padX+graphW}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-          svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="14" font-weight="bold">RUNS</text>`;
-          svgHtml += `<text x="${padX+graphW-30}" y="${h-5}" fill="var(--gold)" font-size="14" font-weight="bold">OVERS</text>`;
-          for(let i=0; i<=5; i++) { let val = Math.round((maxTotal / 5) * i); let y = 20 + graphH - (val/maxTotal * graphH); svgHtml += `<text x="${padX-10}" y="${y+5}" fill="var(--muted)" font-size="16" text-anchor="end">${val}</text>`; svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`; }
-          for(let i=2; i<=maxOvers; i+=2) { let x = padX + (i/maxOvers * graphW); svgHtml += `<text x="${x}" y="${20+graphH+22}" fill="var(--muted)" font-size="16" text-anchor="middle">${i}</text>`; svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+8}" stroke="var(--muted)"/>`; }
+          svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
+          svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${padX+graphW}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
+          svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="22" font-weight="bold">RUNS</text>`;
+          svgHtml += `<text x="${padX+graphW-40}" y="${h-5}" fill="var(--gold)" font-size="22" font-weight="bold">OVERS</text>`;
+          for(let i=0; i<=5; i++) { let val = Math.round((maxTotal / 5) * i); let y = 20 + graphH - (val/maxTotal * graphH); svgHtml += `<text x="${padX-15}" y="${y+8}" fill="var(--muted)" font-size="24" text-anchor="end">${val}</text>`; svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`; }
+          for(let i=2; i<=maxOvers; i+=2) { let x = padX + (i/maxOvers * graphW); svgHtml += `<text x="${x}" y="${20+graphH+30}" fill="var(--muted)" font-size="24" text-anchor="middle">${i}</text>`; svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+10}" stroke="var(--muted)"/>`; }
           function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && currentBalls % 6 !== 0) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
-          function drawWickets(fowArray, color) { let html = ''; (fowArray || []).forEach(f => { let ovrParts = String(f.overs).split('.'); let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0); let x = padX + (balls / (maxOvers * 6)) * graphW; let y = 20 + graphH - (f.score / maxTotal * graphH); html += `<circle cx="${x}" cy="${y}" r="6" fill="${color}" stroke="var(--navy-deep)" stroke-width="3"/>`; html += `<text x="${x}" y="${y - 12}" fill="${color}" font-family="sans-serif" font-size="16" font-weight="900" text-anchor="middle">W</text>`; }); return html; }
+          function drawWickets(fowArray, color) { let html = ''; (fowArray || []).forEach(f => { let ovrParts = String(f.overs).split('.'); let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0); let x = padX + (balls / (maxOvers * 6)) * graphW; let y = 20 + graphH - (f.score / maxTotal * graphH); html += `<circle cx="${x}" cy="${y}" r="8" fill="${color}" stroke="var(--navy-deep)" stroke-width="4"/>`; html += `<text x="${x}" y="${y - 15}" fill="${color}" font-family="sans-serif" font-size="22" font-weight="900" text-anchor="middle">W</text>`; }); return html; }
 
           if(!isRecall && state.innings === 2) {
-              let path1 = buildPath(cRuns2, state.firstInnings.legalBalls, true); svgHtml += `<path d="${path1}" fill="none" stroke="var(--muted)" stroke-width="4" />`; svgHtml += drawWickets(state.firstInnings.fow, "var(--muted)");
-              let path2 = buildPath(cRuns1, state.legalBalls, state.inningsOver); svgHtml += `<path d="${path2}" fill="none" stroke="var(--gold-2)" stroke-width="5" />`; svgHtml += drawWickets(state.fow, "var(--crimson-2)");
+              let path1 = buildPath(cRuns2, state.firstInnings.legalBalls, true); svgHtml += `<path d="${path1}" fill="none" stroke="var(--muted)" stroke-width="6" />`; svgHtml += drawWickets(state.firstInnings.fow, "var(--muted)");
+              let path2 = buildPath(cRuns1, state.legalBalls, state.inningsOver); svgHtml += `<path d="${path2}" fill="none" stroke="var(--gold-2)" stroke-width="8" />`; svgHtml += drawWickets(state.fow, "var(--crimson-2)");
               document.getElementById('wormLegend').innerHTML = `<span style="color:var(--muted)">${state.firstInnings.team === 'A'?state.meta.tA:state.meta.tB} (1st Inn)</span> <span style="color:var(--gold-2)">${batTeamName} (Chasing)</span>`;
           } else {
-              let actBalls = isRecall ? state.firstInnings.legalBalls : state.legalBalls; let path1 = buildPath(cRuns1, actBalls, isRecall ? true : state.inningsOver); svgHtml += `<path d="${path1}" fill="none" stroke="var(--gold-2)" stroke-width="5" />`; svgHtml += drawWickets(isRecall ? state.firstInnings.fow : state.fow, "var(--crimson-2)");
+              let actBalls = isRecall ? state.firstInnings.legalBalls : state.legalBalls; let path1 = buildPath(cRuns1, actBalls, isRecall ? true : state.inningsOver); svgHtml += `<path d="${path1}" fill="none" stroke="var(--gold-2)" stroke-width="8" />`; svgHtml += drawWickets(isRecall ? state.firstInnings.fow : state.fow, "var(--crimson-2)");
               document.getElementById('wormLegend').innerHTML = `<span style="color:var(--gold-2)">${actBatTeamName}</span>`;
           }
           document.getElementById('wormSvg').innerHTML = svgHtml;
