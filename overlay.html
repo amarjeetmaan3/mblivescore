@@ -4,171 +4,160 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>M.B. Live Studio — Broadcast Overlay</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --navy-deep:#050c18; --navy:#0a1628; --navy-2:#0f2140; --navy-3:#16304f;
     --gold:#d4af37; --gold-2:#f2d878; --crimson:#b91c1c; --crimson-2:#e13939;
-    --ink:#f5f5f0; --muted:#8fa3bf; --line:rgba(212,175,55,0.35);
+    --ink:#f5f5f0; --muted:#8fa3bf; --line:rgba(255,255,255,0.15);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html,body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; font-family: 'Rajdhani', sans-serif; color: var(--ink); }
   
   #overlay-canvas { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; transform-origin: top left; }
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
-  .mark { font-family: 'Orbitron', sans-serif; }
 
   /* ================= CORNER BRANDING ================= */
   .corner-brand {
-    position: absolute;
-    top: 25px;
-    left: 35px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    font-family: 'Orbitron', sans-serif;
-    color: var(--gold);
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8));
-    z-index: 20;
-    line-height: 1;
+    position: absolute; top: 25px; left: 35px; display: flex; flex-direction: column; align-items: flex-start;
+    font-family: 'Orbitron', sans-serif; color: var(--gold); z-index: 20; line-height: 1;
   }
-  .corner-brand .mb-text {
-    font-size: 38px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    text-shadow: 2px 2px 0 var(--navy-deep);
-  }
-  .corner-brand .studio-text {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 6px;
-    color: var(--ink);
-    background: var(--crimson);
-    padding: 2px 8px;
-    margin-top: 2px;
-    border-radius: 2px;
-  }
+  .corner-brand .mb-text { font-size: 38px; font-weight: 900; letter-spacing: 4px; text-shadow: 2px 2px 0 var(--navy-deep); }
+  .corner-brand .studio-text { font-size: 14px; font-weight: 700; letter-spacing: 6px; color: var(--ink); background: var(--crimson); padding: 2px 8px; margin-top: 2px; border-radius: 2px; }
 
-  /* ================= MAIN SCOREBUG ================= */
-  .scorebug { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; width: 100%; max-width: 1280px; opacity: 0; transition: opacity .15s ease; filter: drop-shadow(0 -5px 20px rgba(0,0,0,0.5)); z-index: 10; }
+  /* ================= NEW PREMIUM SCOREBUG ================= */
+  .scorebug {
+    position: absolute; bottom: 0; left: 0; width: 100%; max-width: 1280px;
+    display: flex; flex-direction: column; opacity: 0; transition: opacity 0.3s ease; z-index: 10;
+  }
   .scorebug.show { opacity: 1; }
-  
-  .main-strip { display: flex; align-items: stretch; background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%); border-top: 2px solid var(--gold); height: 85px; }
-  #bugNormal { display: flex; align-items: stretch; width: 100%; justify-content: space-between; }
-  #bugResult { display: none; justify-content: center; align-items: center; width: 100%; background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); letter-spacing: 2px; }
-  
-  .team-block { background: var(--gold); color: var(--navy-deep); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; padding: 0 30px; display: flex; align-items: center; border-right: 4px solid var(--crimson); min-width: 160px; justify-content: center; text-align:center; white-space:nowrap; font-weight:900; }
-  
-  .score-block { display: flex; align-items: center; padding: 0 30px; border-right: 1px solid var(--line); }
-  .score-block .runs { font-family: 'Bebas Neue', sans-serif; font-size: 64px; line-height: 0.9; transform: translateY(3px); font-weight:900; }
-  .score-block .overs { font-size: 24px; font-weight: 700; color: var(--muted); margin-left: 15px; align-self: center; }
-  
-  .rate-block { display:flex; flex-direction:column; justify-content:center; align-items:center; padding: 0 25px; border-right: 1px solid var(--line); gap: 2px; min-width:110px;}
-  .rate-block .label { font-size: 14px; letter-spacing: 1.5px; color: var(--gold); font-weight: 700; }
-  .rate-block .value { font-size: 26px; font-weight: 700; line-height: 1; }
-  
-  .batters-block { display:flex; flex-direction:column; justify-content:center; padding: 0 30px; border-right: 1px solid var(--line); gap: 6px; flex:1; min-width:320px;}
-  .batter-row { display:flex; justify-content: space-between; align-items:baseline; font-size: 22px; font-weight: 700; }
-  .batter-row.on-strike { color: var(--gold-2); }
-  .batter-row .fig { color: var(--muted); font-size: 18px; margin-left: 15px; font-weight:600;}
-  
-  .bowler-block { display:flex; flex-direction:column; justify-content:center; padding: 0 30px; min-width: 320px; }
-  .bowler-info { display:flex; align-items:baseline; gap: 10px; margin-bottom: 8px; }
-  .bowler-info .name { font-size: 22px; font-weight: 700; color: var(--gold-2); }
-  .bowler-info .fig { font-size: 18px; color: var(--ink); margin-left: auto; font-weight:700;}
 
-  /* BOTTOM STRIP / MESSAGE BAR RE-DESIGNED TO FIT INSIDE */
-  .bottom-info-area {
-    display: flex;
-    align-items: center;
-    background: var(--navy-3);
-    border-top: 1px solid var(--line);
-    height: 38px;
-    overflow: hidden;
+  #bugNormalContainer { display: block; width: 100%; }
+  
+  #bugResult { 
+      display: none; justify-content: center; align-items: center; width: 100%; height: 96px; 
+      background: radial-gradient(ellipse at center, var(--navy-deep) 0%, #000 100%); 
+      font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--gold-2); 
+      letter-spacing: 2px; border-top: 2px solid var(--gold); 
+  }
+
+  /* TOP ROW */
+  .bug-top-row {
+    display: flex; align-items: stretch; height: 60px;
+    background: linear-gradient(90deg, var(--navy-deep) 0%, var(--navy) 100%);
+    border-top: 2px solid var(--gold);
   }
   
-  /* The dynamic message section */
-  .message-strip { 
-      flex: 1;
-      padding: 0 25px; 
-      font-size: 18px; 
-      font-weight: 700; 
-      letter-spacing: 1px; 
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      text-transform: uppercase;
+  .team-block {
+    background: linear-gradient(135deg, var(--gold) 0%, #eab308 100%); color: #000;
+    font-family: 'Bebas Neue', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 2px;
+    padding: 0 25px; display: flex; align-items: center; justify-content: center; min-width: 120px;
   }
   
-  /* The balls tracker section now lives in the bottom strip */
-  .over-track { 
-      display: flex; 
-      align-items: center; 
-      gap: 6px; 
-      padding: 0 25px;
-      background: rgba(0,0,0,0.3);
-      height: 100%;
-      border-left: 1px solid var(--line);
+  .score-block {
+    display: flex; flex-direction: column; justify-content: center; padding: 0 25px; border-right: 1px solid var(--line); min-width: 180px;
   }
-  .ball-pill { min-width: 26px; height: 26px; padding: 0 4px; border-radius: 4px; background: var(--navy-2); color: var(--ink); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
+  .main-score { font-family: 'Bebas Neue', sans-serif; font-size: 52px; font-weight: 900; color: var(--ink); line-height: 0.9; display: flex; align-items: baseline; gap: 10px;}
+  .main-score .overs { font-size: 24px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 700;}
+  .target-score { font-size: 15px; color: var(--gold-2); font-weight: 800; letter-spacing: 1px; line-height: 1; margin-top: 2px;}
+
+  .rate-block {
+    display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 20px; border-right: 1px solid var(--line); min-width: 110px;
+  }
+  .rate-label { font-size: 13px; letter-spacing: 1.5px; color: var(--gold); font-weight: 800; }
+  .rate-val { font-size: 26px; font-weight: 900; line-height: 1; color: var(--ink); transition: color 0.3s ease; }
+
+  .batters-inline {
+    display: flex; align-items: center; padding: 0 25px; border-right: 1px solid var(--line); gap: 25px; flex: 1;
+  }
+  .batter-item { display: flex; align-items: baseline; gap: 8px; font-size: 22px; font-weight: 800; }
+  .batter-item.on-strike { color: var(--gold-2); }
+  .batter-item .fig { color: var(--muted); font-size: 18px; font-weight: 700; }
+
+  .bowler-inline {
+    display: flex; align-items: center; padding: 0 25px; gap: 12px; font-size: 22px; font-weight: 800; color: var(--ink); min-width: 280px; justify-content: flex-end;
+  }
+  .bowler-inline .fig { color: var(--gold-2); font-size: 20px; }
+
+  /* BOTTOM ROW */
+  .bug-bottom-row {
+    display: flex; align-items: stretch; height: 36px;
+    background: var(--navy-3); border-top: 1px solid var(--line); overflow: hidden;
+  }
+  
+  .message-bar {
+    flex: 1; display: flex; align-items: center; padding: 0 25px;
+    color: var(--ink); font-size: 16px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .timeline-bar {
+    display: flex; align-items: center; gap: 5px; padding: 0 15px;
+    background: rgba(0,0,0,0.4); border-left: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .ball-pill {
+    min-width: 24px; height: 24px; padding: 0 4px; border-radius: 4px;
+    background: #1e293b; color: var(--ink); font-size: 13px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .ball-pill.four { color: var(--gold-2); border-color: var(--gold-2); }
+  .ball-pill.six { color: #fff; background: var(--crimson); border-color: var(--crimson); }
+  .ball-pill.wkt { color: #fff; background: var(--crimson-2); border-color: var(--crimson-2); }
 
   /* ================= CENTER GRAPHICS ================= */
-  .center-panel {
-    position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%);
-    background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%);
-    border: 2px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
-    opacity: 0; pointer-events: none; transition: all .15s ease; z-index: 5;
-    display: flex; flex-direction: column; overflow: hidden;
-  }
+  .center-panel { position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); border: 2px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8)); opacity: 0; pointer-events: none; transition: all .15s ease; z-index: 5; display: flex; flex-direction: column; overflow: hidden; }
   .center-panel.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
   .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 3px; padding: 6px; }
 
+  /* SINGLE PLAYER GRAPHIC */
   #graphic-singlePlayer { width: 700px; padding-bottom: 15px; }
   .sp-name { font-size: 42px; font-weight: 700; color: var(--gold-2); text-align: center; margin: 15px 0 10px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; line-height:1;}
   .sp-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 15px; }
-  .sp-table th { background: rgba(255,255,255,0.05); color: var(--muted); font-size: 15px; padding: 8px; border-bottom: 1px solid var(--line); letter-spacing:1px; }
-  .sp-table td { padding: 10px; font-size: 28px; font-weight: 700; font-family: 'Bebas Neue', sans-serif; color: var(--ink); }
-  .sp-section-title { font-size: 15px; color: var(--gold); background: var(--navy-3); text-align: left; padding: 6px 20px; font-weight: 700; letter-spacing: 2px; }
+  .sp-table th { background: rgba(255,255,255,0.05); color: var(--muted); font-size: 15px; padding: 8px; border-bottom: 1px solid var(--line); letter-spacing:1px; font-weight: 800;}
+  .sp-table td { padding: 10px; font-size: 28px; font-weight: 900; font-family: 'Bebas Neue', sans-serif; color: var(--ink); }
+  .sp-section-title { font-size: 15px; color: var(--gold); background: var(--navy-3); text-align: left; padding: 6px 20px; font-weight: 800; letter-spacing: 2px; }
 
+  /* PLAYING 11 (SQUADS) */
   #graphic-squads { width: 850px; }
   .squads-container { display: flex; align-items: stretch; max-height: 520px; overflow: hidden; } 
   .squad-col { flex: 1; padding: 12px 25px; }
   .squad-col:first-child { border-right: 1px solid var(--line); }
   .squad-team-name { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 34px; color: var(--gold-2); margin-bottom: 10px; letter-spacing: 2px; }
   .squad-list { display: flex; flex-direction: column; gap: 5px; }
-  .squad-player { font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: flex-start; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .squad-player .idx { color: var(--muted); font-size: 14px; width: 25px; font-weight: 600; }
+  .squad-player { font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: flex-start; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .squad-player .idx { color: var(--muted); font-size: 14px; width: 25px; font-weight: 800; }
 
   #graphic-part { width: 650px; }
   .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 15px 35px; }
   .part-player { text-align: center; flex: 1; }
-  .part-name { font-size: 22px; font-weight: 700; color: var(--ink); }
+  .part-name { font-size: 22px; font-weight: 800; color: var(--ink); }
   .part-contrib { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--muted); margin-top: 2px; }
   .part-center { text-align: center; flex: 1.5; border-left: 1px solid var(--line); border-right: 1px solid var(--line); display:flex; justify-content:center; align-items:baseline; gap:8px;}
   .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 72px; color: var(--gold-2); line-height: 1; }
-  .part-balls { font-size: 24px; font-weight: 700; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
+  .part-balls { font-size: 24px; font-weight: 800; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
 
   #graphic-allpart { width: 950px; }
   .allpart-list { padding: 10px 25px; max-height: 380px; overflow-y: auto; }
-  .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-bottom: 1px dotted var(--line); font-size: 20px; font-weight: 600; }
+  .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-bottom: 1px dotted var(--line); font-size: 20px; font-weight: 800; }
   .ap-p1 { flex: 1.2; text-align: left; }
   .ap-mid { flex: 0.8; text-align: center; color: var(--gold-2); font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; display:flex; justify-content:center; align-items:baseline; gap:8px;}
   .ap-p2 { flex: 1.2; text-align: right; }
 
   #graphic-bat { width: 800px; }
   .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
-  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 14px; padding: 6px 15px; letter-spacing: 1px; }
-  .sc-table td { padding: 3px 15px; border-bottom: 1px solid rgba(212,175,55,0.15); font-size: 17px; font-weight: 600; }
+  .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 14px; padding: 6px 15px; letter-spacing: 1px; font-weight:800;}
+  .sc-table td { padding: 3px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 17px; font-weight: 800; }
   .sc-table tr:last-child td { border-bottom: none; }
-  .sc-status { font-size: 14px; color: var(--muted); font-weight: 500; }
-  .sc-notout { color: var(--gold-2); font-weight: 700; }
-  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 8px 20px; font-weight: 700; font-size: 18px; border-top: 2px solid var(--gold); }
+  .sc-status { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .sc-notout { color: var(--gold-2); font-weight: 800; }
+  .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 8px 20px; font-weight: 800; font-size: 18px; border-top: 2px solid var(--gold); }
 
   #graphic-bowl { width: 800px; }
   .sc-table.bowl th { text-align: center; }
   .sc-table.bowl td { text-align: center; }
   .sc-table.bowl td:first-child, .sc-table.bowl th:first-child { text-align: left; }
-  .fow-strip { background: var(--navy-deep); padding: 8px 15px; font-size: 15px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
+  .fow-strip { background: var(--navy-deep); padding: 8px 15px; font-size: 15px; font-weight: 800; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
 
   #graphic-proj { width: 550px; text-align: center; padding-bottom: 15px; }
   .proj-row { display: flex; justify-content: space-between; padding: 8px 45px; border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 700; }
@@ -176,65 +165,60 @@
 
   #graphic-fow { width: 550px; }
   .fow-list { padding: 10px 25px; max-height: 350px; overflow: hidden; }
-  .fow-item { display: flex; justify-content: space-between; padding: 6px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 600; }
+  .fow-item { display: flex; justify-content: space-between; padding: 6px 15px; border-bottom: 1px dotted var(--line); font-size: 18px; font-weight: 800; }
 
   #graphic-chart { width: 750px; }
   #graphic-worm { width: 750px; }
-  #graphic-result { width: 650px; }
   
   .popup-event { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); padding: 22px 70px; border: 3px solid var(--gold); border-radius: 14px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 18px 34px rgba(0,0,0,0.7)); z-index: 20; }
   .popup-event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 96px; line-height: 0.9; color: #fff; letter-spacing: 2px; }
-  .pop-sub { font-size: 13px; letter-spacing: 3px; color: var(--gold-2); margin-top: 6px; font-weight: 700; }
+  .pop-sub { font-size: 13px; letter-spacing: 3px; color: var(--gold-2); margin-top: 6px; font-weight: 800; }
 </style>
 </head>
 <body>
 
 <div id="overlay-canvas">
 
-    <!-- NEW CORNER BRANDING -->
     <div class="corner-brand">
         <div class="mb-text">MB</div>
         <div class="studio-text">LIVE STUDIO</div>
     </div>
 
+    <!-- CLEAN, BUG-FREE SCOREBUG -->
     <div class="scorebug" id="scorebug">
-      <div class="main-strip">
-          <div id="bugNormal">
-            <div class="team-block" id="ovTeam">IND</div>
-            <div class="score-block">
-              <div class="runs num" id="ovScore">0/0</div>
-              <div class="overs" id="ovOvers">(0.0)</div>
-            </div>
-            <div class="rate-block">
-              <div class="label">CRR</div>
-              <div class="value" id="ovCrr">0.00</div>
-              <div id="ovProjWrap" style="display:none; margin-top:4px;">
-                <div class="label">PROJ</div>
-                <div class="value" id="ovProj" style="color:var(--gold-2); font-size:16px;">0</div>
+      <div id="bugNormalContainer">
+          <div class="bug-top-row">
+              <div class="team-block" id="ovTeam">IND</div>
+              <div class="score-block">
+                  <div class="main-score"><span id="ovScore">0/0</span> <span class="overs" id="ovOvers">(0.0)</span></div>
+                  <div class="target-score" id="ovTargetWrap" style="display:none;">TARGET <span id="ovTargetVal">0</span></div>
               </div>
-              <div id="ovRrrWrap" style="display:none; margin-top:4px;">
-                <div class="label">REQ</div>
-                <div class="value" id="ovRrr" style="color:var(--crimson-2); font-size:16px;">0.00</div>
+              
+              <div class="rate-block" id="rateBlockUI">
+                  <div class="rate-label" id="rateLabel">CRR</div>
+                  <div class="rate-val" id="rateValue">0.00</div>
               </div>
-            </div>
-            <div class="batters-block">
-              <div class="batter-row" id="ovStrikerRow"><span id="ovStrikerName">—</span><span class="fig" id="ovStrikerFig"></span></div>
-              <div class="batter-row" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span><span class="fig" id="ovNonStrikerFig"></span></div>
-            </div>
-            <div class="bowler-block">
-              <div class="bowler-info"><span class="name" id="ovBowlerName">—</span><span class="fig" id="ovBowlerFig">0.0-0-0-0</span></div>
-            </div>
+
+              <div class="batters-inline">
+                  <div class="batter-item" id="ovStrikerRow"><span id="ovStrikerName">—</span> <span class="fig" id="ovStrikerFig">0(0)</span></div>
+                  <div class="batter-item" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span> <span class="fig" id="ovNonStrikerFig">0(0)</span></div>
+              </div>
+              
+              <div class="bowler-inline">
+                  <span id="ovBowlerName">—</span> <span class="fig" id="ovBowlerFig">0.0-0-0-0</span>
+              </div>
           </div>
-          <div id="bugResult">
-              <span id="bugResultText"></span>
+          
+          <div class="bug-bottom-row">
+              <div class="message-bar" id="bottomStripText">M.B. LIVE STUDIO</div>
+              <div class="timeline-bar" id="ovBalls"></div>
           </div>
       </div>
       
-      <!-- REDESIGNED BOTTOM AREA -->
-      <div class="bottom-info-area">
-          <div class="message-strip" id="bottomStripText">M.B. LIVE STUDIO</div>
-          <div class="over-track" id="ovBalls"></div>
+      <!-- FIXED: Added bugResult block back to HTML -->
+      <div id="bugResult">
+          <span id="bugResultText"></span>
       </div>
     </div>
 
@@ -319,13 +303,6 @@
       <div id="wormLegend" style="display:flex; justify-content:center; gap:30px; padding-bottom:15px; font-weight:700; font-size:16px;"></div>
     </div>
 
-    <div class="center-panel" id="graphic-result">
-      <div class="center-title">MATCH RESULT</div>
-      <div style="padding: 40px; text-align:center; font-family:'Bebas Neue', sans-serif; font-size: 54px; letter-spacing: 2px; color: var(--gold-2); line-height:1;">
-          <span id="resultText"></span>
-      </div>
-    </div>
-
     <div class="popup-event" id="popupEvent">
       <div class="pop-title num" id="popTitle">WICKET</div>
       <div class="pop-sub" id="popSub"></div>
@@ -352,12 +329,45 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
 const app = initializeApp({ apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY", authDomain: "mb-live-score.firebaseapp.com", databaseURL: "https://mb-live-score-default-rtdb.firebaseio.com", projectId: "mb-live-score" });
 const db = getDatabase(app);
 
+let currentState = null;
+let rateToggleIndex = 0; 
+
+setInterval(() => {
+    rateToggleIndex = 1 - rateToggleIndex;
+    updateRateBlockUI();
+}, 4500);
+
 function fmtOvers(balls) { return `${Math.floor(balls/6)}.${balls%6}`; }
 function getOrdinal(n) { const s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
 
 function getNiceMax(maxVal, ticks) {
     if(maxVal <= 0) return 10; let unrounded = maxVal / ticks; let mag = Math.pow(10, Math.floor(Math.log10(unrounded)));
     let norm = unrounded / mag; let step = (norm <= 1) ? 1 * mag : (norm <= 2) ? 2 * mag : (norm <= 5) ? 5 * mag : 10 * mag; return step * ticks;
+}
+
+function updateRateBlockUI() {
+    if(!currentState) return;
+    const st = currentState;
+    const crr = st.legalBalls > 0 ? ((st.score / st.legalBalls) * 6).toFixed(2) : "0.00";
+    
+    let label = "CRR"; let val = crr; let color = "var(--ink)";
+    
+    if(rateToggleIndex === 1) {
+        if(st.innings === 1) {
+            label = "PROJ"; color = "var(--gold-2)";
+            const oversLeft = st.meta.maxOvers - (st.legalBalls / 6); 
+            val = Math.round(st.score + (crr * oversLeft));
+        } else {
+            label = "REQ"; color = "var(--crimson-2)";
+            const ballsLeft = (st.meta.maxOvers * 6) - st.legalBalls; 
+            val = ballsLeft > 0 ? Math.max(0, ((st.target - st.score) / ballsLeft) * 6).toFixed(2) : "—";
+        }
+    }
+    
+    const rLabel = document.getElementById('rateLabel');
+    const rVal = document.getElementById('rateValue');
+    if(rLabel) rLabel.innerText = label;
+    if(rVal) { rVal.innerText = val; rVal.style.color = color; }
 }
 
 function getMatchResultText(st) {
@@ -369,6 +379,8 @@ function getMatchResultText(st) {
 
 onValue(ref(db, "current_match"), snap => {
   const state = snap.val();
+  currentState = state;
+  
   if(!state) { document.querySelectorAll('.scorebug, .center-panel').forEach(el => el.classList.remove('show')); return; }
 
   const g = state.graphics || {};
@@ -378,46 +390,53 @@ onValue(ref(db, "current_match"), snap => {
   const bug = document.getElementById('scorebug');
   if(g.scorebug) bug.classList.add('show'); else bug.classList.remove('show');
   
+  // FIX: Safe check for result logic using the new bugNormalContainer ID
   if(state.innings === 2 && state.inningsOver) {
-      document.getElementById('bugNormal').style.display = 'none'; document.getElementById('bugResult').style.display = 'flex';
+      document.getElementById('bugNormalContainer').style.display = 'none'; 
+      document.getElementById('bugResult').style.display = 'flex';
       document.getElementById('bugResultText').innerText = getMatchResultText(state);
   } else {
-      document.getElementById('bugNormal').style.display = 'flex'; document.getElementById('bugResult').style.display = 'none';
+      document.getElementById('bugNormalContainer').style.display = 'block'; 
+      document.getElementById('bugResult').style.display = 'none';
   }
   
-  const teamEl = document.getElementById('ovTeam');
-  teamEl.innerText = batTeamName;
-  if(batTeamName.length > 9) teamEl.style.fontSize = '28px';
-  else if(batTeamName.length > 5) teamEl.style.fontSize = '36px';
-  else teamEl.style.fontSize = '46px';
-
+  document.getElementById('ovTeam').innerText = batTeamName;
   document.getElementById('ovScore').innerText = `${state.score}/${state.wickets}`;
   document.getElementById('ovOvers').innerText = `(${fmtOvers(state.legalBalls)})`;
   
-  const crr = state.legalBalls > 0 ? ((state.score / state.legalBalls) * 6).toFixed(2) : "0.00";
-  document.getElementById('ovCrr').innerText = crr;
+  updateRateBlockUI();
 
-  const projWrap = document.getElementById('ovProjWrap'); const rrrWrap = document.getElementById('ovRrrWrap');
-  if(state.innings === 1) {
-      projWrap.style.display = 'block'; rrrWrap.style.display = 'none';
-      const oversLeft = state.meta.maxOvers - (state.legalBalls / 6); document.getElementById('ovProj').innerText = Math.round(state.score + (crr * oversLeft));
+  if(state.innings === 2 && state.target) {
+      document.getElementById('ovTargetWrap').style.display = 'block';
+      document.getElementById('ovTargetVal').innerText = state.target;
   } else {
-      projWrap.style.display = 'none'; rrrWrap.style.display = 'block';
-      const ballsLeft = (state.meta.maxOvers * 6) - state.legalBalls; document.getElementById('ovRrr').innerText = ballsLeft > 0 ? Math.max(0, ((state.target - state.score) / ballsLeft) * 6).toFixed(2) : "—";
+      document.getElementById('ovTargetWrap').style.display = 'none';
   }
 
   const striker = (state.squads[tBat] || []).find(p => p.id === state.striker); const nonStriker = (state.squads[tBat] || []).find(p => p.id === state.nonStriker);
-  if(striker) { document.getElementById('ovStrikerName').innerText = `${striker.name}*`; document.getElementById('ovStrikerFig').innerText = `${striker.runs}(${striker.balls})`; }
-  if(nonStriker) { document.getElementById('ovNonStrikerName').innerText = nonStriker.name; document.getElementById('ovNonStrikerFig').innerText = `${nonStriker.runs}(${nonStriker.balls})`; }
+  
+  const strEl = document.getElementById('ovStrikerRow');
+  if(striker) { 
+      strEl.classList.add('on-strike');
+      document.getElementById('ovStrikerName').innerText = `${striker.name}*`; 
+      document.getElementById('ovStrikerFig').innerText = `${striker.runs}(${striker.balls})`; 
+  }
+  
+  const nonStrEl = document.getElementById('ovNonStrikerRow');
+  if(nonStriker) { 
+      nonStrEl.classList.remove('on-strike');
+      document.getElementById('ovNonStrikerName').innerText = nonStriker.name; 
+      document.getElementById('ovNonStrikerFig').innerText = `${nonStriker.runs}(${nonStriker.balls})`; 
+  }
 
   const bowler = (state.squads[tBowl] || []).find(p => p.id === state.bowler); const bs = (state.bowlerStats || {})[state.bowler] || {balls:0, runs:0, wickets:0};
   document.getElementById('ovBowlerName').innerText = bowler ? bowler.name : "—"; document.getElementById('ovBowlerFig').innerText = `${fmtOvers(bs.balls)}-${bs.runs}-${bs.wickets}`;
 
-  const recent10 = (state.overBalls || []).slice(-10);
-  document.getElementById('ovBalls').innerHTML = recent10.map(b => {
-    let color = "var(--navy-3)", text = b;
-    if(b === 4 || b === '4') color = "var(--gold)"; else if(b === 6 || b === '6') color = "var(--crimson)"; else if(typeof b === 'string' && b.includes('W')) color = "var(--crimson-2)"; else if(typeof b === 'string') { color = "#5b4413"; text = b.replace('+0',''); }
-    return `<div class="ball-pill" style="background:${color}">${text}</div>`;
+  const recentBalls = (state.overBalls || []);
+  document.getElementById('ovBalls').innerHTML = recentBalls.map(b => {
+    let cls = "ball-pill", text = b;
+    if(b === 4 || b === '4') cls += " four"; else if(b === 6 || b === '6') cls += " six"; else if(typeof b === 'string' && b.includes('W')) cls += " wkt"; else if(typeof b === 'string') { text = b.replace('+0',''); }
+    return `<div class="${cls}">${text}</div>`;
   }).join('');
 
   if(g.bottomStrip && g.dynamicText) { 
@@ -428,12 +447,18 @@ onValue(ref(db, "current_match"), snap => {
       document.getElementById('bottomStripText').style.color = "var(--ink)";
   }
 
-  const panels = ['part', 'allpart', 'bat', 'bowl', 'proj', 'fow', 'chart', 'worm', 'result', 'singlePlayer', 'squads'];
-  panels.forEach(p => { document.getElementById(`graphic-${p}`).classList.remove('show'); });
+  const panels = ['part', 'allpart', 'bat', 'bowl', 'fow', 'singlePlayer', 'squads', 'proj', 'chart', 'worm'];
+  panels.forEach(p => { 
+      let el = document.getElementById(`graphic-${p}`);
+      if(el) el.classList.remove('show'); 
+  });
 
   let renderTarget = g.centerGraphic; let isRecall = false;
   if(renderTarget && renderTarget.endsWith('1')) { isRecall = true; renderTarget = renderTarget.replace('1', ''); }
-  if(renderTarget) { document.getElementById(`graphic-${renderTarget}`).classList.add('show'); }
+  if(renderTarget) { 
+      let tEl = document.getElementById(`graphic-${renderTarget}`);
+      if(tEl) tEl.classList.add('show'); 
+  }
 
   let actBatTeamName = batTeamName, actSquads = state.squads, actScore = state.score, actWickets = state.wickets, actBalls = state.legalBalls, actExtras = state.extras, actBStats = state.bowlerStats, actFow = state.fow || [];
   let actBowlTeam = tBowl, actBatTeam = tBat;
@@ -444,10 +469,8 @@ onValue(ref(db, "current_match"), snap => {
       actScore = state.firstInnings.score; actWickets = state.firstInnings.wickets; actBalls = state.firstInnings.legalBalls; actExtras = state.firstInnings.extras; actBStats = state.firstInnings.bowlerStats; actFow = state.firstInnings.fow || [];
   }
 
-  if(g.centerGraphic === 'result' && state.inningsOver) { document.getElementById('resultText').innerText = getMatchResultText(state); }
-
   if(renderTarget === 'singlePlayer' && g.singlePlayer) {
-      let pObj = state.squads.A.find(x => x.id === g.singlePlayer.id) || state.squads.B.find(x => x.id === g.singlePlayer.id);
+      let pObj = (actSquads.A||[]).find(x => x.id === g.singlePlayer.id) || (actSquads.B||[]).find(x => x.id === g.singlePlayer.id);
       if(pObj) {
           document.getElementById('spName').innerText = pObj.name.toUpperCase();
           let html = '';
@@ -458,7 +481,7 @@ onValue(ref(db, "current_match"), snap => {
                        <tr><td>${pObj.runs}</td><td>${pObj.balls}</td><td>${pObj.fours}</td><td>${pObj.sixes}</td><td>${sr}</td></tr></table>`;
           }
           if(g.singlePlayer.type === 'BOWL' || g.singlePlayer.type === 'BOTH') {
-              let bStat = state.bowlerStats[pObj.id] || { balls:0, runs:0, wickets:0, maidens:0, dots:0 };
+              let bStat = actBStats[pObj.id] || { balls:0, runs:0, wickets:0, maidens:0, dots:0 };
               let eco = bStat.balls > 0 ? ((bStat.runs / bStat.balls) * 6).toFixed(1) : "0.0";
               html += `<div class="sp-section-title">BOWLING</div>
                        <table class="sp-table"><tr><th>OVERS</th><th>MAIDENS</th><th>RUNS</th><th>WKTS</th><th>ECON</th></tr>
@@ -471,8 +494,8 @@ onValue(ref(db, "current_match"), snap => {
   if(renderTarget === 'squads') {
       document.getElementById('sqTeam1Name').innerText = state.meta.tA;
       document.getElementById('sqTeam2Name').innerText = state.meta.tB;
-      document.getElementById('sqTeam1List').innerHTML = state.squads.A.map((p,i) => `<div class="squad-player"><span class="idx">${i+1}</span> <span>${p.name}</span></div>`).join('');
-      document.getElementById('sqTeam2List').innerHTML = state.squads.B.map((p,i) => `<div class="squad-player"><span class="idx">${i+1}</span> <span>${p.name}</span></div>`).join('');
+      document.getElementById('sqTeam1List').innerHTML = (state.squads.A||[]).map((p,i) => `<div class="squad-player"><span class="idx">${i+1}</span> <span>${p.name}</span></div>`).join('');
+      document.getElementById('sqTeam2List').innerHTML = (state.squads.B||[]).map((p,i) => `<div class="squad-player"><span class="idx">${i+1}</span> <span>${p.name}</span></div>`).join('');
   }
 
   if(g.centerGraphic === 'part' && state.partnership) {
@@ -511,104 +534,122 @@ onValue(ref(db, "current_match"), snap => {
   }
 
   if(renderTarget === 'bat') {
-    document.getElementById('batTitle').innerText = `${actBatTeamName} BATTING${isRecall?' (1ST INN)':''}`;
-    document.getElementById('batTableBody').innerHTML = (actSquads[actBatTeam]||[]).map(p => {
-      let status = '<span class="sc-status">Yet to bat</span>', style="";
-      if(!isRecall && (p.id === state.striker || p.id === state.nonStriker)) { status = '<span class="sc-notout">Not Out</span>'; style="background:rgba(255,255,255,0.05);"; }
-      else if(p.isOut) status = `<span class="sc-status">${p.dismissalInfo || 'Out'}</span>`;
-      else if(p.balls > 0 || p.runs > 0) status = '<span class="sc-status">Retired</span>';
-      return `<tr style="${style}"><td>${p.name}</td><td>${status}</td><td>${p.runs}</td><td>${p.balls}</td><td>${p.fours}</td><td>${p.sixes}</td></tr>`;
-    }).join('');
-    document.getElementById('batTotal').innerText = `Total: ${actScore}/${actWickets} (${fmtOvers(actBalls)} Ov)`; document.getElementById('batExtras').innerText = `Extras: ${actExtras || 0}`;
+    let el = document.getElementById('batTitle');
+    if(el) {
+        el.innerText = `${actBatTeamName} BATTING${isRecall?' (1ST INN)':''}`;
+        document.getElementById('batTableBody').innerHTML = (actSquads[actBatTeam]||[]).map(p => {
+          let status = '<span class="sc-status">Yet to bat</span>', style="";
+          if(!isRecall && (p.id === state.striker || p.id === state.nonStriker)) { status = '<span class="sc-notout">Not Out</span>'; style="background:rgba(255,255,255,0.05);"; }
+          else if(p.isOut) status = `<span class="sc-status">${p.dismissalInfo || 'Out'}</span>`;
+          else if(p.balls > 0 || p.runs > 0) status = '<span class="sc-status">Retired</span>';
+          return `<tr style="${style}"><td>${p.name}</td><td>${status}</td><td>${p.runs}</td><td>${p.balls}</td><td>${p.fours}</td><td>${p.sixes}</td></tr>`;
+        }).join('');
+        document.getElementById('batTotal').innerText = `Total: ${actScore}/${actWickets} (${fmtOvers(actBalls)} Ov)`; document.getElementById('batExtras').innerText = `Extras: ${actExtras || 0}`;
+    }
   }
 
   if(renderTarget === 'bowl') {
-    document.getElementById('bowlTitle').innerText = `${actBowlTeam === 'A' ? state.meta.tA : state.meta.tB} BOWLING${isRecall?' (1ST INN)':''}`;
-    document.getElementById('bowlTableBody').innerHTML = (actSquads[actBowlTeam]||[]).filter(p => actBStats[p.id]).map(p => {
-      const s = actBStats[p.id]; const econ = s.balls > 0 ? ((s.runs / s.balls) * 6).toFixed(1) : "0.0";
-      return `<tr><td>${p.name}</td><td>${fmtOvers(s.balls)}</td><td>${s.maidens||0}</td><td>${s.runs}</td><td style="color:var(--gold-2); font-weight:700;">${s.wickets}</td><td>${s.dots||0}</td><td>${econ}</td></tr>`;
-    }).join('');
-    const fowText = (actFow||[]).map(f => `${f.wktNo}-${f.score}`).join(', '); document.getElementById('bowlFowStrip').innerText = `Fall of Wickets: ${fowText || 'None'}`;
+    let el = document.getElementById('bowlTitle');
+    if(el) {
+        el.innerText = `${actBowlTeam === 'A' ? state.meta.tA : state.meta.tB} BOWLING${isRecall?' (1ST INN)':''}`;
+        document.getElementById('bowlTableBody').innerHTML = (actSquads[actBowlTeam]||[]).filter(p => actBStats[p.id]).map(p => {
+          const s = actBStats[p.id]; const econ = s.balls > 0 ? ((s.runs / s.balls) * 6).toFixed(1) : "0.0";
+          return `<tr><td>${p.name}</td><td>${fmtOvers(s.balls)}</td><td>${s.maidens||0}</td><td>${s.runs}</td><td style="color:var(--gold-2); font-weight:700;">${s.wickets}</td><td>${s.dots||0}</td><td>${econ}</td></tr>`;
+        }).join('');
+        const fowText = (actFow||[]).map(f => `${f.wktNo}-${f.score}`).join(', '); document.getElementById('bowlFowStrip').innerText = `Fall of Wickets: ${fowText || 'None'}`;
+    }
   }
 
-  if(g.centerGraphic === 'proj') {
-      if (state.innings === 1) {
-          document.getElementById('projInns1').style.display = 'block'; document.getElementById('projInns2').style.display = 'none'; document.getElementById('projTitle').innerText = 'PROJECTED SCORE';
-          const oversLeft = state.meta.maxOvers - (state.legalBalls / 6); let crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
-          document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2); document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
-          let base = Math.max(6, Math.floor(crrNum)); if(base % 2 !== 0) base -= 1; 
-          [1,2,3].forEach(i => { let r = base + (i-1)*2; document.getElementById(`projR${i}L`).innerText = r.toFixed(1); document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft)); });
-      } else {
-          document.getElementById('projInns1').style.display = 'none'; document.getElementById('projInns2').style.display = 'block'; document.getElementById('projTitle').innerText = 'MATCH EQUATION';
-          const needed = Math.max(0, state.target - state.score); const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls); const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0;
-          document.getElementById('projNeed').innerText = `${batTeamName} NEED ${needed} RUNS FROM ${ballsLeft} BALLS`;
-          document.getElementById('projTargetVal').innerText = state.target || 0; document.getElementById('projCrrInns2').innerText = crr; document.getElementById('projRrrInns2').innerText = rrr.toFixed(2);
+  if(renderTarget === 'proj') {
+      let elInns1 = document.getElementById('projInns1');
+      if(elInns1) {
+          if (state.innings === 1) {
+              elInns1.style.display = 'block'; document.getElementById('projInns2').style.display = 'none'; document.getElementById('projTitle').innerText = 'PROJECTED SCORE';
+              const oversLeft = state.meta.maxOvers - (state.legalBalls / 6); let crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
+              document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2); document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
+              let base = Math.max(6, Math.floor(crrNum)); if(base % 2 !== 0) base -= 1; 
+              [1,2,3].forEach(i => { let r = base + (i-1)*2; document.getElementById(`projR${i}L`).innerText = r.toFixed(1); document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft)); });
+          } else {
+              elInns1.style.display = 'none'; document.getElementById('projInns2').style.display = 'block'; document.getElementById('projTitle').innerText = 'MATCH EQUATION';
+              const needed = Math.max(0, state.target - state.score); const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls); const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0;
+              document.getElementById('projNeed').innerText = `${batTeamName} NEED ${needed} RUNS FROM ${ballsLeft} BALLS`;
+              document.getElementById('projTargetVal').innerText = state.target || 0; document.getElementById('projCrrInns2').innerText = crr; document.getElementById('projRrrInns2').innerText = rrr.toFixed(2);
+          }
       }
   }
 
   if(renderTarget === 'fow') {
-    document.getElementById('fowTitle').innerText = `FALL OF WICKETS${isRecall?' (1ST INN)':''}`;
-    document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score} <span style="color:var(--muted); font-size:15px; margin-left:6px;">(${f.overs} Ov)</span></span></div>`).join('');
+    let el = document.getElementById('fowTitle');
+    if(el) {
+        el.innerText = `FALL OF WICKETS${isRecall?' (1ST INN)':''}`;
+        document.getElementById('fowListBody').innerHTML = (actFow||[]).map(f => `<div class="fow-item"><span>${f.wktNo}. ${f.batterName}</span><span style="color:var(--gold-2)">${f.score} <span style="color:var(--muted); font-size:15px; margin-left:6px;">(${f.overs} Ov)</span></span></div>`).join('');
+    }
   }
 
   if(renderTarget === 'chart') {
-      document.getElementById('chartTitle').innerText = `RUNS PER OVER${isRecall?' (1ST INN)':''}`;
-      let hist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []); let oversData = [...hist];
-      if(!isRecall && state.legalBalls % 6 !== 0) { oversData.push(state.currentOverRuns || 0); }
-      let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
-      let displayOvers = oversData.slice(-20); let rawMax = Math.max(10, ...displayOvers); let maxVal = getNiceMax(rawMax, 4);
-      let w = 700, h = 230, padX = 40, padY = 30; let graphW = w - padX - 10; let graphH = h - padY - 20; let svgHtml = '';
-      svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-      svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-10}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-      svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
-      svgHtml += `<text x="${w-40}" y="${h-2}" fill="var(--gold)" font-size="12" font-weight="bold">OVERS</text>`;
-      for(let i=0; i<=4; i++) {
-         let val = Math.round((maxVal / 4) * i); let y = 20 + graphH - (val/maxVal * graphH);
-         svgHtml += `<text x="${padX-5}" y="${y+4}" fill="var(--muted)" font-size="12" text-anchor="end">${val}</text>`;
-         svgHtml += `<line x1="${padX}" y1="${y}" x2="${w-10}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
+      let el = document.getElementById('chartTitle');
+      if(el) {
+          el.innerText = `RUNS PER OVER${isRecall?' (1ST INN)':''}`;
+          let hist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []); let oversData = [...hist];
+          if(!isRecall && state.legalBalls % 6 !== 0) { oversData.push(state.currentOverRuns || 0); }
+          let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
+          let displayOvers = oversData.slice(-20); let rawMax = Math.max(10, ...displayOvers); let maxVal = getNiceMax(rawMax, 4);
+          let w = 700, h = 230, padX = 40, padY = 30; let graphW = w - padX - 10; let graphH = h - padY - 20; let svgHtml = '';
+          svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+          svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-10}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+          svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
+          svgHtml += `<text x="${w-40}" y="${h-2}" fill="var(--gold)" font-size="12" font-weight="bold">OVERS</text>`;
+          for(let i=0; i<=4; i++) {
+             let val = Math.round((maxVal / 4) * i); let y = 20 + graphH - (val/maxVal * graphH);
+             svgHtml += `<text x="${padX-5}" y="${y+4}" fill="var(--muted)" font-size="12" text-anchor="end">${val}</text>`;
+             svgHtml += `<line x1="${padX}" y1="${y}" x2="${w-10}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`;
+          }
+          let barStep = graphW / Math.max(5, displayOvers.length); let barW = Math.min(24, barStep * 0.6);
+          displayOvers.forEach((val, idx) => {
+             let actualOvIndex = (hist.length - displayOvers.length) + idx + (!isRecall && state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1 ? 0 : 0);
+             let x = padX + (idx + 0.5) * barStep - barW/2; let barH = (val / maxVal) * graphH; let y = 20 + graphH - barH;
+             let isCurrent = (!isRecall && idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
+             svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="3" ry="3"/>`;
+             svgHtml += `<text x="${x + barW/2}" y="${y - 5}" fill="var(--ink)" font-size="14" font-weight="bold" text-anchor="middle">${val}</text>`;
+             let wCount = wktsPerOver[actualOvIndex] || 0;
+             for(let wc=0; wc<wCount; wc++) { svgHtml += `<text x="${x + barW/2}" y="${y - 20 - (wc*15)}" fill="var(--crimson-2)" font-size="16" font-weight="900" text-anchor="middle">W</text>`; }
+             if ((actualOvIndex + 1) % 2 === 0) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
+          });
+          document.getElementById('chartSvg').innerHTML = svgHtml;
       }
-      let barStep = graphW / Math.max(5, displayOvers.length); let barW = Math.min(24, barStep * 0.6);
-      displayOvers.forEach((val, idx) => {
-         let actualOvIndex = (hist.length - displayOvers.length) + idx + (!isRecall && state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1 ? 0 : 0);
-         let x = padX + (idx + 0.5) * barStep - barW/2; let barH = (val / maxVal) * graphH; let y = 20 + graphH - barH;
-         let isCurrent = (!isRecall && idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
-         svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="3" ry="3"/>`;
-         svgHtml += `<text x="${x + barW/2}" y="${y - 5}" fill="var(--ink)" font-size="14" font-weight="bold" text-anchor="middle">${val}</text>`;
-         let wCount = wktsPerOver[actualOvIndex] || 0;
-         for(let wc=0; wc<wCount; wc++) { svgHtml += `<text x="${x + barW/2}" y="${y - 20 - (wc*15)}" fill="var(--crimson-2)" font-size="16" font-weight="900" text-anchor="middle">W</text>`; }
-         if ((actualOvIndex + 1) % 2 === 0) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
-      });
-      document.getElementById('chartSvg').innerHTML = svgHtml;
   }
 
   if(renderTarget === 'worm') {
-      document.getElementById('wormTitle').innerText = `WORM GRAPH (CUMULATIVE SCORE)${isRecall?' (1ST INN)':''}`;
-      let maxOvers = state.meta.maxOvers; let w = 700, h = 230, padX = 40, padY = 30; let graphW = w - padX - 20; let graphH = h - padY - 20;
-      let cRuns1 = [0]; let sum1 = 0; let targetHist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
-      targetHist.forEach(r => { sum1 += r; cRuns1.push(sum1); }); if(!isRecall && state.legalBalls % 6 !== 0) { cRuns1.push(sum1 + (state.currentOverRuns||0)); }
-      let cRuns2 = [];
-      if(!isRecall && state.innings === 2 && state.firstInnings) { let sum2 = 0; cRuns2.push(0); (state.firstInnings.overHistory || []).forEach(r => { sum2 += r; cRuns2.push(sum2); }); }
-      let rawTotal = Math.max(state.score, state.target || 0, 50); if(isRecall) rawTotal = Math.max(state.firstInnings.score, 50);
-      let maxTotal = getNiceMax(rawTotal, 5);
-      let svgHtml = '';
-      svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-      svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${padX+graphW}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
-      svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
-      svgHtml += `<text x="${padX+graphW-20}" y="${h-2}" fill="var(--gold)" font-size="12" font-weight="bold">OVERS</text>`;
-      for(let i=0; i<=5; i++) { let val = Math.round((maxTotal / 5) * i); let y = 20 + graphH - (val/maxTotal * graphH); svgHtml += `<text x="${padX-5}" y="${y+4}" fill="var(--muted)" font-size="12" text-anchor="end">${val}</text>`; svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`; }
-      for(let i=2; i<=maxOvers; i+=2) { let x = padX + (i/maxOvers * graphW); svgHtml += `<text x="${x}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" text-anchor="middle">${i}</text>`; svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+5}" stroke="var(--muted)"/>`; }
-      function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && currentBalls % 6 !== 0) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
-      function drawWickets(fowArray, color) { let html = ''; (fowArray || []).forEach(f => { let ovrParts = String(f.overs).split('.'); let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0); let x = padX + (balls / (maxOvers * 6)) * graphW; let y = 20 + graphH - (f.score / maxTotal * graphH); html += `<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="var(--navy-deep)" stroke-width="2"/>`; html += `<text x="${x}" y="${y - 8}" fill="${color}" font-family="sans-serif" font-size="12" font-weight="900" text-anchor="middle">W</text>`; }); return html; }
+      let el = document.getElementById('wormTitle');
+      if(el) {
+          el.innerText = `WORM GRAPH (CUMULATIVE SCORE)${isRecall?' (1ST INN)':''}`;
+          let maxOvers = state.meta.maxOvers; let w = 700, h = 230, padX = 40, padY = 30; let graphW = w - padX - 20; let graphH = h - padY - 20;
+          let cRuns1 = [0]; let sum1 = 0; let targetHist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
+          targetHist.forEach(r => { sum1 += r; cRuns1.push(sum1); }); if(!isRecall && state.legalBalls % 6 !== 0) { cRuns1.push(sum1 + (state.currentOverRuns||0)); }
+          let cRuns2 = [];
+          if(!isRecall && state.innings === 2 && state.firstInnings) { let sum2 = 0; cRuns2.push(0); (state.firstInnings.overHistory || []).forEach(r => { sum2 += r; cRuns2.push(sum2); }); }
+          let rawTotal = Math.max(state.score, state.target || 0, 50); if(isRecall) rawTotal = Math.max(state.firstInnings.score, 50);
+          let maxTotal = getNiceMax(rawTotal, 5);
+          let svgHtml = '';
+          svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+          svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${padX+graphW}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="2"/>`;
+          svgHtml += `<text x="5" y="15" fill="var(--gold)" font-size="12" font-weight="bold">RUNS</text>`;
+          svgHtml += `<text x="${padX+graphW-20}" y="${h-2}" fill="var(--gold)" font-size="12" font-weight="bold">OVERS</text>`;
+          for(let i=0; i<=5; i++) { let val = Math.round((maxTotal / 5) * i); let y = 20 + graphH - (val/maxTotal * graphH); svgHtml += `<text x="${padX-5}" y="${y+4}" fill="var(--muted)" font-size="12" text-anchor="end">${val}</text>`; svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`; }
+          for(let i=2; i<=maxOvers; i+=2) { let x = padX + (i/maxOvers * graphW); svgHtml += `<text x="${x}" y="${20+graphH+16}" fill="var(--muted)" font-size="12" text-anchor="middle">${i}</text>`; svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+5}" stroke="var(--muted)"/>`; }
+          function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && currentBalls % 6 !== 0) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
+          function drawWickets(fowArray, color) { let html = ''; (fowArray || []).forEach(f => { let ovrParts = String(f.overs).split('.'); let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0); let x = padX + (balls / (maxOvers * 6)) * graphW; let y = 20 + graphH - (f.score / maxTotal * graphH); html += `<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="var(--navy-deep)" stroke-width="2"/>`; html += `<text x="${x}" y="${y - 8}" fill="${color}" font-family="sans-serif" font-size="12" font-weight="900" text-anchor="middle">W</text>`; }); return html; }
 
-      if(!isRecall && state.innings === 2) {
-          let path1 = buildPath(cRuns2, state.firstInnings.legalBalls, true); svgHtml += `<path d="${path1}" fill="none" stroke="var(--muted)" stroke-width="3" />`; svgHtml += drawWickets(state.firstInnings.fow, "var(--muted)");
-          let path2 = buildPath(cRuns1, state.legalBalls, state.inningsOver); svgHtml += `<path d="${path2}" fill="none" stroke="var(--gold-2)" stroke-width="4" />`; svgHtml += drawWickets(state.fow, "var(--crimson-2)");
-          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--muted)">${state.firstInnings.team === 'A'?state.meta.tA:state.meta.tB} (1st Inn)</span> <span style="color:var(--gold-2)">${batTeamName} (Chasing)</span>`;
-      } else {
-          let actBalls = isRecall ? state.firstInnings.legalBalls : state.legalBalls; let path1 = buildPath(cRuns1, actBalls, isRecall ? true : state.inningsOver); svgHtml += `<path d="${path1}" fill="none" stroke="var(--gold-2)" stroke-width="4" />`; svgHtml += drawWickets(isRecall ? state.firstInnings.fow : state.fow, "var(--crimson-2)");
-          document.getElementById('wormLegend').innerHTML = `<span style="color:var(--gold-2)">${actBatTeamName}</span>`;
+          if(!isRecall && state.innings === 2) {
+              let path1 = buildPath(cRuns2, state.firstInnings.legalBalls, true); svgHtml += `<path d="${path1}" fill="none" stroke="var(--muted)" stroke-width="3" />`; svgHtml += drawWickets(state.firstInnings.fow, "var(--muted)");
+              let path2 = buildPath(cRuns1, state.legalBalls, state.inningsOver); svgHtml += `<path d="${path2}" fill="none" stroke="var(--gold-2)" stroke-width="4" />`; svgHtml += drawWickets(state.fow, "var(--crimson-2)");
+              document.getElementById('wormLegend').innerHTML = `<span style="color:var(--muted)">${state.firstInnings.team === 'A'?state.meta.tA:state.meta.tB} (1st Inn)</span> <span style="color:var(--gold-2)">${batTeamName} (Chasing)</span>`;
+          } else {
+              let actBalls = isRecall ? state.firstInnings.legalBalls : state.legalBalls; let path1 = buildPath(cRuns1, actBalls, isRecall ? true : state.inningsOver); svgHtml += `<path d="${path1}" fill="none" stroke="var(--gold-2)" stroke-width="4" />`; svgHtml += drawWickets(isRecall ? state.firstInnings.fow : state.fow, "var(--crimson-2)");
+              document.getElementById('wormLegend').innerHTML = `<span style="color:var(--gold-2)">${actBatTeamName}</span>`;
+          }
+          document.getElementById('wormSvg').innerHTML = svgHtml;
       }
-      document.getElementById('wormSvg').innerHTML = svgHtml;
   }
 
   const pop = document.getElementById('popupEvent');
