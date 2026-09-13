@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- 🚨 BUG FIX: Viewport locked to 1080 height. This forces exact 1:1 scaling! 🚨 -->
 <meta name="viewport" content="height=1080, user-scalable=no">
 <title>M.B. Live Studio — Broadcast Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -27,7 +26,6 @@
       width: 100%; height: 100%; position: fixed; top: 0; left: 0; margin: 0; padding: 0; overflow: hidden;
   }
 
-  /* LOGO FIX: 1px from Top, 1px from Left */
   .corner-brand {
     position: fixed !important; 
     top: 1px !important; 
@@ -48,7 +46,6 @@
   .corner-brand .live-text { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--ink); background: var(--crimson); padding: 4px 8px; border-radius: 3px; margin-bottom: 2px;}
   .corner-brand .studio-text { font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--gold); background: var(--navy-deep); padding: 4px 8px; border-radius: 3px; border: 1px solid var(--gold); }
 
-  /* SCOREBUG FIX: Bottom 0px */
   .scorebug {
     position: fixed !important; 
     bottom: 0px !important; 
@@ -329,6 +326,10 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
 
 const app = initializeApp({ apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY", authDomain: "mb-live-score.firebaseapp.com", databaseURL: "https://mb-live-score-default-rtdb.firebaseio.com", projectId: "mb-live-score" });
 const db = getDatabase(app);
+
+// 🚨 BUG FIX: JavaScript से किसी भी टच इवेंट को HTML में ब्लॉक कर दिया गया है 🚨
+document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+document.addEventListener('touchstart', function(e) { e.preventDefault(); }, { passive: false });
 
 let currentState = null;
 let rateToggleIndex = 0; 
