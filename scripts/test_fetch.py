@@ -1,7 +1,12 @@
-import requests, json, os
+import requests, json, os, re, time
+from datetime import datetime
 
 MATCH_URL = "https://www.cricbuzz.com/live-cricket-scores/170103/afg-vs-ind-1st-t20i-afghanistan-vs-india-in-india-2026"
+FIREBASE_URL = os.environ['FIREBASE_DB_URL']
 
+# URL se match ID nikalna (jaise 170103)
+match_id_search = re.search(r'/live-cricket-scores/(\d+)/', MATCH_URL)
+MATCH_ID = match_id_search.group(1) if match_id_search else "unknown"
 
 def extract_json_block(html, key):
     marker = f'\\"{key}\\":{{'
@@ -25,11 +30,11 @@ def fetch_and_parse():
     html = res.text
     m = extract_json_block(html, "miniscore")
     h = extract_json_block(html, "matchHeader")
-    if not m:
-        return None
-    return {
-        "teamA": h["team1"]["shortName"] if h else "",
-        "teamB": h["team2"]["shortName"] if h else "",
+    if not m or not h:
+        return None, None
+    data = {
+        "teamA": h["team1"]["shortName"],
+        "teamB": h["team2"]["shortName"],
         "score": m["batTeam"]["teamScore"],
         "wickets": m["batTeam"]["teamWkts"],
         "overs": m.get("overs"),
@@ -47,6 +52,27 @@ def fetch_and_parse():
         "target": m.get("target"),
         "crr": m.get("currentRunRate"),
     }
+    is_complete = h.get("complete", False)
+    return data, is_complete
 
-data = fetch_and_parse()
-print(json.dumps(data, indent=2, ensure_ascii=False))
+def push_to_firebase(data):
+    requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
+    requests.put(f"{FIREBASE_URL}/auto_match_history/{MATCH_ID}.json", json=data, timeout=10)
+
+start_time = time.time()
+MAX_DURATION = 6 * 60 * 60
+
+while time.time() - start_time < MAX_DURATION:
+    try:
+        data, is_complete = fetch_and_parse()
+        if data:
+            push_to_firebase(data)
+            print(f"{datetime.now()}: {data['teamA']} {data['score']}/{data['wickets']} — complete={is_complete}")
+            if is_complete:
+                print("Match khatam ho gaya, script apne aap ruk rahi hai.")
+                break
+        else:
+            print(f"{datetime.now()}: data nahi mila")
+    except Exception as e:
+        print("Error:", e)
+    time.sleep(15)
