@@ -1,7 +1,7 @@
 import requests, json, os
 
 MATCH_URL = "https://www.cricbuzz.com/live-cricket-scores/170103/afg-vs-ind-1st-t20i-afghanistan-vs-india-in-india-2026"
-FIREBASE_URL = os.environ['FIREBASE_DB_URL']
+
 
 def extract_json_block(html, key):
     marker = f'\\"{key}\\":{{'
