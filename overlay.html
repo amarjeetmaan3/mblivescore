@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- 🚨 वापस 1920 पिक्सल पर फिक्स किया गया 🚨 -->
+<!-- वापस 1920 पर फिक्स, ताकि कुछ भी Shrink या गायब न हो -->
 <meta name="viewport" content="width=1920, user-scalable=no">
 <title>M.B. Live Studio — Broadcast Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -14,7 +14,6 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
-  /* 🚨 1920x1080 हार्ड-कोड, ताकि कुछ भी सिकुड़े या फैले नहीं 🚨 */
   html,body { 
       width: 1920px; height: 1080px; position: relative; background: transparent; overflow: hidden; 
       font-family: 'Rajdhani', sans-serif; color: var(--ink); 
@@ -27,11 +26,13 @@
       width: 1920px; height: 1080px; position: absolute; top: 0; left: 0; margin: 0; padding: 0;
   }
 
-  /* 🚨 लोगो टॉप से 1px और लेफ्ट से 1px 🚨 */
+  /* 🚨 LOGO FIX: Exactly 1px from Top and Left 🚨 */
   .corner-brand {
     position: absolute !important; 
     top: 1px !important; 
     left: 1px !important; 
+    margin: 0 !important;
+    padding: 0 !important;
     display: flex; 
     flex-direction: column; 
     align-items: stretch; 
@@ -45,12 +46,12 @@
   .corner-brand .live-text { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--ink); background: var(--crimson); padding: 4px 8px; border-radius: 3px; margin-bottom: 2px;}
   .corner-brand .studio-text { font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--gold); background: var(--navy-deep); padding: 4px 8px; border-radius: 3px; border: 1px solid var(--gold); }
 
-  /* 🚨 स्कोर बग बॉटम से 1px 🚨 */
+  /* 🚨 SCOREBUG FIX: Exactly 1px from Bottom, 1px from Left/Right 🚨 */
   .scorebug {
     position: absolute !important; 
     bottom: 1px !important; 
-    left: 0; 
-    width: 1920px; 
+    left: 1px !important; 
+    width: 1918px !important; /* 1920px - 2px gap */
     display: flex; 
     flex-direction: column; 
     opacity: 0; 
@@ -569,7 +570,7 @@ onValue(ref(db, "current_match"), snap => {
               const oversLeft = state.meta.maxOvers - (state.legalBalls / 6); let crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
               document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2); document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
               let base = Math.max(6, Math.floor(crrNum)); if(base % 2 !== 0) base -= 1; 
-              [1,2,3].forEach(i => { let r = base + (i-1)*2; document.getElementById(`projR${i}L`).innerText = r.toFixed(1); document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft)); });
+              [1,2,3].forEach(i => { let r = base + (i-1)*2; document.getElementById(`projR${i}LinnerText`).innerText = r.toFixed(1); document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft)); });
           } else {
               elInns1.style.display = 'none'; document.getElementById('projInns2').style.display = 'block'; document.getElementById('projTitle').innerText = 'MATCH EQUATION';
               const needed = Math.max(0, state.target - state.score); const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls); const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0;
