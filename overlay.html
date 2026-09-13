@@ -13,8 +13,9 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
+  /* 🚨 100vh (Viewport Height) का इस्तेमाल ताकि यह स्क्रीन की ऊंचाई के हिसाब से परफेक्ट बैठे 🚨 */
   html,body { 
-      width: 100vw; height: 1080px; position: relative; background: transparent; overflow: hidden; 
+      width: 100vw; height: 100vh; position: relative; background: transparent; overflow: hidden; 
       font-family: 'Rajdhani', sans-serif; color: var(--ink); 
       -webkit-text-size-adjust: none; -moz-text-size-adjust: none; text-size-adjust: none;
   }
@@ -22,14 +23,14 @@
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
 
   #overlay-canvas {
-      width: 100vw; height: 1080px; position: absolute; top: 0; left: 0; margin: 0; padding: 0;
+      width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; margin: 0; padding: 0;
   }
 
-  /* 🚨 LOGO FIX: 1px from Top, 1px from Left 🚨 */
+  /* 🚨 LOGO FIX: Top 0, Left 0 (कोई गैप नहीं) 🚨 */
   .corner-brand {
     position: absolute !important; 
-    top: 1px !important; 
-    left: 1px !important; 
+    top: 0 !important; 
+    left: 0 !important; 
     margin: 0 !important;
     padding: 0 !important;
     display: flex; 
@@ -46,10 +47,10 @@
   .corner-brand .live-text { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--ink); background: var(--crimson); padding: 4px 8px; border-radius: 3px; margin-bottom: 2px;}
   .corner-brand .studio-text { font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--gold); background: var(--navy-deep); padding: 4px 8px; border-radius: 3px; border: 1px solid var(--gold); }
 
-  /* 🚨 SCOREBUG FIX: 1px from Bottom Boundary 🚨 */
+  /* 🚨 SCOREBUG FIX: Bottom 0 (बिल्कुल नीचे चिपका हुआ) 🚨 */
   .scorebug {
     position: absolute; 
-    bottom: 1px !important; 
+    bottom: 0 !important; 
     left: 0; 
     width: 100%; 
     display: flex; 
