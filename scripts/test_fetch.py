@@ -3,38 +3,33 @@ from datetime import datetime
 
 FIREBASE_URL = os.environ['FIREBASE_DB_URL']
 
-# 1. Firebase से क्रिकबज का लिंक (URL) निकालना
 try:
     config_res = requests.get(f"{FIREBASE_URL}/auto_fetch_config.json", timeout=10)
     config_data = config_res.json()
     if not config_data or 'url' not in config_data:
-        print("Error: Firebase mein koi Cricbuzz URL nahi mila. Script band ho rahi hai.")
+        print("Error: Firebase mein URL nahi mila.")
         exit()
     MATCH_URL = config_data['url']
     print(f"Target Match: {MATCH_URL}")
 except Exception as e:
-    print("Error fetching config from Firebase:", e)
+    print("Error fetching config:", e)
     exit()
 
-# 2. URL से मैच ID निकालना (ताकि हिस्ट्री सेव हो सके)
 match_id_search = re.search(r'/live-cricket-scores/(\d+)/', MATCH_URL)
 MATCH_ID = match_id_search.group(1) if match_id_search else "unknown"
 
 def extract_json_block(html, key):
     marker = f'\\"{key}\\":{{'
     idx = html.find(marker)
-    if idx == -1:
-        return None
+    if idx == -1: return None
     start = idx + len(marker) - 1
     depth = 0
     for i in range(start, len(html)):
-        if html[i] == '{':
-            depth += 1
+        if html[i] == '{': depth += 1
         elif html[i] == '}':
             depth -= 1
             if depth == 0:
-                raw = html[start:i+1].replace('\\"', '"')
-                return json.loads(raw)
+                return json.loads(html[start:i+1].replace('\\"', '"'))
     return None
 
 def fetch_and_parse():
@@ -42,50 +37,51 @@ def fetch_and_parse():
     html = res.text
     m = extract_json_block(html, "miniscore")
     h = extract_json_block(html, "matchHeader")
-    if not m or not h:
-        return None, None
+    if not m or not h: return None, None
+    
+    # Safe parsing using .get() to avoid KeyErrors on completed matches
     data = {
-        "teamA": h["team1"]["shortName"],
-        "teamB": h["team2"]["shortName"],
-        "score": m["batTeam"]["teamScore"],
-        "wickets": m["batTeam"]["teamWkts"],
-        "overs": m.get("overs"),
-        "status": m.get("status"),
-        "strikerName": m["batsmanStriker"]["name"],
-        "strikerRuns": m["batsmanStriker"]["runs"],
-        "strikerBalls": m["batsmanStriker"]["balls"],
-        "nonStrikerName": m["batsmanNonStriker"]["name"],
-        "nonStrikerRuns": m["batsmanNonStriker"]["runs"],
-        "nonStrikerBalls": m["batsmanNonStriker"]["balls"],
-        "bowlerName": m["bowlerStriker"]["name"],
-        "bowlerOvers": m["bowlerStriker"]["overs"],
-        "bowlerRuns": m["bowlerStriker"]["runs"],
-        "bowlerWickets": m["bowlerStriker"]["wickets"],
-        "target": m.get("target"),
-        "crr": m.get("currentRunRate"),
+        "teamA": h.get("team1", {}).get("shortName", "TBA"),
+        "teamB": h.get("team2", {}).get("shortName", "TBB"),
+        "score": m.get("batTeam", {}).get("teamScore", 0),
+        "wickets": m.get("batTeam", {}).get("teamWkts", 0),
+        "overs": m.get("overs", "0.0"),
+        "status": m.get("status", ""),
+        "strikerName": m.get("batsmanStriker", {}).get("name", "—"),
+        "strikerRuns": m.get("batsmanStriker", {}).get("runs", 0),
+        "strikerBalls": m.get("batsmanStriker", {}).get("balls", 0),
+        "nonStrikerName": m.get("batsmanNonStriker", {}).get("name", "—"),
+        "nonStrikerRuns": m.get("batsmanNonStriker", {}).get("runs", 0),
+        "nonStrikerBalls": m.get("batsmanNonStriker", {}).get("balls", 0),
+        "bowlerName": m.get("bowlerStriker", {}).get("name", "—"),
+        "bowlerOvers": m.get("bowlerStriker", {}).get("overs", "0.0"),
+        "bowlerRuns": m.get("bowlerStriker", {}).get("runs", 0),
+        "bowlerWickets": m.get("bowlerStriker", {}).get("wickets", 0),
+        "target": m.get("target", 0),
+        "crr": m.get("currentRunRate", "0.00"),
     }
-    is_complete = h.get("complete", False)
+    is_complete = h.get("state", "") == "Complete" or h.get("complete", False)
     return data, is_complete
 
 def push_to_firebase(data):
-    # यह डेटा सीधे current_match_auto में जाएगा, जिससे आपका कंट्रोलर इसे पढ़ सके
     requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
     requests.put(f"{FIREBASE_URL}/auto_match_history/{MATCH_ID}.json", json=data, timeout=10)
 
 start_time = time.time()
-MAX_DURATION = 6 * 60 * 60 # स्क्रिप्ट मैक्सिमम 6 घंटे तक चलेगी
+MAX_DURATION = 6 * 60 * 60
 
 while time.time() - start_time < MAX_DURATION:
     try:
         data, is_complete = fetch_and_parse()
         if data:
             push_to_firebase(data)
-            print(f"{datetime.now()}: {data['teamA']} {data['score']}/{data['wickets']} — complete={is_complete}")
+            print(f"{datetime.now()}: {data['teamA']} {data['score']}/{data['wickets']}")
             if is_complete:
-                print("Match khatam ho gaya, script apne aap ruk rahi hai.")
+                print("Match completed. Final data pushed. Exiting.")
                 break
         else:
-            print(f"{datetime.now()}: data nahi mila")
+            print("Data nahi mila.")
+            break
     except Exception as e:
         print("Error:", e)
     time.sleep(15)
