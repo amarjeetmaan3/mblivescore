@@ -13,15 +13,15 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
+  /* 🚨 1920px की जगह 100vw कर दिया गया है ताकि किनारों पर कोई गैप ना बचे 🚨 */
   html,body { 
-      width: 1920px; height: 1080px; position: relative; background: transparent; overflow: hidden; 
+      width: 100vw; height: 1080px; position: relative; background: transparent; overflow: hidden; 
       font-family: 'Rajdhani', sans-serif; color: var(--ink); 
       -webkit-text-size-adjust: none; -moz-text-size-adjust: none; text-size-adjust: none;
   }
   
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
 
-  /* ================= CORNER BRANDING ================= */
   .corner-brand {
     position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; align-items: flex-start;
     font-family: 'Orbitron', sans-serif; color: var(--gold); z-index: 20; line-height: 1; filter: none; 
@@ -29,7 +29,7 @@
   .corner-brand .mb-text { font-size: 52px; font-weight: 900; letter-spacing: 4px; }
   .corner-brand .studio-text { font-size: 20px; font-weight: 700; letter-spacing: 6px; color: var(--ink); background: var(--crimson); padding: 3px 10px; margin-top: 2px; border-radius: 3px; }
 
-  /* ================= BOTTOM SCOREBUG (100% WIDTH, BALANCED FONTS) ================= */
+  /* ================= BOTTOM SCOREBUG ================= */
   .scorebug {
     position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; 
     opacity: 0; transition: opacity 0.3s ease; z-index: 10; filter: none; 
@@ -43,7 +43,6 @@
       letter-spacing: 3px; border-top: 3px solid var(--gold); 
   }
 
-  /* Scorebug Container Adjusted to 100px Height */
   #bugNormalContainer { 
       display: flex; width: 100%; height: 100px; background: var(--navy-3); border-top: 3px solid var(--gold); 
   }
@@ -65,7 +64,6 @@
   .bug-top-row { display: flex; flex: 1; align-items: stretch; border-bottom: 2px solid var(--line); }
   .bug-bottom-row { height: 42px; display: flex; align-items: stretch; background: var(--navy-3); }
 
-  /* SCOREBUG TOP ROW (Fonts reduced for better fit) */
   .score-block { display: flex; flex-direction: column; justify-content: center; padding: 0 25px; border-right: 2px solid var(--line); flex-shrink: 0; }
   .main-score { font-family: 'Bebas Neue', sans-serif; font-size: 68px; font-weight: 900; color: var(--ink); line-height: 0.9; display: flex; align-items: baseline; gap: 12px;}
   .main-score .overs { font-size: 32px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 700;}
@@ -81,13 +79,13 @@
   .batter-item.on-strike { color: var(--gold-2); }
   .batter-item .fig { color: var(--muted); font-size: 26px; font-weight: 700; flex-shrink: 0; }
 
-  .bowler-inline { display: flex; align-items: center; justify-content: flex-end; padding: 0 25px; gap: 15px; font-size: 32px; font-weight: 800; color: var(--ink); width: 440px; flex-shrink: 0; white-space: nowrap; }
+  /* Bowler width slightly reduced to give batters even more breathing room */
+  .bowler-inline { display: flex; align-items: center; justify-content: flex-end; padding: 0 25px; gap: 15px; font-size: 32px; font-weight: 800; color: var(--ink); width: 420px; flex-shrink: 0; white-space: nowrap; }
   .bowler-inline .fig { color: var(--gold-2); font-size: 28px; }
 
-  /* SCOREBUG BOTTOM ROW (Message kept large) */
   .message-bar { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 25px; color: var(--ink); font-size: 28px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   
-  .timeline-bar { width: 440px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 25px; background: rgba(0,0,0,0.4); border-left: 2px solid var(--line); flex-shrink: 0; }
+  .timeline-bar { width: 420px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 25px; background: rgba(0,0,0,0.4); border-left: 2px solid var(--line); flex-shrink: 0; }
   .ball-pill { min-width: 32px; height: 32px; padding: 0 4px; border-radius: 5px; background: #1e293b; color: var(--ink); font-size: 20px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
   .ball-pill.four { color: var(--gold-2); border-color: var(--gold-2); }
   .ball-pill.six { color: #fff; background: var(--crimson); border-color: var(--crimson); }
@@ -106,7 +104,7 @@
   .sp-table td { padding: 12px; font-size: 42px; font-weight: 900; font-family: 'Bebas Neue', sans-serif; color: var(--ink); }
   .sp-section-title { font-size: 22px; color: var(--gold); background: var(--navy-3); text-align: left; padding: 10px 25px; font-weight: 800; letter-spacing: 2px; }
 
-  /* PLAYING 11 (SQUADS) - TIGHTENED GAP TO FIT 12 PLAYERS */
+  /* PLAYING 11 */
   #graphic-squads { width: 1200px; }
   .squads-container { display: flex; align-items: stretch; max-height: 800px; overflow: hidden; } 
   .squad-col { flex: 1; padding: 15px 30px; }
@@ -126,7 +124,7 @@
   .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 110px; color: var(--gold-2); line-height: 1; }
   .part-balls { font-size: 38px; font-weight: 800; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
 
-  /* ALL PARTNERSHIPS - TIGHTENED TO FIT DATA */
+  /* ALL PARTNERSHIPS */
   #graphic-allpart { width: 1200px; }
   .allpart-list { padding: 10px 20px; max-height: 800px; overflow-y: auto; }
   .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-bottom: 1px dotted var(--line); font-size: 28px; font-weight: 800; }
@@ -134,7 +132,7 @@
   .ap-mid { flex: 0.8; text-align: center; color: var(--gold-2); font-family: 'Bebas Neue', sans-serif; font-size: 48px; line-height: 1; display:flex; justify-content:center; align-items:baseline; gap:10px;}
   .ap-p2 { flex: 1.2; text-align: right; }
 
-  /* BATTING SCORECARD - TIGHTENED TO FIT 12 PLAYERS */
+  /* BATTING SCORECARD */
   #graphic-bat { width: 1250px; }
   .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
   .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 20px; padding: 8px 25px; letter-spacing: 1.5px; font-weight:800;}
@@ -156,7 +154,7 @@
   .proj-row { display: flex; justify-content: space-between; padding: 12px 50px; border-bottom: 1px solid var(--line); font-size: 32px; font-weight: 700; }
   .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 40px; padding: 16px 50px; }
 
-  /* FALL OF WICKETS - TIGHTENED */
+  /* FALL OF WICKETS */
   #graphic-fow { width: 850px; }
   .fow-list { padding: 10px 25px; max-height: 800px; overflow: hidden; }
   .fow-item { display: flex; justify-content: space-between; padding: 8px 20px; border-bottom: 1px dotted var(--line); font-size: 26px; font-weight: 800; }
@@ -221,7 +219,7 @@
       </div>
     </div>
 
-    <!-- GRAPHICS PANELS (TIGHTENED PADDING TO FIT 12 PLAYERS) -->
+    <!-- GRAPHICS PANELS -->
     <div class="center-panel" id="graphic-singlePlayer">
       <div class="center-title">PLAYER PROFILE</div>
       <div class="sp-name" id="spName">PLAYER NAME</div>
