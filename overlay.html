@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="height=1080, user-scalable=no">
+<!-- 🚨 वापस 1920 पिक्सल पर फिक्स किया गया 🚨 -->
+<meta name="viewport" content="width=1920, user-scalable=no">
 <title>M.B. Live Studio — Broadcast Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -13,25 +14,24 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
+  /* 🚨 1920x1080 हार्ड-कोड, ताकि कुछ भी सिकुड़े या फैले नहीं 🚨 */
   html,body { 
-      width: 100%; height: 100%; margin: 0; padding: 0; background: transparent; overflow: hidden; 
+      width: 1920px; height: 1080px; position: relative; background: transparent; overflow: hidden; 
       font-family: 'Rajdhani', sans-serif; color: var(--ink); 
       -webkit-text-size-adjust: none; -moz-text-size-adjust: none; text-size-adjust: none;
-      touch-action: none; user-select: none;
   }
   
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
 
   #overlay-canvas {
-      width: 100%; height: 100%; position: fixed; top: 0; left: 0; margin: 0; padding: 0; overflow: hidden;
+      width: 1920px; height: 1080px; position: absolute; top: 0; left: 0; margin: 0; padding: 0;
   }
 
+  /* 🚨 लोगो टॉप से 1px और लेफ्ट से 1px 🚨 */
   .corner-brand {
-    position: fixed !important; 
+    position: absolute !important; 
     top: 1px !important; 
     left: 1px !important; 
-    margin: 0 !important;
-    padding: 0 !important;
     display: flex; 
     flex-direction: column; 
     align-items: stretch; 
@@ -40,23 +40,22 @@
     color: var(--gold); 
     z-index: 20; 
     line-height: 1; 
-    filter: none; 
   }
   .corner-brand .mb-text { font-size: 56px; font-weight: 900; letter-spacing: 2px; margin-bottom: 4px;}
   .corner-brand .live-text { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--ink); background: var(--crimson); padding: 4px 8px; border-radius: 3px; margin-bottom: 2px;}
   .corner-brand .studio-text { font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--gold); background: var(--navy-deep); padding: 4px 8px; border-radius: 3px; border: 1px solid var(--gold); }
 
+  /* 🚨 स्कोर बग बॉटम से 1px 🚨 */
   .scorebug {
-    position: fixed !important; 
-    bottom: 0px !important; 
+    position: absolute !important; 
+    bottom: 1px !important; 
     left: 0; 
-    width: 100%; 
+    width: 1920px; 
     display: flex; 
     flex-direction: column; 
     opacity: 0; 
     transition: opacity 0.3s ease; 
     z-index: 10; 
-    filter: none; 
   }
   .scorebug.show { opacity: 1; }
 
@@ -115,7 +114,7 @@
   .ball-pill.wkt { color: #fff; background: var(--crimson-2); border-color: var(--crimson-2); }
 
   /* ================= CENTER GRAPHICS GLOBAL ================= */
-  .center-panel { position: fixed; left: 50%; transform: translateX(-50%); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); border: 3px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 25px 50px rgba(0,0,0,0.8)); opacity: 0; pointer-events: none; transition: all .15s ease; z-index: 5; display: flex; flex-direction: column; overflow: hidden; }
+  .center-panel { position: absolute; left: 50%; transform: translateX(-50%); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); border: 3px solid var(--gold); border-radius: 12px; filter: drop-shadow(0 25px 50px rgba(0,0,0,0.8)); opacity: 0; pointer-events: none; transition: all .15s ease; z-index: 5; display: flex; flex-direction: column; overflow: hidden; }
   .center-panel.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
   .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 32px; letter-spacing: 4px; padding: 12px; text-transform: uppercase; }
 
@@ -177,7 +176,7 @@
   #graphic-chart { width: 1500px; top: 6%; }
   #graphic-worm { width: 1500px; top: 6%; }
   
-  .popup-event { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.5); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); padding: 35px 100px; border: 4px solid var(--gold); border-radius: 16px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.8)); z-index: 20; }
+  .popup-event { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.5); background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-deep) 100%); padding: 35px 100px; border: 4px solid var(--gold); border-radius: 16px; text-align: center; opacity: 0; transition: all .15s; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.8)); z-index: 20; }
   .popup-event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 140px; line-height: 0.9; color: #fff; letter-spacing: 4px; }
   .pop-sub { font-size: 22px; letter-spacing: 5px; color: var(--gold-2); margin-top: 8px; font-weight: 800; }
@@ -326,10 +325,6 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
 
 const app = initializeApp({ apiKey: "AIzaSyCgAURksaOv2NtQ9LeVHVoLj4RFtDs7PVY", authDomain: "mb-live-score.firebaseapp.com", databaseURL: "https://mb-live-score-default-rtdb.firebaseio.com", projectId: "mb-live-score" });
 const db = getDatabase(app);
-
-// 🚨 BUG FIX: JavaScript से किसी भी टच इवेंट को HTML में ब्लॉक कर दिया गया है 🚨
-document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
-document.addEventListener('touchstart', function(e) { e.preventDefault(); }, { passive: false });
 
 let currentState = null;
 let rateToggleIndex = 0; 
