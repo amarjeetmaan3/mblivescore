@@ -21,15 +21,15 @@
   
   .num { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
 
-  /* 🚨 LOGO FIX: Stacked MB -> LIVE -> STUDIO 🚨 */
   #overlay-canvas {
       width: 100vw; height: 1080px; position: absolute; top: 0; left: 0; margin: 0; padding: 0;
   }
 
+  /* 🚨 LOGO FIX: 1px from Top, 1px from Left 🚨 */
   .corner-brand {
     position: absolute !important; 
-    top: 15px !important; 
-    left: 15px !important; 
+    top: 1px !important; 
+    left: 1px !important; 
     margin: 0 !important;
     padding: 0 !important;
     display: flex; 
@@ -46,10 +46,18 @@
   .corner-brand .live-text { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--ink); background: var(--crimson); padding: 4px 8px; border-radius: 3px; margin-bottom: 2px;}
   .corner-brand .studio-text { font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--gold); background: var(--navy-deep); padding: 4px 8px; border-radius: 3px; border: 1px solid var(--gold); }
 
-  /* ================= BOTTOM SCOREBUG ================= */
+  /* 🚨 SCOREBUG FIX: 1px from Bottom Boundary 🚨 */
   .scorebug {
-    position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; 
-    opacity: 0; transition: opacity 0.3s ease; z-index: 10; filter: none; 
+    position: absolute; 
+    bottom: 1px !important; 
+    left: 0; 
+    width: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    opacity: 0; 
+    transition: opacity 0.3s ease; 
+    z-index: 10; 
+    filter: none; 
   }
   .scorebug.show { opacity: 1; }
 
@@ -64,7 +72,6 @@
       display: flex; width: 100%; height: 110px; background: var(--navy-3); border-top: 3px solid var(--gold); 
   }
 
-  /* Team Pillars length increased to 200px */
   .team-pillar {
       background: linear-gradient(135deg, var(--gold) 0%, #eab308 100%); color: #000;
       font-family: 'Bebas Neue', sans-serif; font-size: 58px; font-weight: 900; letter-spacing: 2px;
@@ -91,21 +98,17 @@
   .rate-label { font-size: 16px; letter-spacing: 1.5px; color: var(--gold); font-weight: 800; }
   .rate-val { font-size: 32px; font-weight: 900; line-height: 1; color: var(--ink); transition: color 0.3s ease; }
 
-  /* Batters: 30px */
   .batters-inline { display: flex; align-items: center; padding: 0 25px; border-right: 2px solid var(--line); gap: 25px; flex: 1; overflow: hidden; white-space: nowrap; }
   .batter-item { display: flex; align-items: baseline; gap: 8px; font-size: 30px; font-weight: 800; white-space: nowrap; flex-shrink: 1; min-width: 0; }
   .batter-item > span:first-child { overflow: hidden; text-overflow: ellipsis; }
   .batter-item.on-strike { color: var(--gold-2); }
   .batter-item .fig { color: var(--muted); font-size: 24px; font-weight: 700; flex-shrink: 0; }
 
-  /* Bowler: Name on left, Space, Stats on right. Font 30px */
   .bowler-inline { display: flex; align-items: center; justify-content: space-between; padding: 0 25px; gap: 15px; font-size: 30px; font-weight: 800; color: var(--ink); width: 450px; flex-shrink: 0; white-space: nowrap; }
   .bowler-inline .fig { color: var(--gold-2); font-size: 26px; }
 
-  /* Message Strip: 30px. min-width: 0 prevents it from breaking in 2nd Innings */
   .message-bar { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 0 25px; color: var(--ink); font-size: 30px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   
-  /* Timeline: 25px */
   .timeline-bar { width: 450px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 25px; background: rgba(0,0,0,0.4); border-left: 2px solid var(--line); flex-shrink: 0; }
   .ball-pill { min-width: 36px; height: 36px; padding: 0 4px; border-radius: 5px; background: #1e293b; color: var(--ink); font-size: 25px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
   .ball-pill.four { color: var(--gold-2); border-color: var(--gold-2); }
@@ -117,16 +120,13 @@
   .center-panel.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
   .center-title { background: var(--gold); color: var(--navy-deep); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 32px; letter-spacing: 4px; padding: 12px; text-transform: uppercase; }
 
-  /* SINGLE PLAYER GRAPHIC (PLAYER PERFORMANCE) - TOP 6% */
   #graphic-singlePlayer { width: 1400px; padding-bottom: 25px; top: 6%; }
   .sp-name { font-size: 80px; font-weight: 700; color: var(--gold-2); text-align: center; margin: 25px 0 20px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; line-height:1;}
   .sp-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 25px; }
   .sp-table th { background: rgba(255,255,255,0.05); color: var(--muted); font-size: 28px; padding: 15px; border-bottom: 1px solid var(--line); letter-spacing:2px; font-weight: 800;}
   .sp-table td { padding: 18px; font-size: 54px; font-weight: 900; font-family: 'Bebas Neue', sans-serif; color: var(--ink); }
-  /* Centered Headings */
   .sp-section-title { font-size: 28px; color: var(--gold); background: var(--navy-3); text-align: center; padding: 12px 30px; font-weight: 800; letter-spacing: 3px; }
 
-  /* PLAYING 11 (SQUADS) - TOP 6%, GAP 7PX */
   #graphic-squads { width: 1600px; top: 6%; }
   .squads-container { display: flex; align-items: stretch; max-height: 800px; overflow: hidden; } 
   .squad-col { flex: 1; padding: 20px 40px; }
@@ -136,7 +136,6 @@
   .squad-player { font-size: 38px; font-weight: 800; display: flex; align-items: center; justify-content: flex-start; padding-bottom: 7px; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .squad-player .idx { color: var(--muted); font-size: 26px; width: 50px; font-weight: 800; }
 
-  /* PARTNERSHIPS - TOP 18% */
   #graphic-part { width: 1400px; top: 18%; }
   .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 35px 50px; }
   .part-player { text-align: center; flex: 1; }
@@ -146,7 +145,6 @@
   .part-total { font-family: 'Bebas Neue', sans-serif; font-size: 150px; color: var(--gold-2); line-height: 1; }
   .part-balls { font-size: 50px; font-weight: 800; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
 
-  /* ALL PARTNERSHIPS - TOP 6%, GAP 7PX */
   #graphic-allpart { width: 1500px; top: 6%; }
   .allpart-list { padding: 15px 30px; max-height: 800px; overflow-y: auto; }
   .allpart-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 25px; border-bottom: 2px dotted var(--line); font-size: 38px; font-weight: 800; }
@@ -154,7 +152,6 @@
   .ap-mid { flex: 0.8; text-align: center; color: var(--gold-2); font-family: 'Bebas Neue', sans-serif; font-size: 64px; line-height: 1; display:flex; justify-content:center; align-items:baseline; gap:12px;}
   .ap-p2 { flex: 1.2; text-align: right; }
 
-  /* BATTING SCORECARD - TOP 6%, GAP 7PX */
   #graphic-bat { width: 1600px; top: 6%; }
   .sc-table { width: 100%; border-collapse: collapse; text-align: left; }
   .sc-table th { background: var(--navy-3); color: var(--gold); font-size: 26px; padding: 12px 35px; letter-spacing: 2px; font-weight:800;}
@@ -164,26 +161,20 @@
   .sc-notout { color: var(--gold-2); font-weight: 800; }
   .sc-footer { background: var(--navy-3); display: flex; justify-content: space-between; padding: 15px 40px; font-weight: 800; font-size: 34px; border-top: 2px solid var(--gold); }
 
-  /* BOWLING SCORECARD - TOP 6%, GAP 7PX */
   #graphic-bowl { width: 1600px; top: 6%; }
   .sc-table.bowl th { text-align: center; }
   .sc-table.bowl td { text-align: center; }
   .sc-table.bowl td:first-child, .sc-table.bowl th:first-child { text-align: left; }
-  
-  /* Fall of Wkt Strip inside Bowling Card: Font +2px (30px), Color Highlighted (Gold) */
   .fow-strip { background: var(--navy-deep); padding: 15px 35px; font-size: 30px; font-weight: 900; color: var(--gold-2); border-top: 2px solid var(--line); text-align: center; }
 
-  /* PROJECTED SCORE */
   #graphic-proj { width: 1200px; text-align: center; padding-bottom: 25px; top: 15%; }
   .proj-row { display: flex; justify-content: space-between; padding: 18px 60px; border-bottom: 2px solid var(--line); font-size: 42px; font-weight: 700; }
   .proj-row.highlight { background: rgba(212,175,55,0.1); color: var(--gold-2); font-size: 52px; padding: 22px 60px; }
 
-  /* FALL OF WICKETS - TOP 9%, GAP 7PX */
   #graphic-fow { width: 1200px; top: 9%; }
   .fow-list { padding: 15px 35px; max-height: 800px; overflow: hidden; }
   .fow-item { display: flex; justify-content: space-between; padding: 7px 30px; border-bottom: 2px dotted var(--line); font-size: 36px; font-weight: 800; }
 
-  /* CHARTS (BAR & WORM) - HEIGHT INCREASED */
   #graphic-chart { width: 1500px; top: 6%; }
   #graphic-worm { width: 1500px; top: 6%; }
   
@@ -224,7 +215,6 @@
                       <div class="batter-item" id="ovNonStrikerRow"><span id="ovNonStrikerName">—</span> <span class="fig" id="ovNonStrikerFig">0(0)</span></div>
                   </div>
                   
-                  <!-- Bowler Name (Left) and Stats (Right) format -->
                   <div class="bowler-inline">
                       <span id="ovBowlerName">—</span> <span class="fig" id="ovBowlerFig">0.0-0-0-0</span>
                   </div>
@@ -244,7 +234,6 @@
       </div>
     </div>
 
-    <!-- GRAPHICS PANELS -->
     <div class="center-panel" id="graphic-singlePlayer">
       <div class="center-title">PLAYER PERFORMANCE</div>
       <div class="sp-name" id="spName">PLAYER NAME</div>
@@ -609,15 +598,12 @@ onValue(ref(db, "current_match"), snap => {
           let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
           let displayOvers = oversData.slice(-20); let rawMax = Math.max(10, ...displayOvers); let maxVal = getNiceMax(rawMax, 4);
           
-          /* HEIGHT 500px */
           let w = 1450, h = 500, padX = 80, padY = 60; 
           let graphW = w - padX - 30; let graphH = h - padY - 20; let svgHtml = '';
           svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
           svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${w-20}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
           
-          // RUNS Label shifted away from corner
           svgHtml += `<text x="15" y="30" fill="var(--gold)" font-size="22" font-weight="bold">RUNS</text>`;
-          // OVERS Label shifted
           svgHtml += `<text x="${w-90}" y="${h-10}" fill="var(--gold)" font-size="22" font-weight="bold">OVERS</text>`;
           
           for(let i=0; i<=4; i++) {
@@ -646,7 +632,6 @@ onValue(ref(db, "current_match"), snap => {
           el.innerText = `${actBatTeamName} - WORM GRAPH${isRecall?' (1ST INN)':''}`;
           let maxOvers = state.meta.maxOvers; 
           
-          /* HEIGHT 500px */
           let w = 1450, h = 500, padX = 80, padY = 60; 
           let graphW = w - padX - 30; let graphH = h - padY - 20;
           let cRuns1 = [0]; let sum1 = 0; let targetHist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
@@ -659,9 +644,7 @@ onValue(ref(db, "current_match"), snap => {
           svgHtml += `<line x1="${padX}" y1="20" x2="${padX}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
           svgHtml += `<line x1="${padX}" y1="${20+graphH}" x2="${padX+graphW}" y2="${20+graphH}" stroke="var(--muted)" stroke-width="3"/>`;
           
-          // RUNS Label
           svgHtml += `<text x="15" y="30" fill="var(--gold)" font-size="22" font-weight="bold">RUNS</text>`;
-          // OVERS Label
           svgHtml += `<text x="${w-90}" y="${h-10}" fill="var(--gold)" font-size="22" font-weight="bold">OVERS</text>`;
           
           for(let i=0; i<=5; i++) { let val = Math.round((maxTotal / 5) * i); let y = 20 + graphH - (val/maxTotal * graphH); svgHtml += `<text x="${padX-15}" y="${y+8}" fill="var(--muted)" font-size="24" text-anchor="end">${val}</text>`; svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`; }
