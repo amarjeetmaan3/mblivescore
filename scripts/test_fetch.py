@@ -1,7 +1,7 @@
 import requests, json, os, re, time
 from datetime import datetime
 
-MATCH_URL = "https://www.cricbuzz.com/live-cricket-scores/170103/afg-vs-ind-1st-t20i-afghanistan-vs-india-in-india-2026"
+MATCH_URL = "https://www.cricbuzz.com/live-cricket-scores/169891/indw-vs-slw-final-womens-asia-cup-2026"
 FIREBASE_URL = os.environ['FIREBASE_DB_URL']
 
 # URL se match ID nikalna (jaise 170103)
