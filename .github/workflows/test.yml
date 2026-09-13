@@ -12,7 +12,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install requests
-      - run: python test_fetch.py
+            - run: python scripts/test_fetch.py
       - uses: actions/upload-artifact@v4
         with:
           name: output-html
