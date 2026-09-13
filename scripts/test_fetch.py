@@ -1,10 +1,22 @@
 import requests, json, os, re, time
 from datetime import datetime
 
-MATCH_URL = "https://www.cricbuzz.com/live-cricket-scores/169891/indw-vs-slw-final-womens-asia-cup-2026"
 FIREBASE_URL = os.environ['FIREBASE_DB_URL']
 
-# URL se match ID nikalna (jaise 170103)
+# 1. Firebase से क्रिकबज का लिंक (URL) निकालना
+try:
+    config_res = requests.get(f"{FIREBASE_URL}/auto_fetch_config.json", timeout=10)
+    config_data = config_res.json()
+    if not config_data or 'url' not in config_data:
+        print("Error: Firebase mein koi Cricbuzz URL nahi mila. Script band ho rahi hai.")
+        exit()
+    MATCH_URL = config_data['url']
+    print(f"Target Match: {MATCH_URL}")
+except Exception as e:
+    print("Error fetching config from Firebase:", e)
+    exit()
+
+# 2. URL से मैच ID निकालना (ताकि हिस्ट्री सेव हो सके)
 match_id_search = re.search(r'/live-cricket-scores/(\d+)/', MATCH_URL)
 MATCH_ID = match_id_search.group(1) if match_id_search else "unknown"
 
@@ -56,11 +68,12 @@ def fetch_and_parse():
     return data, is_complete
 
 def push_to_firebase(data):
+    # यह डेटा सीधे current_match_auto में जाएगा, जिससे आपका कंट्रोलर इसे पढ़ सके
     requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
     requests.put(f"{FIREBASE_URL}/auto_match_history/{MATCH_ID}.json", json=data, timeout=10)
 
 start_time = time.time()
-MAX_DURATION = 6 * 60 * 60
+MAX_DURATION = 6 * 60 * 60 # स्क्रिप्ट मैक्सिमम 6 घंटे तक चलेगी
 
 while time.time() - start_time < MAX_DURATION:
     try:
