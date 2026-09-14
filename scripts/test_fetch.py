@@ -4,7 +4,6 @@ from datetime import datetime
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
 
 def get_next_data(url):
-    # Cricbuzz ki website se direct master JSON nikalne ka sabse tagda tarika
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     try:
         res = requests.get(url, headers=headers, timeout=15)
@@ -38,29 +37,25 @@ def get_playing_11(match_header, team_key):
     return names[:11]
 
 def fetch_match_smart(match_url):
-    # 1. Live Data Fetch
     live_data = get_next_data(match_url)
     m = live_data.get("miniscore", {})
     h = live_data.get("matchHeader", {})
     
-    # Fallback agar match complete ho gaya ho aur link redirect ho raha ho
     if not m or not h:
         sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
         live_data = get_next_data(sc_url)
         m = live_data.get("miniscore", {})
         h = live_data.get("matchHeader", {})
         
-    if not h: 
-        print("Match Header missing, checking API failsafe...")
-        return None
+    if not h: return None
 
     playing11_A = get_playing_11(h, "team1")
     playing11_B = get_playing_11(h, "team2")
 
     batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1 = [], [], [], []
     batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2 = [], [], [], []
+    extras_inn1, extras_inn2 = 0, 0
     
-    # 2. Scorecard Fetch
     sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
     sc_data = get_next_data(sc_url)
     full_sc = sc_data.get("scoreCard", [])
@@ -87,8 +82,10 @@ def fetch_match_smart(match_url):
             for key, p in parts_details.items():
                 past_parts.append({"wktNo": p.get("wicketNum", 0), "bat1Name": p.get("bat1Name", ""), "bat1Runs": p.get("bat1Runs", 0), "bat2Name": p.get("bat2Name", ""), "bat2Runs": p.get("bat2Runs", 0), "totalRuns": p.get("totalRuns", 0), "totalBalls": p.get("totalBalls", 0)})
             
-            if idx == 0: batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1 = bat_card, bowl_card, fow_list, past_parts
-            elif idx == 1: batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2 = bat_card, bowl_card, fow_list, past_parts
+            extras_val = int(inn.get("extrasData", {}).get("total", 0))
+
+            if idx == 0: batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1, extras_inn1 = bat_card, bowl_card, fow_list, past_parts, extras_val
+            elif idx == 1: batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2, extras_inn2 = bat_card, bowl_card, fow_list, past_parts, extras_val
 
     match_state = str(h.get("state", ""))
     is_complete = match_state == "Complete" or h.get("complete", False)
@@ -107,6 +104,7 @@ def fetch_match_smart(match_url):
         "recentOvs": m.get("recentOvsStats", ""),
         
         "playing11_A": playing11_A, "playing11_B": playing11_B,
+        "extras_inn1": extras_inn1, "extras_inn2": extras_inn2,
         "battingCard_inn1": batting_card_inn1, "bowlingCard_inn1": bowling_card_inn1, "fow_inn1": fow_inn1, "pastParts_inn1": part_inn1,
         "battingCard_inn2": batting_card_inn2, "bowlingCard_inn2": bowling_card_inn2, "fow_inn2": fow_inn2, "pastParts_inn2": part_inn2
     }
@@ -126,14 +124,8 @@ while time.time() - start_time < MAX_DURATION:
         current_url = config_data['url']
         if current_url != last_url: last_url = current_url
             
-        match_id_search = re.search(r'/live-cricket-scores/(\d+)/', current_url)
-        MATCH_ID = match_id_search.group(1) if match_id_search else "unknown"
-        
         data = fetch_match_smart(current_url)
         if data:
             requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
-            print(f"Pushed: {data['teamA']} vs {data['teamB']} | SquadA: {len(data['playing11_A'])} | Bat1: {len(data['battingCard_inn1'])}")
-        else:
-            print("No Match Data Found!")
-    except Exception as e: print("Loop Error:", e)
+    except Exception as e: pass
     time.sleep(15)
