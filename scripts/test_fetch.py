@@ -4,11 +4,17 @@ from datetime import datetime
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
 
 def extract_json_data(html, key):
-    marker = f'\\"{key}\\":'
-    idx = html.find(marker)
-    if idx == -1: return None
-    
-    start = idx + len(marker)
+    # यह नया स्कैनर Escaped (\") और Unescaped (") दोनों तरह के डेटा को ढूँढ सकता है
+    idx = html.find(f'\\"{key}\\":')
+    if idx != -1:
+        start = idx + len(f'\\"{key}\\":')
+    else:
+        idx = html.find(f'"{key}":')
+        if idx != -1:
+            start = idx + len(f'"{key}":')
+        else:
+            return None
+            
     while start < len(html) and html[start] not in ['{', '[']:
         start += 1
         
@@ -24,9 +30,12 @@ def extract_json_data(html, key):
             depth -= 1
             if depth == 0:
                 try:
-                    raw = html[start:i+1].replace('\\"', '"').replace('\\\\', '\\')
+                    raw = html[start:i+1]
+                    if '\\"' in raw:
+                        raw = raw.replace('\\"', '"').replace('\\\\', '\\')
                     return json.loads(raw)
-                except:
+                except Exception as e:
+                    print(f"JSON Parse Error for {key}:", e)
                     return None
     return None
 
@@ -75,16 +84,18 @@ def fetch_match_smart(match_url):
         "recentOvs": m.get("recentOvsStats", "")
     }
     
-    # --- नया: Full Scorecard फेच करना ---
+    # --- Deep Fetch: Full Scorecard Data ---
     try:
         sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
         res_sc_full = requests.get(sc_url, headers=headers, timeout=15)
         full_sc_data = extract_json_data(res_sc_full.text, "scoreCard")
         if full_sc_data:
             data["fullScorecard"] = full_sc_data
+            print("Full Scorecard Successfully Extracted!")
+        else:
+            print("Warning: scoreCard array not found in HTML.")
     except Exception as e:
         print("Scorecard fetch error:", e)
-    # -----------------------------------
 
     is_complete = h.get("state", "") == "Complete" or h.get("complete", False) or True
     return data, is_complete
@@ -115,7 +126,7 @@ while time.time() - start_time < MAX_DURATION:
         if data:
             requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
             requests.put(f"{FIREBASE_URL}/auto_match_history/{MATCH_ID}.json", json=data, timeout=10)
-            print(f"{datetime.now()}: {data['teamA']} {data['score']}/{data['wickets']} (Scorecard Appended)")
+            print(f"{datetime.now()}: {data['teamA']} {data['score']}/{data['wickets']}")
             
     except Exception as e:
         print("Loop Error:", e)
