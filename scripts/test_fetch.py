@@ -38,7 +38,6 @@ def fetch_match_smart(match_url):
     m = extract_json_data(html, "miniscore")
     h = extract_json_data(html, "matchHeader")
     
-    # Live data na milne par scorecard page se data nikalna
     if not m or not h:
         scorecard_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
         res_sc = requests.get(scorecard_url, headers=headers, timeout=15)
@@ -76,6 +75,17 @@ def fetch_match_smart(match_url):
         "recentOvs": m.get("recentOvsStats", "")
     }
     
+    # --- नया: Full Scorecard फेच करना ---
+    try:
+        sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
+        res_sc_full = requests.get(sc_url, headers=headers, timeout=15)
+        full_sc_data = extract_json_data(res_sc_full.text, "scoreCard")
+        if full_sc_data:
+            data["fullScorecard"] = full_sc_data
+    except Exception as e:
+        print("Scorecard fetch error:", e)
+    # -----------------------------------
+
     is_complete = h.get("state", "") == "Complete" or h.get("complete", False) or True
     return data, is_complete
 
@@ -85,20 +95,16 @@ last_url = ""
 
 while time.time() - start_time < MAX_DURATION:
     try:
-        # Har 15 second mein Firebase check karega ki Controller mein naya link to nahi aaya!
         config_res = requests.get(f"{FIREBASE_URL}/auto_fetch_config.json", timeout=10)
         config_data = config_res.json()
         
         if not config_data or 'url' not in config_data:
-            print("URL nahi mila, wait kar rahe hain...")
             time.sleep(15)
             continue
             
         current_url = config_data['url']
         
-        # Agar URL change hua hai, to script update ho jayegi
         if current_url != last_url:
-            print(f"Naya Match Link Detect Hua: {current_url}")
             last_url = current_url
             
         match_id_search = re.search(r'/live-cricket-scores/(\d+)/', current_url)
@@ -109,12 +115,9 @@ while time.time() - start_time < MAX_DURATION:
         if data:
             requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
             requests.put(f"{FIREBASE_URL}/auto_match_history/{MATCH_ID}.json", json=data, timeout=10)
-            print(f"{datetime.now()}: {data['teamA']} {data['score']}/{data['wickets']}")
-        else:
-            print("Data fetch failed for this URL.")
+            print(f"{datetime.now()}: {data['teamA']} {data['score']}/{data['wickets']} (Scorecard Appended)")
             
     except Exception as e:
         print("Loop Error:", e)
         
-    # Script band nahi hogi, bas 15 second wait karke dobara try karegi
     time.sleep(15)
