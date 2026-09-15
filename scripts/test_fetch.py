@@ -114,18 +114,32 @@ start_time = time.time()
 MAX_DURATION = 6 * 60 * 60
 last_url = ""
 
+print("Script Started! Starting infinite loop...", flush=True)
+
 while time.time() - start_time < MAX_DURATION:
     try:
+        print("Checking Firebase for new URL...", flush=True)
         config_res = requests.get(f"{FIREBASE_URL}/auto_fetch_config.json", timeout=10)
         config_data = config_res.json()
+        
         if not config_data or 'url' not in config_data:
-            time.sleep(15); continue
+            print(f"No URL found in Firebase. Response: {config_data}", flush=True)
+            time.sleep(15)
+            continue
             
         current_url = config_data['url']
-        if current_url != last_url: last_url = current_url
+        if current_url != last_url:
+            last_url = current_url
+            requests.delete(f"{FIREBASE_URL}/current_match_auto.json") 
+            print(f"New Link Detected: {current_url}. Wiped old data!", flush=True)
             
         data = fetch_match_smart(current_url)
         if data:
             requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
-    except Exception as e: pass
+            print(f"Pushed: {data['teamA']} vs {data['teamB']} | Score: {data['score']}/{data['wickets']}", flush=True)
+        else:
+            print("No Match Data Found! Cricbuzz page might be empty or restricted.", flush=True)
+    except Exception as e: 
+        print(f"Loop Error: {e}", flush=True)
+    
     time.sleep(15)
