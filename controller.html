@@ -7,49 +7,36 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --navy-deep:#050c18; --navy:#0a1628; --navy-2:#0f2140; --navy-3:#16304f;
-    --gold:#d4af37; --gold-2:#f2d878; --crimson:#b91c1c; --crimson-2:#e13939;
-    --ink:#f5f5f0; --muted:#8fa3bf; --line:#1c3352;
-  }
+  :root{ --navy-deep:#050c18; --navy:#0a1628; --navy-2:#0f2140; --navy-3:#16304f; --gold:#d4af37; --gold-2:#f2d878; --crimson:#b91c1c; --ink:#f5f5f0; --muted:#8fa3bf; --line:#1c3352; }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Rajdhani', Arial, sans-serif; }
   html, body { height: 100dvh; background: var(--navy-deep); color: var(--ink); overflow: hidden; display: flex; flex-direction: column; }
-
   button, input, select { outline: none; border: 1px solid var(--line); background: var(--navy-2); color: var(--ink); padding: 6px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; }
   button { cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: 0.1s; }
   button:active { transform: scale(0.96); }
   select:disabled { opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.2); color: var(--gold-2); } 
-
   .btn-primary { background: var(--gold); border-color: var(--gold); color: var(--navy-deep); font-weight: 700; }
   .btn-danger { background: var(--crimson); border-color: var(--crimson); color: #fff; font-weight: 700; }
   .btn-blue { background: var(--navy-3); border-color: var(--line); color: var(--ink); }
   .btn-accent { background: #3d2c00; border-color: var(--gold); color: var(--gold-2); }
   .btn-active { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
-
-  .screen { display: none; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 8px 30px; }
+  .screen { display: none; height: 100dvh; overflow-y: auto; padding: 6px 8px 30px; }
   .screen.active { display: flex; flex-direction: column; }
-
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
   .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
   .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
-
   .card { background: var(--navy); border: 1px solid var(--line); padding: 7px; border-radius: 6px; margin-bottom: 6px; }
   .card-title { font-size: 10px; color: var(--gold); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-
   .hud { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); border: 1px solid var(--gold); padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
   .hud-team { font-size: 13px; font-weight: 700; color: #cbd5e1; }
   .hud-score { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold-2); line-height: 1; }
   .hud-overs { font-size: 12px; font-weight: 700; color: var(--muted); }
   .hud-stat { font-size: 11px; font-weight: 600; }
-
   .score-pad button { height: 38px; font-size: 18px; font-weight: 900; background: var(--navy-3); border-radius: 4px; }
   .score-pad button[data-run="4"] { background: var(--gold); color: var(--navy-deep); }
   .score-pad button[data-run="6"] { background: var(--crimson); color: #fff; }
-
   .extra-pad button { height: 32px; font-size: 11px; background: #4a3406; color: var(--ink); border-color: rgba(212,175,55,0.4); }
   .wicket-pad button { height: 32px; font-size: 11px; background: var(--crimson); color: #fff; }
-
   .banner { background: linear-gradient(90deg, var(--gold) 0%, var(--gold-2) 100%); color: var(--navy-deep); padding: 8px; border-radius: 6px; margin-bottom: 6px; text-align: center; font-weight: 700; font-size: 12px; }
   .timeline { max-height: 100px; overflow-y: auto; background: var(--navy-deep); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--line); }
   .timeline-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 11px; }
@@ -110,12 +97,8 @@
   <div class="card" id="autoSyncPanel" style="display:none; border: 1px solid #16a34a; background: linear-gradient(135deg, var(--navy-deep) 0%, #064e3b 100%);">
     <div class="card-title" style="color: #4ade80;">
       <span><i class="fas fa-satellite-dish"></i> CRICBUZZ DATA SYNC</span>
-      <div>
-        <span style="font-size: 9px; color:var(--ink);">AUTO-UPDATE:</span>
-        <button id="btnAutoUpdateToggle" class="btn-danger" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="toggleAutoUpdate()">OFF</button>
-      </div>
+      <div><span style="font-size: 9px; color:var(--ink);">AUTO-UPDATE:</span><button id="btnAutoUpdateToggle" class="btn-danger" style="display:inline-flex; padding:2px 6px; font-size:9px;" onclick="toggleAutoUpdate()">OFF</button></div>
     </div>
-    
     <div class="grid-2" style="margin-bottom: 6px;">
       <div style="background: rgba(0,0,0,0.4); padding: 6px; border-radius: 4px; border: 1px dashed #4ade80;">
         <span class="small-label" style="color:#4ade80;">📡 CRICBUZZ PREVIEW</span>
@@ -258,13 +241,12 @@ window.createAutoMatch = function() {
     const url = document.getElementById('cricbuzz_url').value.trim();
     if(!url) return;
     
-    // SUPER-WIPER: Naya link aate hi Firebase ka purana kachra saaf karega!
     set(ref(db, 'auto_fetch_config'), { url: url });
     set(ref(db, 'current_match_auto'), null); 
     autoMatchData = null; 
     
     const tA = "WAITING...", tB = "WAITING..."; const squadSize = 11, maxOvers = 20;
-    const mkRoster = (lbl) => Array.from({length: squadSize}, (_, i) => ({ id: `${lbl[0]}${i+1}`, name: `${lbl} Player ${i+1}`, isOut: false, isAbsent: false, isRetired: false, runs: 0, balls: 0, fours: 0, sixes: 0, dismissalInfo: "" }));
+    const mkRoster = (lbl) => Array.from({length: squadSize}, (_, i) => ({ id: `${lbl[0]}${i+1}`, name: `${lbl} Player ${i+1}`, isOut: false, isAbsent: false, isRetired: false, runs: 0, balls: 0, fours: 0, sixes: 0, dismissalInfo: "Yet to bat" }));
     
     state = {
         id: "MB_AUTO_" + Date.now(), title: `Auto Match`,
@@ -295,20 +277,49 @@ window.toggleAutoUpdate = function() {
     else { btn.innerText = 'OFF'; btn.classList.replace('btn-active', 'btn-danger'); }
 };
 
-function rebuildSquad(teamId, playing11, batCard, bowlCard) {
-    let newSquad = []; let addedNames = new Set(); let idx = 1;
-    const addPlayer = (name, runs, balls, fours, sixes, outDesc, isOut) => {
-        let n = name.trim();
-        if(!addedNames.has(n.toLowerCase())) {
-            newSquad.push({ id: `${teamId}${idx++}`, name: n, runs: runs||0, balls: balls||0, fours: fours||0, sixes: sixes||0, dismissalInfo: outDesc||"", isOut: !!isOut, isRetired: !!(outDesc && outDesc.toLowerCase().includes('retire')), isAbsent: false });
-            addedNames.add(n.toLowerCase());
+// DYNAMIC SQUAD BUILDER (No Limits, Smart Merging)
+function rebuildSquad(teamId, playing11, batCard) {
+    let newSquad = [];
+    let idx = 1;
+    const clean = (n) => n.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Step 1: Push Playing 11 (jisme 11, 14, 15 jitne bhi hon)
+    if(playing11 && playing11.length > 0) {
+        playing11.forEach(name => {
+            newSquad.push({ id: `${teamId}${idx++}`, name: name.trim(), runs: 0, balls: 0, fours: 0, sixes: 0, dismissalInfo: "Yet to bat", isOut: false, isRetired: false, isAbsent: false });
+        });
+    }
+
+    // Step 2: Merge Batting Card with Smart Name matching
+    if(batCard && batCard.length > 0) {
+        batCard.forEach(b => {
+            let bClean = clean(b.name);
+            let match = newSquad.find(x => clean(x.name) === bClean || clean(x.name).includes(bClean) || bClean.includes(clean(x.name)));
+            
+            if(match) {
+                match.name = b.name; // Keep complete scorecard name
+                match.runs = b.runs; match.balls = b.balls; match.fours = b.fours; match.sixes = b.sixes;
+                match.dismissalInfo = b.outDesc || "Yet to bat";
+                match.isOut = !!b.isOut; match.isRetired = !!(b.outDesc && b.outDesc.toLowerCase().includes('retire'));
+            } else {
+                newSquad.push({ id: `${teamId}${idx++}`, name: b.name.trim(), runs: b.runs, balls: b.balls, fours: b.fours, sixes: b.sixes, dismissalInfo: b.outDesc || "Yet to bat", isOut: !!b.isOut, isRetired: !!(b.outDesc && b.outDesc.toLowerCase().includes('retire')), isAbsent: false });
+            }
+        });
+    }
+    
+    // Failsafe if completely empty
+    if(newSquad.length === 0) {
+        for(let i=0; i<11; i++) {
+            newSquad.push({ id: `${teamId}${i+1}`, name: `Player ${i+1}`, runs: 0, balls: 0, fours: 0, sixes: 0, dismissalInfo: "Yet to bat", isOut: false, isRetired: false, isAbsent: false });
         }
-    };
-    if(batCard) batCard.forEach(b => addPlayer(b.name, b.runs, b.balls, b.fours, b.sixes, b.outDesc, b.isOut));
-    if(bowlCard) bowlCard.forEach(bw => addPlayer(bw.name));
-    if(playing11) playing11.forEach(name => addPlayer(name));
-    while(newSquad.length < state.meta.squadSize) addPlayer(`Player ${idx}`);
+    }
+
     state.squads[teamId] = newSquad;
+    
+    // Dynamically expand squad size in state if it's larger
+    if (state.meta.squadSize < newSquad.length) {
+        state.meta.squadSize = newSquad.length;
+    }
 }
 
 window.syncCricbuzzToLive = function() {
@@ -321,14 +332,14 @@ window.syncCricbuzzToLive = function() {
     
     const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
     if (state.innings === 1) {
-        rebuildSquad(tBat, autoMatchData.playing11_A, autoMatchData.battingCard_inn1, null);
-        rebuildSquad(tBowl, autoMatchData.playing11_B, null, autoMatchData.bowlingCard_inn1);
+        rebuildSquad(tBat, autoMatchData.playing11_A, autoMatchData.battingCard_inn1);
+        rebuildSquad(tBowl, autoMatchData.playing11_B, null); 
         state.fow = autoMatchData.fow_inn1 || []; state.pastPartnerships = autoMatchData.pastParts_inn1 || []; state.extras = autoMatchData.extras_inn1 || 0;
     } else if (state.innings === 2) {
         if(!state.firstInnings) state.firstInnings = { batters: [], bowlers: [], fow: [], pastPartnerships: [] };
         state.firstInnings.team = tBowl; state.firstInnings.batters = autoMatchData.battingCard_inn1 || []; state.firstInnings.bowlers = autoMatchData.bowlingCard_inn1 || []; state.firstInnings.fow = autoMatchData.fow_inn1 || []; state.firstInnings.pastPartnerships = autoMatchData.pastParts_inn1 || []; state.firstInnings.extras = autoMatchData.extras_inn1 || 0;
-        rebuildSquad(tBat, autoMatchData.playing11_B, autoMatchData.battingCard_inn2, null);
-        rebuildSquad(tBowl, autoMatchData.playing11_A, null, autoMatchData.bowlingCard_inn2);
+        rebuildSquad(tBat, autoMatchData.playing11_B, autoMatchData.battingCard_inn2);
+        rebuildSquad(tBowl, autoMatchData.playing11_A, null);
         state.fow = autoMatchData.fow_inn2 || []; state.pastPartnerships = autoMatchData.pastParts_inn2 || []; state.extras = autoMatchData.extras_inn2 || 0;
     }
     
@@ -336,7 +347,7 @@ window.syncCricbuzzToLive = function() {
     const currentBowlCard = state.innings === 1 ? autoMatchData.bowlingCard_inn1 : autoMatchData.bowlingCard_inn2;
     if(currentBowlCard) {
         currentBowlCard.forEach(bw => {
-            let p = state.squads[tBowl].find(x => x.name.toLowerCase() === bw.name.trim().toLowerCase());
+            let p = state.squads[tBowl].find(x => x.name.toLowerCase().includes(bw.name.trim().toLowerCase()) || bw.name.trim().toLowerCase().includes(x.name.toLowerCase()));
             if(p) state.bowlerStats[p.id] = { runs: bw.runs, wickets: bw.wickets, maidens: bw.maidens, balls: (Math.floor(bw.overs) * 6) + Math.round((bw.overs - Math.floor(bw.overs)) * 10), dots: 0, ovRunsTracker: 0 };
         });
     }
@@ -348,7 +359,7 @@ window.syncCricbuzzToLive = function() {
     if(st) state.striker = st.id; if(nst) state.nonStriker = nst.id; if(bw) state.bowler = bw.id;
     state.partnership = { runs: parseInt(autoMatchData.currPartnershipRuns) || 0, balls: parseInt(autoMatchData.currPartnershipBalls) || 0, p1: state.striker, p2: state.nonStriker, p1Runs: autoMatchData.strikerRuns || 0, p1Balls: autoMatchData.strikerBalls || 0, p2Runs: autoMatchData.nonStrikerRuns || 0, p2Balls: autoMatchData.nonStrikerBalls || 0 };
     
-    syncLiveAndSave();
+    syncLiveAndSave(); 
     const liveBox = document.getElementById('cbCurrentLive').parentElement; liveBox.style.borderColor = '#4ade80'; setTimeout(() => { liveBox.style.borderColor = 'var(--line)'; }, 1000);
 };
 
@@ -387,7 +398,7 @@ let heavySaveTimer = null;
 function syncLiveAndSave() {
   if(!state) return; set(liveRef, state); updateUI();
   clearTimeout(heavySaveTimer);
-  heavySaveTimer = setTimeout(() => { const summary = { id: state.id, title: state.title, meta: state.meta, legalBalls: state.legalBalls, innings: state.innings, score: state.score }; set(ref(db, `mb_saved_matches_list/${state.id}`), summary); set(ref(db, `mb_match_data/${state.id}`), state); }, 800);
+  heavySaveTimer = setTimeout(() => { const summary = { id: state.id, title: state.title, meta: state.meta, legalBalls: state.legalBalls, innings: state.innings, score: state.score }; set(ref(db, `mb_saved_matches_list/${state.id}`), summary); set(ref(db, `mb_match_data/${state.id}`), state); }, 500);
 }
 
 window.handleGraphicClick = function(baseTarget) {
