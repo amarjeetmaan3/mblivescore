@@ -250,7 +250,7 @@ window.createAutoMatch = function() {
     
     state = {
         id: "MB_AUTO_" + Date.now(), title: `Auto Match`,
-        meta: { tA, tB, squadSize, maxOvers, batTeam: "A", bowlTeam: "B", tossWinner: "A", tossDecision: "BAT" },
+        meta: { tA, tB, tA_full: "", tB_full: "", squadSize, maxOvers, batTeam: "A", bowlTeam: "B", tossWinner: "A", tossDecision: "BAT" },
         squads: { A: mkRoster('A'), B: mkRoster('B') },
         innings: 1, score: 0, wickets: 0, legalBalls: 0, extras: 0, overBalls: [], currentOverRuns: 0, overHistory: [],
         target: null, firstInnings: null, inningsOver: false, matchResult: "",
@@ -277,27 +277,27 @@ window.toggleAutoUpdate = function() {
     else { btn.innerText = 'OFF'; btn.classList.replace('btn-active', 'btn-danger'); }
 };
 
-// DYNAMIC SQUAD BUILDER (No Limits, Smart Merging)
+// FULL-PROOF REBUILDER: Ab Team A humesha Team A hi rahegi aur cross nahi hogi!
 function rebuildSquad(teamId, playing11, batCard) {
     let newSquad = [];
     let idx = 1;
     const clean = (n) => n.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    // Step 1: Push Playing 11 (jisme 11, 14, 15 jitne bhi hon)
+    // Step 1: Push Playing 11 (Sabse pehle asli naam jayenge)
     if(playing11 && playing11.length > 0) {
         playing11.forEach(name => {
             newSquad.push({ id: `${teamId}${idx++}`, name: name.trim(), runs: 0, balls: 0, fours: 0, sixes: 0, dismissalInfo: "Yet to bat", isOut: false, isRetired: false, isAbsent: false });
         });
     }
 
-    // Step 2: Merge Batting Card with Smart Name matching
+    // Step 2: Merge Batting Card Details (Sirf runs update honge, naye player randomly add nahi honge)
     if(batCard && batCard.length > 0) {
         batCard.forEach(b => {
             let bClean = clean(b.name);
             let match = newSquad.find(x => clean(x.name) === bClean || clean(x.name).includes(bClean) || bClean.includes(clean(x.name)));
             
             if(match) {
-                match.name = b.name; // Keep complete scorecard name
+                match.name = b.name; 
                 match.runs = b.runs; match.balls = b.balls; match.fours = b.fours; match.sixes = b.sixes;
                 match.dismissalInfo = b.outDesc || "Yet to bat";
                 match.isOut = !!b.isOut; match.isRetired = !!(b.outDesc && b.outDesc.toLowerCase().includes('retire'));
@@ -307,7 +307,6 @@ function rebuildSquad(teamId, playing11, batCard) {
         });
     }
     
-    // Failsafe if completely empty
     if(newSquad.length === 0) {
         for(let i=0; i<11; i++) {
             newSquad.push({ id: `${teamId}${i+1}`, name: `Player ${i+1}`, runs: 0, balls: 0, fours: 0, sixes: 0, dismissalInfo: "Yet to bat", isOut: false, isRetired: false, isAbsent: false });
@@ -315,34 +314,47 @@ function rebuildSquad(teamId, playing11, batCard) {
     }
 
     state.squads[teamId] = newSquad;
-    
-    // Dynamically expand squad size in state if it's larger
-    if (state.meta.squadSize < newSquad.length) {
-        state.meta.squadSize = newSquad.length;
-    }
+    if (state.meta.squadSize < newSquad.length) state.meta.squadSize = newSquad.length;
 }
 
 window.syncCricbuzzToLive = function() {
     if(!autoMatchData || !state) return;
-    state.meta.tA = autoMatchData.teamA || state.meta.tA; state.meta.tB = autoMatchData.teamB || state.meta.tB; state.title = `${state.meta.tA} vs ${state.meta.tB}`;
+    state.meta.tA = autoMatchData.teamA || state.meta.tA; 
+    state.meta.tB = autoMatchData.teamB || state.meta.tB; 
+    
+    // Yaha full names bhi Database me save ho jayenge Graphics ke liye
+    state.meta.tA_full = autoMatchData.teamA_name || state.meta.tA_full || state.meta.tA;
+    state.meta.tB_full = autoMatchData.teamB_name || state.meta.tB_full || state.meta.tB;
+    state.title = `${state.meta.tA} vs ${state.meta.tB}`;
+    
     state.score = parseInt(autoMatchData.score) || 0; state.wickets = parseInt(autoMatchData.wickets) || 0;
     if(autoMatchData.overs) { let ov = parseFloat(autoMatchData.overs); state.legalBalls = (Math.floor(ov) * 6) + Math.round((ov - Math.floor(ov)) * 10); }
     if(autoMatchData.target && parseInt(autoMatchData.target) > 0) { state.target = parseInt(autoMatchData.target); state.innings = 2; }
     if(autoMatchData.isComplete || (autoMatchData.matchStatus && autoMatchData.matchStatus.toLowerCase().includes("won"))) { state.inningsOver = true; state.matchResult = autoMatchData.matchStatus; }
     
-    const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
+    // STRICT TEAM MAPPING: ZIM(A) hamesha Team A, AUS(B) hamesha Team B
+    let bat1 = autoMatchData.battingTeam || 'A';
+    let bowl1 = bat1 === 'A' ? 'B' : 'A';
+    
+    let batCardA = bat1 === 'A' ? autoMatchData.battingCard_inn1 : autoMatchData.battingCard_inn2;
+    let batCardB = bat1 === 'B' ? autoMatchData.battingCard_inn1 : autoMatchData.battingCard_inn2;
+
+    rebuildSquad('A', autoMatchData.playing11_A, batCardA);
+    rebuildSquad('B', autoMatchData.playing11_B, batCardB);
+    
     if (state.innings === 1) {
-        rebuildSquad(tBat, autoMatchData.playing11_A, autoMatchData.battingCard_inn1);
-        rebuildSquad(tBowl, autoMatchData.playing11_B, null); 
-        state.fow = autoMatchData.fow_inn1 || []; state.pastPartnerships = autoMatchData.pastParts_inn1 || []; state.extras = autoMatchData.extras_inn1 || 0;
+        state.meta.batTeam = bat1; state.meta.bowlTeam = bowl1;
+        state.fow = autoMatchData.fow_inn1 || [];
+        state.pastPartnerships = autoMatchData.pastParts_inn1 || [];
+        state.extras = autoMatchData.extras_inn1 || 0;
     } else if (state.innings === 2) {
-        if(!state.firstInnings) state.firstInnings = { batters: [], bowlers: [], fow: [], pastPartnerships: [] };
-        state.firstInnings.team = tBowl; state.firstInnings.batters = autoMatchData.battingCard_inn1 || []; state.firstInnings.bowlers = autoMatchData.bowlingCard_inn1 || []; state.firstInnings.fow = autoMatchData.fow_inn1 || []; state.firstInnings.pastPartnerships = autoMatchData.pastParts_inn1 || []; state.firstInnings.extras = autoMatchData.extras_inn1 || 0;
-        rebuildSquad(tBat, autoMatchData.playing11_B, autoMatchData.battingCard_inn2);
-        rebuildSquad(tBowl, autoMatchData.playing11_A, null);
-        state.fow = autoMatchData.fow_inn2 || []; state.pastPartnerships = autoMatchData.pastParts_inn2 || []; state.extras = autoMatchData.extras_inn2 || 0;
+        state.meta.batTeam = bowl1; state.meta.bowlTeam = bat1;
+        state.fow = autoMatchData.fow_inn2 || [];
+        state.pastPartnerships = autoMatchData.pastParts_inn2 || [];
+        state.extras = autoMatchData.extras_inn2 || 0;
     }
     
+    const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
     state.bowlerStats = {};
     const currentBowlCard = state.innings === 1 ? autoMatchData.bowlingCard_inn1 : autoMatchData.bowlingCard_inn2;
     if(currentBowlCard) {
