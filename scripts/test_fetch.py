@@ -37,15 +37,20 @@ def get_playing_11(match_header, team_key):
     return names[:11]
 
 def fetch_match_smart(match_url):
-    live_data = get_next_data(match_url)
+    # 1. AUTO-URL CORRECTOR (MANDATORY) - Ye ab scorecard link ko khud scores me badal dega
+    live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/')
+    sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
+    
+    # 2. Fetch Header & Miniscore
+    live_data = get_next_data(live_url)
     m = live_data.get("miniscore", {})
     h = live_data.get("matchHeader", {})
     
-    if not m or not h:
-        sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
-        live_data = get_next_data(sc_url)
-        m = live_data.get("miniscore", {})
-        h = live_data.get("matchHeader", {})
+    # Failsafe
+    if not h:
+        sc_data_temp = get_next_data(sc_url)
+        h = sc_data_temp.get("matchHeader", {})
+        if not m: m = sc_data_temp.get("miniscore", {})
         
     if not h: return None
 
@@ -56,7 +61,7 @@ def fetch_match_smart(match_url):
     batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2 = [], [], [], []
     extras_inn1, extras_inn2 = 0, 0
     
-    sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
+    # 3. Fetch Scorecard Data
     sc_data = get_next_data(sc_url)
     full_sc = sc_data.get("scoreCard", [])
     
