@@ -43,10 +43,18 @@ def get_cricbuzz_data(url):
 
 def get_playing_11(match_header, team_key):
     team_data = match_header.get(team_key, {})
-    p_ids = team_data.get("playingXI", []) or team_data.get("squad", [])
-    names, players_meta = [], match_header.get("players", [])
+    p_ids = team_data.get("playingXI", [])
+    if not p_ids: p_ids = team_data.get("squad", [])
+    
+    # FIX: Agar ids comma se judi hui string me ho (e.g. "123, 456")
+    if isinstance(p_ids, str):
+        p_ids = [x.strip() for x in p_ids.split(',') if x.strip()]
+        
+    names = []
+    players_meta = match_header.get("players", [])
+    
     def find_name(pid):
-        pid = str(pid)
+        pid = str(pid).strip()
         if isinstance(players_meta, list):
             for p in players_meta:
                 if str(p.get("id")) == pid: return p.get("name") or p.get("shortName")
@@ -55,8 +63,9 @@ def get_playing_11(match_header, team_key):
             if isinstance(p, dict): return p.get("name") or p.get("shortName")
         return f"Player {pid}"
     
-    for pid in p_ids: names.append(find_name(pid))
-    # LIMIT HATA DI GAYI HAI: Jitne names honge utne hi return honge (11, 14, 15)
+    for pid in p_ids:
+        if pid: names.append(find_name(pid))
+        
     if not names: names = [f"Player {i+1}" for i in range(11)]
     return names
 
@@ -72,6 +81,12 @@ def fetch_match_smart(match_url):
     if not h:
         m, h = sc_data.get("miniscore", {}), sc_data.get("matchHeader", {})
     if not h: return None
+
+    # Identify Who is Batting exactly to avoid Swap logic issues
+    t1_id = str(h.get("team1", {}).get("id", ""))
+    t2_id = str(h.get("team2", {}).get("id", ""))
+    bat_id = str(m.get("batTeam", {}).get("teamId", ""))
+    batting_team = "A" if bat_id == t1_id else "B" if bat_id == t2_id else "A"
 
     playing11_A, playing11_B = get_playing_11(h, "team1"), get_playing_11(h, "team2")
     batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1, extras_inn1 = [], [], [], [], 0
@@ -95,7 +110,12 @@ def fetch_match_smart(match_url):
             elif idx == 1: batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2, extras_inn2 = bat_card, bowl_card, fow_list, past_parts, extras_val
 
     data = {
-        "teamA": h.get("team1", {}).get("shortName", "TBA"), "teamB": h.get("team2", {}).get("shortName", "TBB"),
+        "teamA": h.get("team1", {}).get("shortName", "TBA"), 
+        "teamA_name": h.get("team1", {}).get("name", "Team A"), # Full Name added
+        "teamB": h.get("team2", {}).get("shortName", "TBB"),
+        "teamB_name": h.get("team2", {}).get("name", "Team B"), # Full Name added
+        "battingTeam": batting_team, # Explicitly tells Controller who is batting
+        
         "score": m.get("batTeam", {}).get("teamScore", 0), "wickets": m.get("batTeam", {}).get("teamWkts", 0),
         "overs": m.get("overs", "0.0"), "target": m.get("target", 0), "crr": m.get("currentRunRate", "0.00"),
         "matchStatus": h.get("status", ""), "isComplete": str(h.get("state", "")) == "Complete" or h.get("complete", False),
@@ -103,6 +123,7 @@ def fetch_match_smart(match_url):
         "nonStrikerName": m.get("batsmanNonStriker", {}).get("name", "—"), "nonStrikerRuns": m.get("batsmanNonStriker", {}).get("runs", 0), "nonStrikerBalls": m.get("batsmanNonStriker", {}).get("balls", 0),
         "bowlerName": m.get("bowlerStriker", {}).get("name", "—"), "bowlerOvers": m.get("bowlerStriker", {}).get("overs", "0.0"), "bowlerRuns": m.get("bowlerStriker", {}).get("runs", 0), "bowlerWickets": m.get("bowlerStriker", {}).get("wickets", 0),
         "currPartnershipRuns": m.get("partnerShip", {}).get("runs", 0), "currPartnershipBalls": m.get("partnerShip", {}).get("balls", 0), "recentOvs": m.get("recentOvsStats", ""),
+        
         "playing11_A": playing11_A, "playing11_B": playing11_B, "extras_inn1": extras_inn1, "extras_inn2": extras_inn2,
         "battingCard_inn1": batting_card_inn1, "bowlingCard_inn1": bowling_card_inn1, "fow_inn1": fow_inn1, "pastParts_inn1": part_inn1,
         "battingCard_inn2": batting_card_inn2, "bowlingCard_inn2": bowling_card_inn2, "fow_inn2": fow_inn2, "pastParts_inn2": part_inn2
@@ -111,14 +132,13 @@ def fetch_match_smart(match_url):
 
 start_time = time.time()
 last_url = ""
-print("Fast Script with Dynamic Squad Size Started...", flush=True)
+print("Fast Script with Strict Mapping & Full Names Started...", flush=True)
 
 while time.time() - start_time < 6 * 60 * 60:
     try:
         config_data = session.get(f"{FIREBASE_URL}/auto_fetch_config.json", timeout=10).json()
         if not config_data or 'url' not in config_data:
-            time.sleep(4)
-            continue
+            time.sleep(4); continue
             
         current_url = config_data['url']
         if current_url != last_url:
