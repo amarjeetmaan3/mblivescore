@@ -2,7 +2,7 @@ import requests, json, os, re, time
 from datetime import datetime
 
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
-session = requests.Session() # Faster requests without reconnecting
+session = requests.Session()
 
 def extract_raw_json(html, key):
     idx = html.find(f'"{key}":')
@@ -54,9 +54,11 @@ def get_playing_11(match_header, team_key):
             p = players_meta.get(pid, {})
             if isinstance(p, dict): return p.get("name") or p.get("shortName")
         return f"Player {pid}"
+    
     for pid in p_ids: names.append(find_name(pid))
-    while len(names) < 11: names.append(f"TBA {len(names)+1}")
-    return names[:11]
+    # LIMIT HATA DI GAYI HAI: Jitne names honge utne hi return honge (11, 14, 15)
+    if not names: names = [f"Player {i+1}" for i in range(11)]
+    return names
 
 def fetch_match_smart(match_url):
     live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
@@ -109,7 +111,7 @@ def fetch_match_smart(match_url):
 
 start_time = time.time()
 last_url = ""
-print("Fast Script Started...", flush=True)
+print("Fast Script with Dynamic Squad Size Started...", flush=True)
 
 while time.time() - start_time < 6 * 60 * 60:
     try:
@@ -129,4 +131,4 @@ while time.time() - start_time < 6 * 60 * 60:
             session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=5)
             print(f"Update: {data['score']}/{data['wickets']}", flush=True)
     except Exception as e: pass
-    time.sleep(4) # Ultra-fast sync interval (4 seconds)
+    time.sleep(4)
