@@ -1,5 +1,4 @@
 import requests, json, os, re, time
-from datetime import datetime
 
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
 session = requests.Session()
@@ -43,30 +42,33 @@ def get_cricbuzz_data(url):
 
 def get_playing_11(match_header, team_key):
     team_data = match_header.get(team_key, {})
-    p_ids = team_data.get("playingXI", [])
-    if not p_ids: p_ids = team_data.get("squad", [])
+    p_xi = team_data.get("playingXI", "")
+    squad = team_data.get("squad", "")
     
-    # FIX: Agar ids comma se judi hui string me ho (e.g. "123, 456")
-    if isinstance(p_ids, str):
-        p_ids = [x.strip() for x in p_ids.split(',') if x.strip()]
-        
     names = []
-    players_meta = match_header.get("players", [])
-    
-    def find_name(pid):
-        pid = str(pid).strip()
-        if isinstance(players_meta, list):
+    # Extract from comma-separated string if available
+    if isinstance(p_xi, str) and p_xi.strip():
+        names = [x.strip() for x in p_xi.split(',') if x.strip()]
+    elif isinstance(p_xi, list) and len(p_xi) > 0:
+        players_meta = match_header.get("players", [])
+        for pid in p_xi:
             for p in players_meta:
-                if str(p.get("id")) == pid: return p.get("name") or p.get("shortName")
-        elif isinstance(players_meta, dict):
-            p = players_meta.get(pid, {})
-            if isinstance(p, dict): return p.get("name") or p.get("shortName")
-        return f"Player {pid}"
-    
-    for pid in p_ids:
-        if pid: names.append(find_name(pid))
-        
-    if not names: names = [f"Player {i+1}" for i in range(11)]
+                if str(p.get("id")) == str(pid):
+                    names.append(p.get("name") or p.get("shortName"))
+                    break
+                    
+    # Fallback to Squad if playing11 is empty
+    if not names:
+        if isinstance(squad, str) and squad.strip():
+            names = [x.strip() for x in squad.split(',') if x.strip()]
+        elif isinstance(squad, list) and len(squad) > 0:
+            players_meta = match_header.get("players", [])
+            for pid in squad:
+                for p in players_meta:
+                    if str(p.get("id")) == str(pid):
+                        names.append(p.get("name") or p.get("shortName"))
+                        break
+                        
     return names
 
 def fetch_match_smart(match_url):
@@ -82,11 +84,18 @@ def fetch_match_smart(match_url):
         m, h = sc_data.get("miniscore", {}), sc_data.get("matchHeader", {})
     if not h: return None
 
-    # Identify Who is Batting exactly to avoid Swap logic issues
+    # STRICT TEAM IDENTIFICATION
     t1_id = str(h.get("team1", {}).get("id", ""))
     t2_id = str(h.get("team2", {}).get("id", ""))
-    bat_id = str(m.get("batTeam", {}).get("teamId", ""))
-    batting_team = "A" if bat_id == t1_id else "B" if bat_id == t2_id else "A"
+    
+    # Identify who batted first exactly
+    bat_team_inn1 = "A"
+    if isinstance(full_sc, list) and len(full_sc) > 0:
+        inn1_bat_id = str(full_sc[0].get("batTeamDetails", {}).get("batTeamId", ""))
+        if inn1_bat_id == t2_id: bat_team_inn1 = "B"
+    else:
+        bat_id = str(m.get("batTeam", {}).get("teamId", ""))
+        bat_team_inn1 = "B" if bat_id == t2_id else "A"
 
     playing11_A, playing11_B = get_playing_11(h, "team1"), get_playing_11(h, "team2")
     batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1, extras_inn1 = [], [], [], [], 0
@@ -110,11 +119,9 @@ def fetch_match_smart(match_url):
             elif idx == 1: batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2, extras_inn2 = bat_card, bowl_card, fow_list, past_parts, extras_val
 
     data = {
-        "teamA": h.get("team1", {}).get("shortName", "TBA"), 
-        "teamA_name": h.get("team1", {}).get("name", "Team A"), # Full Name added
-        "teamB": h.get("team2", {}).get("shortName", "TBB"),
-        "teamB_name": h.get("team2", {}).get("name", "Team B"), # Full Name added
-        "battingTeam": batting_team, # Explicitly tells Controller who is batting
+        "teamA": h.get("team1", {}).get("shortName", "TBA"), "teamA_name": h.get("team1", {}).get("name", "Team A"),
+        "teamB": h.get("team2", {}).get("shortName", "TBB"), "teamB_name": h.get("team2", {}).get("name", "Team B"),
+        "bat_team_inn1": bat_team_inn1,
         
         "score": m.get("batTeam", {}).get("teamScore", 0), "wickets": m.get("batTeam", {}).get("teamWkts", 0),
         "overs": m.get("overs", "0.0"), "target": m.get("target", 0), "crr": m.get("currentRunRate", "0.00"),
@@ -132,7 +139,7 @@ def fetch_match_smart(match_url):
 
 start_time = time.time()
 last_url = ""
-print("Fast Script with Strict Mapping & Full Names Started...", flush=True)
+print("Super Fast Script Started (Fixed Teams & Names)...", flush=True)
 
 while time.time() - start_time < 6 * 60 * 60:
     try:
@@ -149,6 +156,6 @@ while time.time() - start_time < 6 * 60 * 60:
         data = fetch_match_smart(current_url)
         if data:
             session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=5)
-            print(f"Update: {data['score']}/{data['wickets']}", flush=True)
+            print(f"Pushed: {data['teamA']} vs {data['teamB']} | Score: {data['score']}/{data['wickets']}", flush=True)
     except Exception as e: pass
     time.sleep(4)
