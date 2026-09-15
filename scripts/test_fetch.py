@@ -3,18 +3,55 @@ from datetime import datetime
 
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
 
-def get_next_data(url):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+def extract_raw_json(html, key):
+    # Fallback: Agar Cricbuzz data chupaye, toh raw HTML se nikaalna
+    idx = html.find(f'"{key}":')
+    if idx == -1: idx = html.find(f'\\"{key}\\":')
+    if idx == -1: return None
+    
+    start = html.find(':', idx) + 1
+    while start < len(html) and html[start] not in ['{', '[']: start += 1
+    if start >= len(html): return None
+    
+    open_char, close_char, depth = html[start], '}' if html[start] == '{' else ']', 0
+    for i in range(start, len(html)):
+        if html[i] == open_char: depth += 1
+        elif html[i] == close_char:
+            depth -= 1
+            if depth == 0:
+                try:
+                    raw = html[start:i+1].replace('\\"', '"').replace('\\\\', '\\') if '\\"' in html[start:i+1] else html[start:i+1]
+                    return json.loads(raw)
+                except: return None
+    return None
+
+def get_cricbuzz_data(url):
+    # ANTI-BOT HEADERS: Cricbuzz ko lagega ki ye asli Google Chrome hai
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.google.com/"
+    }
     try:
         res = requests.get(url, headers=headers, timeout=15)
-        match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', res.text, re.DOTALL)
+        html = res.text
+        
+        # Attempt 1: Next.js Data
+        match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.DOTALL)
         if match:
-            raw_json = match.group(1)
-            data = json.loads(raw_json)
-            return data.get("props", {}).get("pageProps", {}).get("page", {})
+            data = json.loads(match.group(1)).get("props", {}).get("pageProps", {}).get("page", {})
+            if data and "matchHeader" in data: return data, html
+            
+        # Attempt 2: Raw HTML Extraction (Hybrid)
+        m = extract_raw_json(html, "miniscore")
+        h = extract_raw_json(html, "matchHeader")
+        sc = extract_raw_json(html, "scoreCard")
+        
+        return {"miniscore": m or {}, "matchHeader": h or {}, "scoreCard": sc or []}, html
     except Exception as e:
-        print("Fetch Error:", e)
-    return {}
+        print("HTTP Fetch Error:", e, flush=True)
+        return {}, ""
 
 def get_playing_11(match_header, team_key):
     team_data = match_header.get(team_key, {})
@@ -37,20 +74,20 @@ def get_playing_11(match_header, team_key):
     return names[:11]
 
 def fetch_match_smart(match_url):
-    # 1. AUTO-URL CORRECTOR (MANDATORY) - Ye ab scorecard link ko khud scores me badal dega
-    live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/')
-    sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
+    # AUTO-URL CORRECTOR
+    live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
+    sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/').replace('/cricket-scores/', '/cricket-scorecard/')
     
-    # 2. Fetch Header & Miniscore
-    live_data = get_next_data(live_url)
+    live_data, _ = get_cricbuzz_data(live_url)
     m = live_data.get("miniscore", {})
     h = live_data.get("matchHeader", {})
     
-    # Failsafe
+    sc_data, _ = get_cricbuzz_data(sc_url)
+    full_sc = sc_data.get("scoreCard", [])
+    
     if not h:
-        sc_data_temp = get_next_data(sc_url)
-        h = sc_data_temp.get("matchHeader", {})
-        if not m: m = sc_data_temp.get("miniscore", {})
+        m = sc_data.get("miniscore", {})
+        h = sc_data.get("matchHeader", {})
         
     if not h: return None
 
@@ -61,30 +98,22 @@ def fetch_match_smart(match_url):
     batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2 = [], [], [], []
     extras_inn1, extras_inn2 = 0, 0
     
-    # 3. Fetch Scorecard Data
-    sc_data = get_next_data(sc_url)
-    full_sc = sc_data.get("scoreCard", [])
-    
     if isinstance(full_sc, list):
         for idx, inn in enumerate(full_sc):
             bat_card, bowl_card, fow_list, past_parts = [], [], [], []
             
-            bat_details = inn.get("batTeamDetails", {}).get("batsmenData", {})
-            for key, b in bat_details.items():
+            for key, b in inn.get("batTeamDetails", {}).get("batsmenData", {}).items():
                 out_desc = str(b.get("outDesc", "")).strip()
                 is_out = bool(out_desc and out_desc.lower() not in ['not out', 'batting'])
                 bat_card.append({"name": b.get("batName", "TBA"), "runs": int(b.get("runs", 0)), "balls": int(b.get("balls", 0)), "fours": int(b.get("fours", 0)), "sixes": int(b.get("sixes", 0)), "outDesc": out_desc, "isOut": is_out})
             
-            bowl_details = inn.get("bowlTeamDetails", {}).get("bowlersData", {})
-            for key, bw in bowl_details.items():
+            for key, bw in inn.get("bowlTeamDetails", {}).get("bowlersData", {}).items():
                 bowl_card.append({"name": bw.get("bowlName", "TBA"), "overs": float(bw.get("overs", 0)), "maidens": int(bw.get("maidens", 0)), "runs": int(bw.get("runs", 0)), "wickets": int(bw.get("wickets", 0))})
             
-            fow_details = inn.get("fowData", {})
-            for i, (key, f) in enumerate(fow_details.items()):
+            for i, (key, f) in enumerate(inn.get("fowData", {}).items()):
                 fow_list.append({"wktNo": i + 1, "score": f.get("score", 0), "overs": str(f.get("overs", "0.0")), "batterName": f.get("batName", "Unknown")})
                     
-            parts_details = inn.get("partnershipsData", {})
-            for key, p in parts_details.items():
+            for key, p in inn.get("partnershipsData", {}).items():
                 past_parts.append({"wktNo": p.get("wicketNum", 0), "bat1Name": p.get("bat1Name", ""), "bat1Runs": p.get("bat1Runs", 0), "bat2Name": p.get("bat2Name", ""), "bat2Runs": p.get("bat2Runs", 0), "totalRuns": p.get("totalRuns", 0), "totalBalls": p.get("totalBalls", 0)})
             
             extras_val = int(inn.get("extrasData", {}).get("total", 0))
@@ -92,8 +121,7 @@ def fetch_match_smart(match_url):
             if idx == 0: batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1, extras_inn1 = bat_card, bowl_card, fow_list, past_parts, extras_val
             elif idx == 1: batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2, extras_inn2 = bat_card, bowl_card, fow_list, past_parts, extras_val
 
-    match_state = str(h.get("state", ""))
-    is_complete = match_state == "Complete" or h.get("complete", False)
+    is_complete = str(h.get("state", "")) == "Complete" or h.get("complete", False)
     
     data = {
         "teamA": h.get("team1", {}).get("shortName", "TBA"), "teamB": h.get("team2", {}).get("shortName", "TBB"),
@@ -119,16 +147,14 @@ start_time = time.time()
 MAX_DURATION = 6 * 60 * 60
 last_url = ""
 
-print("Script Started! Starting infinite loop...", flush=True)
+print("Hybrid Script Started! Bypassing blocks...", flush=True)
 
 while time.time() - start_time < MAX_DURATION:
     try:
-        print("Checking Firebase for new URL...", flush=True)
         config_res = requests.get(f"{FIREBASE_URL}/auto_fetch_config.json", timeout=10)
         config_data = config_res.json()
         
         if not config_data or 'url' not in config_data:
-            print(f"No URL found in Firebase. Response: {config_data}", flush=True)
             time.sleep(15)
             continue
             
@@ -136,15 +162,15 @@ while time.time() - start_time < MAX_DURATION:
         if current_url != last_url:
             last_url = current_url
             requests.delete(f"{FIREBASE_URL}/current_match_auto.json") 
-            print(f"New Link Detected: {current_url}. Wiped old data!", flush=True)
+            print(f"\n[NEW LINK] Wiping old data for: {current_url}", flush=True)
             
         data = fetch_match_smart(current_url)
         if data:
             requests.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
-            print(f"Pushed: {data['teamA']} vs {data['teamB']} | Score: {data['score']}/{data['wickets']}", flush=True)
+            print(f"[SUCCESS] Pushed: {data['teamA']} vs {data['teamB']} | Score: {data['score']}/{data['wickets']}", flush=True)
         else:
-            print("No Match Data Found! Cricbuzz page might be empty or restricted.", flush=True)
+            print("[FAILED] Blocked by Cricbuzz or Invalid Link.", flush=True)
     except Exception as e: 
-        print(f"Loop Error: {e}", flush=True)
+        print(f"[ERROR] Loop Exception: {e}", flush=True)
     
     time.sleep(15)
