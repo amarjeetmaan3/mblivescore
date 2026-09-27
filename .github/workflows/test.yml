@@ -13,6 +13,7 @@ jobs:
           python-version: '3.11'
       - run: pip install requests
       - run: python scripts/test_fetch.py
+      - run: python scripts/debug_explore.py
         env:
           FIREBASE_DB_URL: ${{ secrets.FIREBASE_DB_URL }}
       - uses: actions/upload-artifact@v4
