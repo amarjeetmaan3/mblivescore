@@ -66,36 +66,53 @@ def get_cricbuzz_data(url, attempts=3):
 
 def get_playing_11(match_header, team_key):
     team_data = match_header.get(team_key, {})
+    team_id = str(team_data.get("id", ""))
     p_xi, squad = team_data.get("playingXI", ""), team_data.get("squad", "")
     names = []
+    players_meta = match_header.get("players", [])
 
-    def names_from_list_of_dicts(lst):
-        out = []
-        for item in lst:
+    def get_name(pid):
+        for p in players_meta:
+            if str(p.get("id")) == str(pid): return p.get("name") or p.get("shortName")
+        return None
+
+    # Step 1: Fetch from playingXI
+    if isinstance(p_xi, str) and p_xi.strip():
+        for pid in p_xi.split(','):
+            n = get_name(pid.strip())
+            if n and n not in names: names.append(n)
+    elif isinstance(p_xi, list):
+        for item in p_xi:
             if isinstance(item, dict):
-                nm = item.get("name") or item.get("fullName") or item.get("shortName")
-                if nm: out.append(nm)
-        return out
-
-    if isinstance(p_xi, str) and p_xi.strip(): names = [x.strip() for x in p_xi.split(',') if x.strip()]
-    elif isinstance(p_xi, list) and len(p_xi) > 0:
-        if isinstance(p_xi[0], dict): names = names_from_list_of_dicts(p_xi)
-        else:
-            for pid in p_xi:
-                for p in match_header.get("players", []):
-                    if str(p.get("id")) == str(pid):
-                        names.append(p.get("name") or p.get("shortName")); break
-
-    if not names:
-        if isinstance(squad, str) and squad.strip(): names = [x.strip() for x in squad.split(',') if x.strip()]
-        elif isinstance(squad, list) and len(squad) > 0:
-            if isinstance(squad[0], dict): names = names_from_list_of_dicts(squad)
+                n = item.get("name") or item.get("shortName")
+                if n and n not in names: names.append(n)
             else:
-                for pid in squad:
-                    for p in match_header.get("players", []):
-                        if str(p.get("id")) == str(pid):
-                            names.append(p.get("name") or p.get("shortName")); break
-    return names
+                n = get_name(item)
+                if n and n not in names: names.append(n)
+
+    # Step 2: Fallback to Squad if less than 11
+    if len(names) < 11:
+        if isinstance(squad, str) and squad.strip():
+            for pid in squad.split(','):
+                n = get_name(pid.strip())
+                if n and n not in names: names.append(n)
+        elif isinstance(squad, list):
+            for item in squad:
+                if isinstance(item, dict):
+                    n = item.get("name") or item.get("shortName")
+                    if n and n not in names: names.append(n)
+                else:
+                    n = get_name(item)
+                    if n and n not in names: names.append(n)
+
+    # Step 3: Ultimate Fallback to Metadata Match (If IDs were missing entirely)
+    if len(names) < 11:
+        for p in players_meta:
+            if str(p.get("teamId")) == team_id:
+                n = p.get("name") or p.get("shortName")
+                if n and n not in names: names.append(n)
+
+    return names[:15] # Supports up to 15 players for warmups/domestic
 
 def fetch_match_smart(match_url, sc_cache):
     live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
@@ -119,11 +136,8 @@ def fetch_match_smart(match_url, sc_cache):
     if not h: return None, combined_err or "no data"
 
     t1_id, t2_id = str(h.get("team1", {}).get("id", "")), str(h.get("team2", {}).get("id", ""))
-
     toss_res = h.get("tossResults", {})
     toss_winner = "A" if str(toss_res.get("tossWinnerId", "")) == t1_id else ("B" if str(toss_res.get("tossWinnerId", "")) == t2_id else "A")
-    match_format = str(h.get("matchFormat", "")).upper()
-    max_overs = 50 if match_format == "ODI" else (90 if match_format == "TEST" else (10 if match_format == "T10" else 20))
 
     bat_team_inn1 = "A"
     if isinstance(full_sc, list) and len(full_sc) > 0:
@@ -135,56 +149,58 @@ def fetch_match_smart(match_url, sc_cache):
     
     batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1 = [], [], [], []
     batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2 = [], [], [], []
-    inn1_details = {"score": 0, "wickets": 0, "overs": "0.0", "extras": {}, "extrasString": ""}
-    inn2_details = {"score": 0, "wickets": 0, "overs": "0.0", "extras": {}, "extrasString": ""}
+    inn1_details = {"score": 0, "wickets": 0, "overs": "0.0", "extras": 0, "extrasString": "", "totalString": ""}
+    inn2_details = {"score": 0, "wickets": 0, "overs": "0.0", "extras": 0, "extrasString": "", "totalString": ""}
+    
+    # Feature 1: Dynamic Max Overs Extraction
+    match_format = str(h.get("matchFormat", "")).upper()
+    max_overs = 50 if match_format == "ODI" else (90 if match_format == "TEST" else (10 if match_format == "T10" else 20))
 
     if isinstance(full_sc, list):
         for idx, inn in enumerate(full_sc):
             bat_card, bowl_card, fow_list, past_parts = [], [], [], []
             
-            # PERFECT BATTING CARD & DISMISSALS
+            # Update Max Overs if explicitly provided in scoreDetails
+            lim = inn.get("scoreDetails", {}).get("oversLimit")
+            if lim: max_overs = lim
+
             for key, b in inn.get("batTeamDetails", {}).get("batsmenData", {}).items():
                 out_desc = str(b.get("outDesc", "")).strip()
-                bat_card.append({
-                    "name": b.get("batName", "TBA"), "runs": int(b.get("runs", 0)), "balls": int(b.get("balls", 0)), 
-                    "fours": int(b.get("fours", 0)), "sixes": int(b.get("sixes", 0)), "outDesc": out_desc, "dismissalInfo": out_desc,
-                    "isOut": bool(out_desc and out_desc.lower() not in ['not out', 'batting', 'retired hurt'])
-                })
+                bat_card.append({ "name": b.get("batName", "TBA"), "runs": int(b.get("runs", 0)), "balls": int(b.get("balls", 0)), "fours": int(b.get("fours", 0)), "sixes": int(b.get("sixes", 0)), "outDesc": out_desc, "dismissalInfo": out_desc, "isOut": bool(out_desc and out_desc.lower() not in ['not out', 'batting', 'retired hurt']) })
                 
-            # PERFECT BOWLING CARD
             for key, bw in inn.get("bowlTeamDetails", {}).get("bowlersData", {}).items():
-                bowl_card.append({
-                    "name": bw.get("bowlName", "TBA"), "overs": float(bw.get("overs", 0)), "maidens": int(bw.get("maidens", 0)), 
-                    "runs": int(bw.get("runs", 0)), "wickets": int(bw.get("wickets", 0)), "wides": int(bw.get("wides", 0)),
-                    "noBalls": int(bw.get("no_balls", 0)), "economy": str(bw.get("economy", "0.0"))
-                })
+                bowl_card.append({ "name": bw.get("bowlName", "TBA"), "overs": float(bw.get("overs", 0)), "maidens": int(bw.get("maidens", 0)), "runs": int(bw.get("runs", 0)), "wickets": int(bw.get("wickets", 0)), "wides": int(bw.get("wides", 0)), "noBalls": int(bw.get("no_balls", 0)), "economy": str(bw.get("economy", "0.0")) })
                 
-            # FOW 
             for i, (key, f) in enumerate(inn.get("fowData", {}).items()):
                 fow_list.append({"wktNo": f.get("wicketNum") or (i + 1), "score": f.get("score", 0), "overs": str(f.get("overs", "0.0")), "batterName": f.get("batName", "Unknown")})
                 
-            # ALL PARTNERSHIPS
             for key, p in inn.get("partnershipsData", {}).items():
-                past_parts.append({
-                    "wktNo": p.get("wicketNum", 0), "bat1Name": p.get("bat1Name", ""), "bat1Runs": p.get("bat1Runs", 0), "bat1Balls": p.get("bat1Balls", 0),
-                    "bat2Name": p.get("bat2Name", ""), "bat2Runs": p.get("bat2Runs", 0), "bat2Balls": p.get("bat2Balls", 0),
-                    "totalRuns": p.get("totalRuns", 0), "totalBalls": p.get("totalBalls", 0)
-                })
+                past_parts.append({ "wktNo": p.get("wicketNum", 0), "bat1Name": p.get("bat1Name", ""), "bat1Runs": p.get("bat1Runs", 0), "bat1Balls": p.get("bat1Balls", 0), "bat2Name": p.get("bat2Name", ""), "bat2Runs": p.get("bat2Runs", 0), "bat2Balls": p.get("bat2Balls", 0), "totalRuns": p.get("totalRuns", 0), "totalBalls": p.get("totalBalls", 0) })
 
-            # TOTAL & EXTRAS FOR BOTTOM STRIP
             score_det = inn.get("scoreDetails", {})
             extras_det = inn.get("extrasData", {})
-            ex_total = extras_det.get("total", 0)
-            ex_b = extras_det.get("byes", 0)
-            ex_lb = extras_det.get("legByes", 0)
-            ex_w = extras_det.get("wides", 0)
-            ex_nb = extras_det.get("noBalls", 0)
-            ex_p = extras_det.get("penalty", 0)
+            ex_total, ex_b, ex_lb, ex_w, ex_nb, ex_p = extras_det.get("total", 0), extras_det.get("byes", 0), extras_det.get("legByes", 0), extras_det.get("wides", 0), extras_det.get("noBalls", 0), extras_det.get("penalty", 0)
             
+            # Feature 3 & 4: Active Partnership Injection (Fixes Undefined and Second Wicket issue)
+            inn_bat_id = str(inn.get("batTeamDetails", {}).get("batTeamId", ""))
+            active_bat_id = str(m.get("batTeam", {}).get("teamId", ""))
+            if inn_bat_id == active_bat_id:
+                curr_wkt = score_det.get("wickets", 0) + 1 # Strict math logic: 0 wickets = 1st Wicket
+                active_p = {
+                    "wktNo": curr_wkt, "bat1Name": m.get("batsmanStriker", {}).get("name", "—"), "bat1Runs": m.get("batsmanStriker", {}).get("runs", 0), "bat1Balls": m.get("batsmanStriker", {}).get("balls", 0),
+                    "bat2Name": m.get("batsmanNonStriker", {}).get("name", "—"), "bat2Runs": m.get("batsmanNonStriker", {}).get("runs", 0), "bat2Balls": m.get("batsmanNonStriker", {}).get("balls", 0),
+                    "totalRuns": m.get("partnerShip", {}).get("runs", 0), "totalBalls": m.get("partnerShip", {}).get("balls", 0)
+                }
+                existing = next((p for p in past_parts if p['wktNo'] == curr_wkt), None)
+                if existing: past_parts[past_parts.index(existing)] = active_p
+                else: past_parts.append(active_p)
+
+            # Feature 5: Extras & Total Strings
             details = {
                 "score": score_det.get("runs", 0), "wickets": score_det.get("wickets", 0), "overs": str(score_det.get("overs", "0.0")),
-                "extras": {"total": ex_total, "byes": ex_b, "legByes": ex_lb, "wides": ex_w, "noBalls": ex_nb, "penalty": ex_p},
-                "extrasString": f"{ex_total} (b {ex_b}, lb {ex_lb}, w {ex_w}, nb {ex_nb}, p {ex_p})"
+                "extras": ex_total,
+                "extrasString": f"Extras: {ex_total} (b {ex_b}, lb {ex_lb}, w {ex_w}, nb {ex_nb}, p {ex_p})",
+                "totalString": f"TOTAL: {score_det.get('runs', 0)}/{score_det.get('wickets', 0)} ({str(score_det.get('overs', '0.0'))} Overs)"
             }
 
             if idx == 0: 
@@ -216,7 +232,7 @@ def fetch_match_smart(match_url, sc_cache):
 start_time = time.time()
 last_url = ""
 sc_cache = {}
-print("Cricbuzz fetcher started (Full 1st Innings Data Extraction)...", flush=True)
+print("Cricbuzz Auto-Fetcher (Broadcast Edition) Started...", flush=True)
 
 while time.time() - start_time < 6 * 60 * 60:
     try:
