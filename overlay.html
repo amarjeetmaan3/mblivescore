@@ -570,12 +570,12 @@ onValue(ref(db, "current_match"), snap => {
               const oversLeft = state.meta.maxOvers - (state.legalBalls / 6); let crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
               document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2); document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
               let base = Math.max(6, Math.floor(crrNum)); if(base % 2 !== 0) base -= 1; 
-              [1,2,3].forEach(i => { let r = base + (i-1)*2; document.getElementById(`projR${i}LinnerText`).innerText = r.toFixed(1); document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft)); });
+              [1,2,3].forEach(i => { let r = base + (i-1)*2; document.getElementById(`projR${i}L`).innerText = r.toFixed(1); document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft)); });
           } else {
               elInns1.style.display = 'none'; document.getElementById('projInns2').style.display = 'block'; document.getElementById('projTitle').innerText = 'MATCH EQUATION';
-              const needed = Math.max(0, state.target - state.score); const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls); const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0;
+              const needed = Math.max(0, state.target - state.score); const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls); const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0; const crr = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
               document.getElementById('projNeed').innerText = `${batTeamName} NEED ${needed} RUNS FROM ${ballsLeft} BALLS`;
-              document.getElementById('projTargetVal').innerText = state.target || 0; document.getElementById('projCrrInns2').innerText = crr; document.getElementById('projRrrInns2').innerText = rrr.toFixed(2);
+              document.getElementById('projTargetVal').innerText = state.target || 0; document.getElementById('projCrrInns2').innerText = crr.toFixed(2); document.getElementById('projRrrInns2').innerText = rrr.toFixed(2);
           }
       }
   }
