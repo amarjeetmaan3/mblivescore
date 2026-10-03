@@ -145,7 +145,7 @@ def fetch_match_smart(match_url, sc_cache):
 
     toss_res = h.get("tossResults", {})
     toss_winner = "A" if str(toss_res.get("tossWinnerId", "")) == t1_id else ("B" if str(toss_res.get("tossWinnerId", "")) == t2_id else "A")
-    match_format = str(h.get("matchFormat", "")).upper()
+    match_format = str(h.get("matchFormat", "")).strip().upper()
     default_max_overs = 50 if match_format == "ODI" else (90 if match_format == "TEST" else (10 if match_format == "T10" else 20))
     # Local/custom-overs matches (40, 45, 60 overs etc.) aren't covered by the standard
     # format labels above — try to spot a number-of-overs mention in the match text first.
