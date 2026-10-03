@@ -72,8 +72,20 @@ for label, url in URLS.items():
         print("\n-- matchHeader --")
         if h:
             print("keys:", list(h.keys()))
+            if h.get("matchTeamInfo") is not None:
+                print("\n-- matchHeader.matchTeamInfo (likely holds Playing XI) --")
+                summarize({"matchTeamInfo": h["matchTeamInfo"]}, max_depth=3)
         else:
             print("NOT FOUND on this page")
+
+        # Grab raw text around each "playingXI" mention so we can see its exact
+        # surrounding key/structure even if it's not nested under matchHeader.
+        pxi_positions = [i for i in range(len(html)) if html.startswith("playingXI", i)]
+        if pxi_positions:
+            print(f"\n-- raw context around 'playingXI' ({len(pxi_positions)} hits, showing first 3) --")
+            for p in pxi_positions[:3]:
+                snippet = html[max(0, p - 80):p + 400]
+                print(f"  ...{snippet}...\n")
 
         print("\n-- scoreCard --")
         if sc:
