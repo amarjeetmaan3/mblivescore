@@ -390,6 +390,9 @@ window.syncCricbuzzToLive = function() {
         state.firstInnings.pastPartnerships = autoMatchData.pastParts_inn1 || []; 
         state.firstInnings.extras = (autoMatchData.inn1_details && autoMatchData.inn1_details.extras && autoMatchData.inn1_details.extras.total) || 0;
         state.firstInnings.overHistory = autoMatchData.overHistory_inn1 || [];
+        state.firstInnings.score = (autoMatchData.inn1_details && autoMatchData.inn1_details.score) || 0;
+        state.firstInnings.wickets = (autoMatchData.inn1_details && autoMatchData.inn1_details.wickets) || 0;
+        state.firstInnings.legalBalls = (function(ov){ ov = ov || 0; const oI = Math.floor(ov); return oI * 6 + Math.round((ov - oI) * 10); })(autoMatchData.inn1_details && autoMatchData.inn1_details.overs);
 
         let batCardA = bat1 === 'A' ? autoMatchData.battingCard_inn1 : autoMatchData.battingCard_inn2;
         let bowlCardA = bowl1 === 'A' ? autoMatchData.bowlingCard_inn1 : autoMatchData.bowlingCard_inn2;
