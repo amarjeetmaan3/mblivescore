@@ -5,6 +5,12 @@ URLS = {
     "SCORECARD": "https://www.cricbuzz.com/live-cricket-scorecard/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026",
     "SQUADS":    "https://www.cricbuzz.com/cricket-match-squads/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026",
     "OVERS":     "https://www.cricbuzz.com/live-cricket-over-by-over/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026",
+    "GRAPH_WORM":     "https://www.cricbuzz.com/live-cricket-graphs/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026?graph=worm",
+    "GRAPH_OVERS":    "https://www.cricbuzz.com/live-cricket-graphs/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026?graph=overs",
+    "GRAPH_RUNRATE":  "https://www.cricbuzz.com/live-cricket-graphs/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026?graph=run_rate",
+    "GRAPH_PARTNERSHIPS": "https://www.cricbuzz.com/live-cricket-graphs/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026?graph=partnerships",
+    "GRAPH_BALLMAP":  "https://www.cricbuzz.com/live-cricket-graphs/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026?graph=ball_map",
+    "GRAPH_WINPROB":  "https://www.cricbuzz.com/live-cricket-graphs/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026?graph=win_probability",
 }
 
 HEADERS = {
