@@ -2,9 +2,9 @@ import requests, json
 
 # Same match, three different tabs
 URLS = {
-    "SCORECARD": "https://www.cricbuzz.com/live-cricket-scorecard/151532/ind-vs-wi-1st-odi-west-indies-tour-of-india-2026",
-    "SQUADS":    "https://www.cricbuzz.com/cricket-match-squads/151532/ind-vs-wi-1st-odi-west-indies-tour-of-india-2026",
-    "OVERS":     "https://www.cricbuzz.com/live-cricket-over-by-over/151532/ind-vs-wi-1st-odi-west-indies-tour-of-india-2026",
+    "SCORECARD": "https://www.cricbuzz.com/live-cricket-scorecard/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026",
+    "SQUADS":    "https://www.cricbuzz.com/cricket-match-squads/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026",
+    "OVERS":     "https://www.cricbuzz.com/live-cricket-over-by-over/151554/ind-vs-wi-3rd-odi-west-indies-tour-of-india-2026",
 }
 
 HEADERS = {
