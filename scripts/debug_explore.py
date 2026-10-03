@@ -78,25 +78,37 @@ for label, url in URLS.items():
         else:
             print("NOT FOUND on this page")
 
-        # "playingXI" itself turned out to be a small per-player field, not the
-        # squad list. Anchor on a real player object instead ("captain":true/false
-        # appears on every squad entry) and show a LARGE before-context so we can
-        # see the actual array/key name that wraps the player list.
-        anchor = '"captain":'
-        apos = html.find(anchor)
-        if apos != -1:
-            print(f"\n-- large context BEFORE first '{anchor}' (to find the enclosing key/array name) --")
-            print(html[max(0, apos - 900):apos + 200])
+        # Previous attempt searched for `"captain":` but the real text has escaped
+        # quotes (\"captain\":), so it never matched. Use a bare word instead —
+        # that matches regardless of escaping — anchored on a name we know is in
+        # this page's squad list.
+        for anchor in ["Rohit Sharma", "captain"]:
+            apos = html.find(anchor)
+            if apos != -1:
+                print(f"\n-- context BEFORE first '{anchor}' (to find the enclosing key/array name) --")
+                print(html[max(0, apos - 700):apos + 150])
+                break
+        else:
+            print("\n-- could not find 'Rohit Sharma' or 'captain' anywhere on this page --")
 
         print("\n-- broader keyword scan for squad / overs / ball-by-ball candidates --")
-        for kw in ["squadDetails", "squadPlayers", "playing11", "squads\":", "team1Players",
+        for kw in ["squadDetails", "squadPlayers", "playing11", "squads", "team1Players",
                    "matchSquad", "commentaryList", "commentaryAllList", "ballByBall",
-                   "overSep", "oversList", "timeline", "miniBall", "commEvents"]:
+                   "overSep", "oversList", "timeline", "miniBall", "commEvents",
+                   "commText", "shortText", "inningsId"]:
             cnt = html.count(kw)
             if cnt > 0:
                 print(f"  '{kw}': found {cnt} times  <-- LOOK AT THIS ONE")
                 p = html.find(kw)
                 print(f"     context: ...{html[max(0,p-120):p+250]}...")
+
+        # Last resort for pages where nothing above matched: dump a couple of raw
+        # chunks so we can eyeball the structure directly.
+        if label == "OVERS":
+            print("\n-- raw chunk @ 30000-31500 (manual inspection) --")
+            print(html[30000:31500])
+            print("\n-- raw chunk @ 150000-151500 (manual inspection) --")
+            print(html[150000:151500])
 
         print("\n-- scoreCard --")
         if sc:
