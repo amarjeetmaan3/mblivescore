@@ -190,21 +190,20 @@ def fetch_match_smart(match_url, sc_cache):
                     "noBalls": int(bw.get("no_balls", 0)), "economy": str(bw.get("economy", "0.0"))
                 })
                 
-            # FOW — Cricbuzz's exact key/shape for this varies, so try known variants
-            # and accept either a dict-of-objects or a plain list.
-            fow_raw = inn.get("fowData") or inn.get("fallOfWickets") or inn.get("fow") or {}
-            fow_entries = list(fow_raw.values()) if isinstance(fow_raw, dict) else (fow_raw if isinstance(fow_raw, list) else [])
-            for i, f in enumerate(fow_entries):
+            # FOW — confirmed real structure: inn["wicketsData"] = {"wkt_1": {...}, "wkt_2": {...}, ...}
+            # with fields batId, batName, wktOver, wktRuns, ballNbr, wktNbr.
+            for key, f in inn.get("wicketsData", {}).items():
                 if not isinstance(f, dict): continue
-                fow_list.append({"wktNo": f.get("wicketNum") or (i + 1), "score": f.get("score", 0), "overs": str(f.get("overs", "0.0")), "batterName": f.get("batName", "Unknown")})
-                
-            # ALL PARTNERSHIPS — field names below match what overlay.html actually reads
-            # (p1Name/p2Name/runs/balls), not Cricbuzz's own bat1Name/totalRuns names.
+                fow_list.append({"wktNo": f.get("wktNbr", 0), "score": f.get("wktRuns", 0), "overs": str(f.get("wktOver", "0.0")), "batterName": f.get("batName", "Unknown")})
+            fow_list.sort(key=lambda x: x["wktNo"])
+
+            # ALL PARTNERSHIPS — confirmed field names: bat1Name/bat1Runs/bat2Name/bat2Runs/
+            # totalRuns/totalBalls (no per-batsman ball counts are provided by Cricbuzz here).
             for key, p in inn.get("partnershipsData", {}).items():
                 past_parts.append({
-                    "wktNo": p.get("wicketNum", 0),
-                    "p1Name": p.get("bat1Name", ""), "p1Runs": p.get("bat1Runs", 0), "p1Balls": p.get("bat1Balls", 0),
-                    "p2Name": p.get("bat2Name", ""), "p2Runs": p.get("bat2Runs", 0), "p2Balls": p.get("bat2Balls", 0),
+                    "wktNo": p.get("wktNbr", 0),
+                    "p1Name": p.get("bat1Name", ""), "p1Runs": p.get("bat1Runs", 0), "p1Balls": 0,
+                    "p2Name": p.get("bat2Name", ""), "p2Runs": p.get("bat2Runs", 0), "p2Balls": 0,
                     "runs": p.get("totalRuns", 0), "balls": p.get("totalBalls", 0)
                 })
             # Cricbuzz includes the still-unbroken partnership as an extra entry, which
@@ -280,3 +279,4 @@ while time.time() - start_time < 6 * 60 * 60:
             push_status(False, err)
     except Exception as e: push_status(False, f"script error: {e}")
     time.sleep(4)
+    
