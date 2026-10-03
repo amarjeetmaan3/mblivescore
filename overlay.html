@@ -136,6 +136,23 @@
   .squad-player .idx { color: var(--muted); font-size: 26px; width: 50px; font-weight: 800; }
 
   #graphic-part { width: 1400px; top: 18%; }
+  #graphic-main { width: 1300px; padding: 30px 50px; }
+  .main-team-row { display:flex; justify-content:space-between; align-items:baseline; border-bottom: 2px solid var(--gold); padding-bottom: 14px; margin-bottom: 18px; }
+  .main-team-name { font-family:'Bebas Neue',sans-serif; font-size: 48px; color: var(--gold-2); letter-spacing: 1px; }
+  .main-score-line { font-family:'Bebas Neue',sans-serif; font-size: 72px; font-weight: 900; color: #fff; display:flex; align-items:baseline; gap: 14px; }
+  .main-overs { font-size: 28px; color: var(--gold-2); font-weight: 400; }
+  .main-batsmen-row { display:flex; justify-content: space-around; margin-bottom: 14px; }
+  .main-bat-block { text-align:center; }
+  .main-bat-name { font-size: 24px; font-weight:700; color:#fff; }
+  .main-bat-score { font-size: 30px; font-weight:900; color: var(--gold-2); }
+  .main-bowler-row { text-align:center; font-size: 22px; color:#dbe2ea; margin-bottom: 8px; }
+  .main-bowler-figs { margin-left:10px; font-weight:900; color:#fff; }
+  .main-lastwkt-row { text-align:center; font-size: 18px; color: var(--crimson-2); margin-bottom: 16px; }
+  .main-stats-row { display:flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 14px; flex-wrap: wrap; gap: 10px; }
+  .main-stat { text-align:center; }
+  .main-stat-label { display:block; font-size: 13px; color:#9fb0c3; letter-spacing: 1px; }
+  .main-stat-val { display:block; font-size: 24px; font-weight:900; color:#fff; }
+
   .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 35px 50px; }
   .part-player { text-align: center; flex: 1; }
   .part-name { font-size: 48px; font-weight: 800; color: var(--ink); }
@@ -250,6 +267,33 @@
           <div class="squad-team-name" id="sqTeam2Name">TEAM 2</div>
           <div class="squad-list" id="sqTeam2List"></div>
         </div>
+      </div>
+    </div>
+
+    <div class="center-panel" id="graphic-main">
+      <div id="mainLiveView">
+        <div class="main-team-row">
+          <div class="main-team-name" id="mainTeamName">TEAM</div>
+          <div class="main-score-line"><span id="mainScoreVal">0/0</span><span class="main-overs" id="mainOversVal">(0.0 OV)</span></div>
+        </div>
+        <div class="main-batsmen-row">
+          <div class="main-bat-block"><div class="main-bat-name" id="mainBat1Name">—</div><div class="main-bat-score" id="mainBat1Score">0 (0)</div></div>
+          <div class="main-bat-block"><div class="main-bat-name" id="mainBat2Name">—</div><div class="main-bat-score" id="mainBat2Score">0 (0)</div></div>
+        </div>
+        <div class="main-bowler-row">BOWLING: <span id="mainBowlerName">—</span><span class="main-bowler-figs" id="mainBowlerFigs">0-0-0</span></div>
+        <div class="main-lastwkt-row" id="mainLastWkt">LAST WKT: —</div>
+        <div class="main-stats-row">
+          <div class="main-stat"><span class="main-stat-label">PARTNERSHIP</span><span class="main-stat-val" id="mainPartnership">0 (0)</span></div>
+          <div class="main-stat" id="mainCrrOnlyBlock"><span class="main-stat-label">CRR</span><span class="main-stat-val" id="mainCRROnly">0.00</span></div>
+          <div class="main-stat" id="mainTargetStat" style="display:none;"><span class="main-stat-label">TARGET</span><span class="main-stat-val" id="mainTarget">0</span></div>
+          <div class="main-stat" id="mainCrrStat" style="display:none;"><span class="main-stat-label">CRR</span><span class="main-stat-val" id="mainCRR">0.00</span></div>
+          <div class="main-stat" id="mainRrrStat" style="display:none;"><span class="main-stat-label">RRR</span><span class="main-stat-val" id="mainRRR">0.00</span></div>
+          <div class="main-stat" id="mainNeedStat" style="display:none;"><span class="main-stat-label">NEED</span><span class="main-stat-val" id="mainNeed">0 off 0</span></div>
+        </div>
+      </div>
+      <div id="mainRecallView" style="display:none; text-align:center; padding: 50px 30px;">
+        <div class="main-team-name" id="mainRecallTeamName" style="font-size:52px;">TEAM</div>
+        <div class="main-score-line" style="justify-content:center; font-size:90px;"><span id="mainRecallScoreVal">0/0</span><span class="main-overs" id="mainRecallOversVal">(0.0 OV)</span></div>
       </div>
     </div>
 
@@ -445,7 +489,7 @@ onValue(ref(db, "current_match"), snap => {
       document.getElementById('bottomStripText').style.color = "var(--ink)";
   }
 
-  const panels = ['part', 'allpart', 'bat', 'bowl', 'fow', 'singlePlayer', 'squads', 'proj', 'chart', 'worm'];
+  const panels = ['main', 'part', 'allpart', 'bat', 'bowl', 'fow', 'singlePlayer', 'squads', 'proj', 'chart', 'worm'];
   panels.forEach(p => { 
       let el = document.getElementById(`graphic-${p}`);
       if(el) el.classList.remove('show'); 
@@ -470,6 +514,62 @@ onValue(ref(db, "current_match"), snap => {
 
   document.getElementById('ovTeam').innerText = actBatTeamName;
   document.getElementById('ovBowlTeam').innerText = bowlTeamName;
+
+  if(renderTarget === 'main') {
+    if(isRecall) {
+      document.getElementById('mainLiveView').style.display = 'none';
+      document.getElementById('mainRecallView').style.display = 'block';
+      document.getElementById('mainRecallTeamName').innerText = actBatTeamName;
+      document.getElementById('mainRecallScoreVal').innerText = `${actScore}/${actWickets}`;
+      document.getElementById('mainRecallOversVal').innerText = `(${fmtOvers(actBalls)} OV)`;
+    } else {
+      document.getElementById('mainLiveView').style.display = 'block';
+      document.getElementById('mainRecallView').style.display = 'none';
+      document.getElementById('mainTeamName').innerText = actBatTeamName;
+      document.getElementById('mainScoreVal').innerText = `${state.score}/${state.wickets}`;
+      document.getElementById('mainOversVal').innerText = `(${fmtOvers(state.legalBalls)} OV)`;
+
+      const strikerObj = (actSquads[actBatTeam]||[]).find(p => p.id === state.striker);
+      const nonStrikerObj = (actSquads[actBatTeam]||[]).find(p => p.id === state.nonStriker);
+      document.getElementById('mainBat1Name').innerText = strikerObj ? `${strikerObj.name} *` : '—';
+      document.getElementById('mainBat1Score').innerText = strikerObj ? `${strikerObj.runs} (${strikerObj.balls})` : '0 (0)';
+      document.getElementById('mainBat2Name').innerText = nonStrikerObj ? nonStrikerObj.name : '—';
+      document.getElementById('mainBat2Score').innerText = nonStrikerObj ? `${nonStrikerObj.runs} (${nonStrikerObj.balls})` : '0 (0)';
+
+      const bowlerObj = (actSquads[actBowlTeam]||[]).find(p => p.id === state.bowler);
+      const bStats = state.bowlerStats[state.bowler] || {};
+      document.getElementById('mainBowlerName').innerText = bowlerObj ? bowlerObj.name : '—';
+      document.getElementById('mainBowlerFigs').innerText = `${fmtOvers(bStats.balls||0)}-${bStats.runs||0}-${bStats.wickets||0}`;
+
+      const lastW = (state.fow && state.fow.length) ? state.fow[state.fow.length - 1] : null;
+      document.getElementById('mainLastWkt').innerText = lastW ? `LAST WKT: ${lastW.batterName} — ${lastW.score}-${lastW.wktNo} (${lastW.overs} OV)` : 'LAST WKT: —';
+
+      document.getElementById('mainPartnership').innerText = `${state.partnership.runs} (${state.partnership.balls})`;
+
+      const crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
+      if(state.innings === 2 && state.target != null) {
+        const needed = Math.max(0, state.target - state.score);
+        const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls);
+        const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0;
+        document.getElementById('mainCrrOnlyBlock').style.display = 'none';
+        document.getElementById('mainTargetStat').style.display = 'block';
+        document.getElementById('mainCrrStat').style.display = 'block';
+        document.getElementById('mainRrrStat').style.display = 'block';
+        document.getElementById('mainNeedStat').style.display = 'block';
+        document.getElementById('mainTarget').innerText = state.target;
+        document.getElementById('mainCRR').innerText = crrNum.toFixed(2);
+        document.getElementById('mainRRR').innerText = rrr.toFixed(2);
+        document.getElementById('mainNeed').innerText = `${needed} off ${ballsLeft}`;
+      } else {
+        document.getElementById('mainCrrOnlyBlock').style.display = 'block';
+        document.getElementById('mainTargetStat').style.display = 'none';
+        document.getElementById('mainCrrStat').style.display = 'none';
+        document.getElementById('mainRrrStat').style.display = 'none';
+        document.getElementById('mainNeedStat').style.display = 'none';
+        document.getElementById('mainCRROnly').innerText = crrNum.toFixed(2);
+      }
+    }
+  }
 
   if(renderTarget === 'singlePlayer' && g.singlePlayer) {
       let pObj = (actSquads.A||[]).find(x => x.id === g.singlePlayer.id) || (actSquads.B||[]).find(x => x.id === g.singlePlayer.id);
