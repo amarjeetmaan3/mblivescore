@@ -132,6 +132,12 @@ def fetch_match_smart(match_url, sc_cache):
     full_sc = sc_data.get("scoreCard", [])
 
     if not h: m, h = sc_data.get("miniscore", {}), sc_data.get("matchHeader", {})
+    # Fill gaps field-by-field from the scorecard page's matchHeader (e.g. matchFormat
+    # sometimes only appears on one of the two pages) instead of an all-or-nothing swap.
+    sc_h = sc_data.get("matchHeader", {}) or {}
+    for k, v in sc_h.items():
+        if not h.get(k) and v:
+            h[k] = v
     combined_err = live_err or sc_err
     if not h: return None, combined_err or "no data"
 
@@ -143,7 +149,7 @@ def fetch_match_smart(match_url, sc_cache):
     default_max_overs = 50 if match_format == "ODI" else (90 if match_format == "TEST" else (10 if match_format == "T10" else 20))
     # Local/custom-overs matches (40, 45, 60 overs etc.) aren't covered by the standard
     # format labels above — try to spot a number-of-overs mention in the match text first.
-    desc_text = f"{h.get('matchDescription', '')} {h.get('seriesName', '')}"
+    desc_text = f"{h.get('matchDesc', '')} {h.get('matchDescription', '')} {h.get('seriesName', '')}"
     custom_overs = re.search(r'(\d+)\s*-?\s*overs?\b', desc_text, re.IGNORECASE)
     max_overs = int(custom_overs.group(1)) if (custom_overs and match_format not in ("ODI", "TEST", "T10")) else default_max_overs
 
