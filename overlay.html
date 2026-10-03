@@ -136,22 +136,22 @@
   .squad-player .idx { color: var(--muted); font-size: 26px; width: 50px; font-weight: 800; }
 
   #graphic-part { width: 1400px; top: 18%; }
-  #graphic-main { width: 1300px; padding: 30px 50px; }
-  .main-team-row { display:flex; justify-content:space-between; align-items:baseline; border-bottom: 2px solid var(--gold); padding-bottom: 14px; margin-bottom: 18px; }
-  .main-team-name { font-family:'Bebas Neue',sans-serif; font-size: 48px; color: var(--gold-2); letter-spacing: 1px; }
-  .main-score-line { font-family:'Bebas Neue',sans-serif; font-size: 72px; font-weight: 900; color: #fff; display:flex; align-items:baseline; gap: 14px; }
-  .main-overs { font-size: 28px; color: var(--gold-2); font-weight: 400; }
-  .main-batsmen-row { display:flex; justify-content: space-around; margin-bottom: 14px; }
-  .main-bat-block { text-align:center; }
-  .main-bat-name { font-size: 24px; font-weight:700; color:#fff; }
-  .main-bat-score { font-size: 30px; font-weight:900; color: var(--gold-2); }
-  .main-bowler-row { text-align:center; font-size: 22px; color:#dbe2ea; margin-bottom: 8px; }
-  .main-bowler-figs { margin-left:10px; font-weight:900; color:#fff; }
-  .main-lastwkt-row { text-align:center; font-size: 18px; color: var(--crimson-2); margin-bottom: 16px; }
-  .main-stats-row { display:flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 14px; flex-wrap: wrap; gap: 10px; }
-  .main-stat { text-align:center; }
-  .main-stat-label { display:block; font-size: 13px; color:#9fb0c3; letter-spacing: 1px; }
-  .main-stat-val { display:block; font-size: 24px; font-weight:900; color:#fff; }
+  #graphic-main { width: 1650px; top: 32%; padding: 44px 64px 40px; border-width: 4px; }
+  .main-team-row { display:flex; justify-content:space-between; align-items:center; border-bottom: 3px solid var(--gold); padding-bottom: 22px; margin-bottom: 28px; }
+  .main-team-name { font-family:'Bebas Neue',sans-serif; font-size: 72px; color: var(--gold-2); letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+  .main-score-line { font-family:'Bebas Neue',sans-serif; font-size: 118px; line-height: 1; font-weight: 900; color: #fff; display:flex; align-items:baseline; gap: 20px; text-shadow: 0 4px 14px rgba(0,0,0,0.6); }
+  .main-overs { font-size: 38px; color: var(--gold-2); font-weight: 400; }
+  .main-batsmen-row { display:flex; justify-content: space-around; margin-bottom: 26px; gap: 20px; }
+  .main-bat-block { text-align:center; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 14px 34px; flex:1; border: 1px solid rgba(255,255,255,0.1); }
+  .main-bat-name { font-size: 34px; font-weight:800; color:#fff; font-family:'Rajdhani',sans-serif; letter-spacing: 0.5px; }
+  .main-bat-score { font-size: 46px; font-weight:900; color: var(--gold-2); font-family:'Bebas Neue',sans-serif; margin-top: 4px; }
+  .main-bowler-row { text-align:center; font-size: 32px; color:#dbe2ea; margin-bottom: 14px; font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing: 1px; }
+  .main-bowler-figs { margin-left:16px; font-weight:900; color:#fff; font-size: 36px; font-family:'Bebas Neue',sans-serif; }
+  .main-lastwkt-row { text-align:center; font-size: 26px; color: var(--crimson-2); margin-bottom: 26px; font-weight: 700; }
+  .main-stats-row { display:flex; justify-content: space-around; border-top: 2px solid rgba(255,255,255,0.18); padding-top: 24px; flex-wrap: wrap; gap: 16px; }
+  .main-stat { text-align:center; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 10px 26px; min-width: 140px; }
+  .main-stat-label { display:block; font-size: 17px; color:#9fb0c3; letter-spacing: 1.5px; font-weight:700; }
+  .main-stat-val { display:block; font-size: 38px; font-weight:900; color:#fff; font-family:'Bebas Neue',sans-serif; margin-top: 2px; }
 
   .part-flex { display: flex; align-items: center; justify-content: space-between; padding: 35px 50px; }
   .part-player { text-align: center; flex: 1; }
@@ -291,9 +291,9 @@
           <div class="main-stat" id="mainNeedStat" style="display:none;"><span class="main-stat-label">NEED</span><span class="main-stat-val" id="mainNeed">0 off 0</span></div>
         </div>
       </div>
-      <div id="mainRecallView" style="display:none; text-align:center; padding: 50px 30px;">
-        <div class="main-team-name" id="mainRecallTeamName" style="font-size:52px;">TEAM</div>
-        <div class="main-score-line" style="justify-content:center; font-size:90px;"><span id="mainRecallScoreVal">0/0</span><span class="main-overs" id="mainRecallOversVal">(0.0 OV)</span></div>
+      <div id="mainRecallView" style="display:none; text-align:center; padding: 60px 30px;">
+        <div class="main-team-name" id="mainRecallTeamName" style="font-size:72px;">TEAM</div>
+        <div class="main-score-line" style="justify-content:center; font-size:130px; margin-top:14px;"><span id="mainRecallScoreVal">0/0</span><span class="main-overs" id="mainRecallOversVal">(0.0 OV)</span></div>
       </div>
     </div>
 
