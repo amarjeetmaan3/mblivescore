@@ -541,8 +541,11 @@ onValue(ref(db, "current_match"), snap => {
         el.innerText = `${actBatTeamName} BATTING SCORECARD${isRecall?' (1ST INN)':''}`;
         document.getElementById('batTableBody').innerHTML = (actSquads[actBatTeam]||[]).map(p => {
           let status = '<span class="sc-status">Yet to bat</span>', style="";
+          const retiredFlag = p.isRetired || ((p.dismissalInfo||p.outDesc||'').toLowerCase().includes('retire'));
           if(!isRecall && (p.id === state.striker || p.id === state.nonStriker)) { status = '<span class="sc-notout">Not Out</span>'; style="background:rgba(255,255,255,0.05);"; }
           else if(p.isOut) status = `<span class="sc-status">${p.dismissalInfo || 'Out'}</span>`;
+          else if(retiredFlag) status = '<span class="sc-status">Retired</span>';
+          else if(isRecall && (p.balls > 0 || p.runs > 0)) status = '<span class="sc-notout">Not Out</span>';
           else if(p.balls > 0 || p.runs > 0) status = '<span class="sc-status">Retired</span>';
           return `<tr style="${style}"><td>${p.name}</td><td>${status}</td><td>${p.runs}</td><td>${p.balls}</td><td>${p.fours}</td><td>${p.sixes}</td></tr>`;
         }).join('');
@@ -554,10 +557,17 @@ onValue(ref(db, "current_match"), snap => {
     let el = document.getElementById('bowlTitle');
     if(el) {
         el.innerText = `${actBowlTeam === 'A' ? state.meta.tA : state.meta.tB} BOWLING SCORECARD${isRecall?' (1ST INN)':''}`;
-        document.getElementById('bowlTableBody').innerHTML = (actSquads[actBowlTeam]||[]).filter(p => actBStats[p.id]).map(p => {
-          const s = actBStats[p.id]; const econ = s.balls > 0 ? ((s.runs / s.balls) * 6).toFixed(1) : "0.0";
-          return `<tr><td>${p.name}</td><td>${fmtOvers(s.balls)}</td><td>${s.maidens||0}</td><td>${s.runs}</td><td style="color:var(--gold-2); font-weight:700;">${s.wickets}</td><td>${s.dots||0}</td><td>${econ}</td></tr>`;
-        }).join('');
+        if(isRecall) {
+          document.getElementById('bowlTableBody').innerHTML = (actSquads[actBowlTeam]||[]).filter(p => p.overs !== undefined).map(p => {
+            const econ = p.overs > 0 ? (p.runs / p.overs).toFixed(1) : "0.0";
+            return `<tr><td>${p.name}</td><td>${p.overs}</td><td>${p.maidens||0}</td><td>${p.runs}</td><td style="color:var(--gold-2); font-weight:700;">${p.wickets}</td><td>-</td><td>${econ}</td></tr>`;
+          }).join('');
+        } else {
+          document.getElementById('bowlTableBody').innerHTML = (actSquads[actBowlTeam]||[]).filter(p => actBStats[p.id]).map(p => {
+            const s = actBStats[p.id]; const econ = s.balls > 0 ? ((s.runs / s.balls) * 6).toFixed(1) : "0.0";
+            return `<tr><td>${p.name}</td><td>${fmtOvers(s.balls)}</td><td>${s.maidens||0}</td><td>${s.runs}</td><td style="color:var(--gold-2); font-weight:700;">${s.wickets}</td><td>${s.dots||0}</td><td>${econ}</td></tr>`;
+          }).join('');
+        }
         const fowText = (actFow||[]).map(f => `${f.wktNo}-${f.score}`).join(', '); document.getElementById('bowlFowStrip').innerText = `Fall of Wickets: ${fowText || 'None'}`;
     }
   }
@@ -565,7 +575,13 @@ onValue(ref(db, "current_match"), snap => {
   if(renderTarget === 'proj') {
       let elInns1 = document.getElementById('projInns1');
       if(elInns1) {
-          if (state.innings === 1) {
+          if (isRecall) {
+              // A completed innings has nothing to "project" — show its final total instead
+              // of a live run-rate equation. (Using the 1st-innings score bar's elements.)
+              elInns1.style.display = 'block'; document.getElementById('projInns2').style.display = 'none'; document.getElementById('projTitle').innerText = '1ST INNINGS: FINAL SCORE';
+              document.getElementById('projCrrLabel').innerText = '--'; document.getElementById('projCrrTotal').innerText = `${state.firstInnings.score||0}/${state.firstInnings.wickets||0} (${fmtOvers(state.firstInnings.legalBalls||0)} OV)`;
+              [1,2,3].forEach(i => { document.getElementById(`projR${i}L`).innerText = '--'; document.getElementById(`projR${i}T`).innerText = '--'; });
+          } else if (state.innings === 1) {
               elInns1.style.display = 'block'; document.getElementById('projInns2').style.display = 'none'; document.getElementById('projTitle').innerText = 'PROJECTED SCORE';
               const oversLeft = state.meta.maxOvers - (state.legalBalls / 6); let crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
               document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2); document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
