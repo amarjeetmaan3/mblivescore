@@ -78,14 +78,25 @@ for label, url in URLS.items():
         else:
             print("NOT FOUND on this page")
 
-        # Grab raw text around each "playingXI" mention so we can see its exact
-        # surrounding key/structure even if it's not nested under matchHeader.
-        pxi_positions = [i for i in range(len(html)) if html.startswith("playingXI", i)]
-        if pxi_positions:
-            print(f"\n-- raw context around 'playingXI' ({len(pxi_positions)} hits, showing first 3) --")
-            for p in pxi_positions[:3]:
-                snippet = html[max(0, p - 80):p + 400]
-                print(f"  ...{snippet}...\n")
+        # "playingXI" itself turned out to be a small per-player field, not the
+        # squad list. Anchor on a real player object instead ("captain":true/false
+        # appears on every squad entry) and show a LARGE before-context so we can
+        # see the actual array/key name that wraps the player list.
+        anchor = '"captain":'
+        apos = html.find(anchor)
+        if apos != -1:
+            print(f"\n-- large context BEFORE first '{anchor}' (to find the enclosing key/array name) --")
+            print(html[max(0, apos - 900):apos + 200])
+
+        print("\n-- broader keyword scan for squad / overs / ball-by-ball candidates --")
+        for kw in ["squadDetails", "squadPlayers", "playing11", "squads\":", "team1Players",
+                   "matchSquad", "commentaryList", "commentaryAllList", "ballByBall",
+                   "overSep", "oversList", "timeline", "miniBall", "commEvents"]:
+            cnt = html.count(kw)
+            if cnt > 0:
+                print(f"  '{kw}': found {cnt} times  <-- LOOK AT THIS ONE")
+                p = html.find(kw)
+                print(f"     context: ...{html[max(0,p-120):p+250]}...")
 
         print("\n-- scoreCard --")
         if sc:
