@@ -260,7 +260,15 @@ function namesMatch(a, b) {
 }
 
 window.createAutoMatch = function() {
-    autoUpdateEnabled = false;
+    // Auto mode should apply each new Firebase fetch by default. Otherwise the
+    // preview score changes while the live controller/overlay stays stale.
+    autoUpdateEnabled = true;
+    const autoUpdateBtn = document.getElementById('btnAutoUpdateToggle');
+    if (autoUpdateBtn) {
+        autoUpdateBtn.innerText = 'ON';
+        autoUpdateBtn.classList.remove('btn-danger');
+        autoUpdateBtn.classList.add('btn-active');
+    }
     const url = document.getElementById('cricbuzz_url').value.trim();
     if(!url) return;
     
