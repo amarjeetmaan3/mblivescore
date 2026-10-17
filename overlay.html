@@ -763,7 +763,7 @@ onValue(ref(db, "current_match"), snap => {
              svgHtml += `<text x="${x + barW/2}" y="${y - 12}" fill="var(--ink)" font-size="28" font-weight="bold" text-anchor="middle">${val}</text>`;
              let wCount = wktsPerOver[actualOvIndex] || 0;
              for(let wc=0; wc<wCount; wc++) { svgHtml += `<text x="${x + barW/2}" y="${y - 40 - (wc*25)}" fill="var(--crimson-2)" font-size="30" font-weight="900" text-anchor="middle">W</text>`; }
-             if ((actualOvIndex + 1) % 2 === 0) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
+             if ((actualOvIndex + 1) % 2 === 0 || actualOvIndex + 1 === (Number(state.meta.maxOvers) || 20)) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
           });
           document.getElementById('chartSvg').innerHTML = svgHtml;
       }
