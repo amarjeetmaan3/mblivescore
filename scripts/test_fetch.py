@@ -1,4 +1,4 @@
-import requests, json, os, re, time, random
+import requests, json, os, re, time, random, html
 
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
 session = requests.Session()
@@ -379,6 +379,61 @@ def fetch_squads_xis(match_url, cache):
     return (cached or {}).get('A', []), (cached or {}).get('B', [])
 
 
+def extract_over_histories(page_text, team_a, team_b):
+    """Recover per-over runs from Cricbuzz's over-by-over page, including history
+    from before this fetcher started. The page gives cumulative score after each over."""
+    result = {1: [], 2: []}
+    if not page_text:
+        return result
+    plain = html.unescape(re.sub(r'<[^>]+>', ' ', str(page_text)))
+    plain = re.sub(r'\\s+', ' ', plain)
+    team_names = {str(team_a or '').strip().upper(), str(team_b or '').strip().upper()}
+    team_names.discard('')
+    heading_re = re.compile(
+        r'\\b(' + '|'.join(re.escape(name) for name in sorted(team_names, key=len, reverse=True)) +
+        r')\\s*\\((1st|2nd)\\s*Inn\\)',
+        re.IGNORECASE
+    )
+    headings = list(heading_re.finditer(plain))
+    if not headings:
+        return result
+    cumulative_by_innings = {1: {}, 2: {}}
+    score_re = re.compile(r'\\b(?:Ov|Over)\\s*(\\d{1,2})\\s+(\\d{1,3})\\s*[-–]\\s*(\\d{1,2})\\b', re.IGNORECASE)
+    for idx, heading in enumerate(headings):
+        innings_number = 1 if heading.group(2).lower().startswith('1') else 2
+        end = headings[idx + 1].start() if idx + 1 < len(headings) else len(plain)
+        section = plain[heading.end():end]
+        for match in score_re.finditer(section):
+            over_number = int(match.group(1))
+            cumulative_runs = int(match.group(2))
+            # Keep the latest cumulative score if the page repeats an over summary.
+            cumulative_by_innings[innings_number][over_number] = cumulative_runs
+
+    for innings_number, cumulative in cumulative_by_innings.items():
+        if not cumulative:
+            continue
+        history = [None] * max(cumulative)
+        previous_total = 0
+        previous_over = 0
+        for over_number in sorted(cumulative):
+            total = cumulative[over_number]
+            if over_number == 1:
+                history[0] = total
+                previous_total = total
+                previous_over = 1
+                continue
+            if over_number == previous_over + 1:
+                history[over_number - 1] = max(0, total - previous_total)
+                previous_total = total
+                previous_over = over_number
+            else:
+                # Do not invent runs for overs missing from Cricbuzz's page.
+                previous_total = total
+                previous_over = over_number
+        result[innings_number] = history
+    return result
+
+
 def fetch_match_smart(match_url, sc_cache):
     live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
     sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/').replace('/cricket-scores/', '/cricket-scorecard/')
@@ -394,6 +449,18 @@ def fetch_match_smart(match_url, sc_cache):
             sc_cache['data'], sc_cache['ts'] = sc_data, now
             
     sc_data = sc_cache.get('data', {}) or {}
+
+    # The over-by-over page supplies completed-over cumulative scores, allowing
+    # charts to be correct even when this workflow starts after an innings begins.
+    if now - sc_cache.get('over_ts', 0) > 20 or not sc_cache.get('over_data'):
+        over_url = re.sub(
+            r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard)/',
+            '/live-cricket-over-by-over/', match_url, count=1
+        )
+        over_data, over_err = get_cricbuzz_data(over_url)
+        if over_data.get("pageText"):
+            sc_cache['over_data'], sc_cache['over_ts'] = over_data, now
+    over_data = sc_cache.get('over_data', {}) or {}
     full_sc = sc_data.get("scoreCard", [])
 
     if not h: m, h = sc_data.get("miniscore", {}), sc_data.get("matchHeader", {})
@@ -433,6 +500,25 @@ def fetch_match_smart(match_url, sc_cache):
 
     curr_innings_id = m.get("inningsId", 1) or 1
     track_over_history(curr_innings_id, m.get("overs", 0), m.get("batTeam", {}).get("teamScore", 0))
+    page_histories = extract_over_histories(
+        over_data.get("pageText", "") + " " + live_data.get("pageText", ""),
+        h.get("team1", {}).get("shortName", ""),
+        h.get("team2", {}).get("shortName", "")
+    )
+    for innings_number in (1, 2):
+        parsed_history = page_histories.get(innings_number, [])
+        if parsed_history and any(value is not None for value in parsed_history):
+            tracked = over_hist_state.setdefault(innings_number, {"history": [], "currentOverRuns": 0})
+            tracked["history"] = parsed_history
+    current_innings_history = page_histories.get(int(curr_innings_id) if str(curr_innings_id).isdigit() else 1, [])
+    try:
+        completed_overs = int(float(m.get("overs", 0) or 0))
+        current_score = int(m.get("batTeam", {}).get("teamScore", 0) or 0)
+        known_completed = current_innings_history[:completed_overs]
+        if len(known_completed) == completed_overs and all(value is not None for value in known_completed):
+            over_hist_state.setdefault(curr_innings_id, {})["currentOverRuns"] = max(0, current_score - sum(known_completed))
+    except (TypeError, ValueError):
+        pass
     
     batting_card_inn1, bowling_card_inn1, fow_inn1, part_inn1 = [], [], [], []
     batting_card_inn2, bowling_card_inn2, fow_inn2, part_inn2 = [], [], [], []
@@ -521,8 +607,8 @@ def fetch_match_smart(match_url, sc_cache):
         "inn1_details": inn1_details, "inn2_details": inn2_details,
         "battingCard_inn1": batting_card_inn1, "bowlingCard_inn1": bowling_card_inn1, "fow_inn1": fow_inn1, "pastParts_inn1": part_inn1,
         "battingCard_inn2": batting_card_inn2, "bowlingCard_inn2": bowling_card_inn2, "fow_inn2": fow_inn2, "pastParts_inn2": part_inn2,
-        "overHistory_inn1": list(over_hist_state.get(1, {}).get("history", [])),
-        "overHistory_inn2": list(over_hist_state.get(2, {}).get("history", [])),
+        "overHistory_inn1": list(page_histories.get(1) or over_hist_state.get(1, {}).get("history", [])),
+        "overHistory_inn2": list(page_histories.get(2) or over_hist_state.get(2, {}).get("history", [])),
         "currentOverRuns": int(over_hist_state.get(curr_innings_id, {}).get("currentOverRuns", 0) or 0)
     }
     return data, combined_err
