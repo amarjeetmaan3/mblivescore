@@ -46,11 +46,10 @@ def track_over_history(innings_id, overs_val, score):
         st["currentOverRuns"] = 0
         st["lastOver"] = over_int
     elif over_int > previous_over + 1:
-        # We missed one or more over boundaries. Mark unknown overs as null rather
-        # than incorrectly repeating the full innings score for every over.
-        st["currentOverRuns"] += delta
-        st["history"].extend([None] * max(0, over_int - previous_over - 1))
-        st["history"].append(st["currentOverRuns"])
+        # We missed multiple over boundaries, so the score delta cannot safely be
+        # assigned to individual overs. Keep those bars unknown instead of inventing
+        # per-over totals from the innings score.
+        st["history"].extend([None] * (over_int - previous_over))
         st["currentOverRuns"] = 0
         st["lastOver"] = over_int
     st["lastScore"] = score_now
