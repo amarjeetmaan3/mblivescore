@@ -134,6 +134,8 @@ def get_playing_11(match_header, team_key):
         if isinstance(value, list):
             return value
         if isinstance(value, dict):
+            if player_name(value):
+                return [value]
             for key in ("players", "playerDetails", "playingXI", "playing11", "squad", "list"):
                 if isinstance(value.get(key), list):
                     return value[key]
@@ -285,7 +287,7 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
     match_format = str((match_header or {}).get("matchFormat", "")).strip().upper()
     desc_text = f"{(match_header or {}).get('matchDesc', '')} {(match_header or {}).get('matchDescription', '')}"
     custom_overs = re.search(r"(\d+)\s*-?\s*overs?\b", desc_text, re.IGNORECASE)
-    if custom_overs and match_format not in ("ODI", "TEST", "T10", "T20", "T20I"):
+    if custom_overs and match_format not in ("ODI", "TEST", "T10"):
         result = as_positive_int(custom_overs.group(1))
         if result:
             return result
