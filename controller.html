@@ -409,7 +409,15 @@ window.syncCricbuzzToLive = function() {
         state.extras = (autoMatchData.inn2_details && autoMatchData.inn2_details.extras && autoMatchData.inn2_details.extras.total) || 0;
         state.overHistory = autoMatchData.overHistory_inn2 || [];
     }
-    
+
+    // Keep the in-progress over separate from completed-over run totals. This is
+    // required by both the per-over bar chart and cumulative worm graph.
+    const providedCurrentOverRuns = Number(autoMatchData.currentOverRuns);
+    state.currentOverRuns = Number.isFinite(providedCurrentOverRuns)
+        ? Math.max(0, providedCurrentOverRuns)
+        : Math.max(0, state.score - (state.overHistory || []).reduce((sum, runs) => sum + (Number(runs) || 0), 0));
+    state.overBalls = [];
+
     const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
     state.bowlerStats = {};
     const currentBowlCard = state.innings === 1 ? autoMatchData.bowlingCard_inn1 : autoMatchData.bowlingCard_inn2;
