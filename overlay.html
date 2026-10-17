@@ -407,8 +407,9 @@ function updateRateBlockUI() {
     if(rateToggleIndex === 1) {
         if(st.innings === 1) {
             label = "PROJ"; color = "var(--gold-2)";
-            const oversLeft = st.meta.maxOvers - (st.legalBalls / 6); 
-            val = Math.round(st.score + (crr * oversLeft));
+            const maxBalls = Math.max(0, (Number(st.meta.maxOvers) || 20) * 6);
+            const ballsLeft = Math.max(0, maxBalls - (Number(st.legalBalls) || 0));
+            val = Math.round(st.score + (crr * ballsLeft / 6));
         } else {
             label = "REQ"; color = "var(--crimson-2)";
             const ballsLeft = (st.meta.maxOvers * 6) - st.legalBalls; 
@@ -694,10 +695,19 @@ onValue(ref(db, "current_match"), snap => {
               [1,2,3].forEach(i => { document.getElementById(`projR${i}L`).innerText = '--'; document.getElementById(`projR${i}T`).innerText = '--'; });
           } else if (state.innings === 1) {
               elInns1.style.display = 'block'; document.getElementById('projInns2').style.display = 'none'; document.getElementById('projTitle').innerText = 'PROJECTED SCORE';
-              const oversLeft = state.meta.maxOvers - (state.legalBalls / 6); let crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
-              document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2); document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
-              let base = Math.max(6, Math.floor(crrNum)); if(base % 2 !== 0) base -= 1; 
-              [1,2,3].forEach(i => { let r = base + (i-1)*2; document.getElementById(`projR${i}L`).innerText = r.toFixed(1); document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (r * oversLeft)); });
+              const maxBalls = Math.max(0, (Number(state.meta.maxOvers) || 20) * 6);
+              const ballsLeft = Math.max(0, maxBalls - (Number(state.legalBalls) || 0));
+              const oversLeft = ballsLeft / 6;
+              const crrNum = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
+              document.getElementById('projCrrLabel').innerText = crrNum.toFixed(2);
+              document.getElementById('projCrrTotal').innerText = Math.round(state.score + (crrNum * oversLeft));
+              let base = Math.max(6, Math.floor(crrNum));
+              if(base % 2 !== 0) base -= 1;
+              [1,2,3].forEach(i => {
+                  const rate = base + (i - 1) * 2;
+                  document.getElementById(`projR${i}L`).innerText = rate.toFixed(1);
+                  document.getElementById(`projR${i}T`).innerText = Math.round(state.score + (rate * ballsLeft / 6));
+              });
           } else {
               elInns1.style.display = 'none'; document.getElementById('projInns2').style.display = 'block'; document.getElementById('projTitle').innerText = 'MATCH EQUATION';
               const needed = Math.max(0, state.target - state.score); const ballsLeft = Math.max(0, (state.meta.maxOvers * 6) - state.legalBalls); const rrr = ballsLeft > 0 ? (needed / ballsLeft) * 6 : 0; const crr = state.legalBalls > 0 ? (state.score / state.legalBalls) * 6 : 0;
@@ -720,9 +730,13 @@ onValue(ref(db, "current_match"), snap => {
       if(el) {
           el.innerText = `${actBatTeamName} - RUNS PER OVER${isRecall?' (1ST INN)':''}`;
           let hist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []); let oversData = [...hist];
-          if(!isRecall && state.legalBalls % 6 !== 0) { oversData.push(state.currentOverRuns || 0); }
+          if(!isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { oversData.push(state.currentOverRuns || 0); }
           let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
-          let displayOvers = oversData.slice(-20); let rawMax = Math.max(10, ...displayOvers); let maxVal = getNiceMax(rawMax, 4);
+          // Keep the complete innings visible; limiting this to 20 bars hid earlier
+          // overs in 50-over matches and caused the labels to drift.
+          let displayOvers = [...oversData];
+          let rawMax = Math.max(10, ...displayOvers.map(value => Number(value) || 0));
+          let maxVal = getNiceMax(rawMax, 4);
           
           let w = 1450, h = 500, padX = 80, padY = 60; 
           let graphW = w - padX - 30; let graphH = h - padY - 20; let svgHtml = '';
@@ -739,14 +753,22 @@ onValue(ref(db, "current_match"), snap => {
           }
           let barStep = graphW / Math.max(5, displayOvers.length); let barW = Math.min(45, barStep * 0.6);
           displayOvers.forEach((val, idx) => {
-             let actualOvIndex = (hist.length - displayOvers.length) + idx + (!isRecall && state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1 ? 0 : 0);
-             let x = padX + (idx + 0.5) * barStep - barW/2; let barH = (val / maxVal) * graphH; let y = 20 + graphH - barH;
-             let isCurrent = (!isRecall && idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
-             svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="5" ry="5"/>`;
-             svgHtml += `<text x="${x + barW/2}" y="${y - 12}" fill="var(--ink)" font-size="28" font-weight="bold" text-anchor="middle">${val}</text>`;
+             const isPartialCurrentOver = !isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0) && idx === displayOvers.length - 1;
+             const actualOvIndex = isPartialCurrentOver ? hist.length : idx;
+             let x = padX + (idx + 0.5) * barStep - barW/2;
+             const knownValue = val !== null && val !== undefined && Number.isFinite(Number(val));
+             let barH = knownValue ? ((Number(val) || 0) / maxVal) * graphH : 0;
+             let y = 20 + graphH - barH;
+             let isCurrent = (!isRecall && idx === displayOvers.length - 1 && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0));
+             if(knownValue) {
+                 svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="5" ry="5"/>`;
+                 svgHtml += `<text x="${x + barW/2}" y="${y - 12}" fill="var(--ink)" font-size="28" font-weight="bold" text-anchor="middle">${val}</text>`;
+             } else {
+                 svgHtml += `<text x="${x + barW/2}" y="${20+graphH-12}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">—</text>`;
+             }
              let wCount = wktsPerOver[actualOvIndex] || 0;
              for(let wc=0; wc<wCount; wc++) { svgHtml += `<text x="${x + barW/2}" y="${y - 40 - (wc*25)}" fill="var(--crimson-2)" font-size="30" font-weight="900" text-anchor="middle">W</text>`; }
-             if ((actualOvIndex + 1) % 2 === 0) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
+             if ((actualOvIndex + 1) % 2 === 0 || actualOvIndex + 1 === (Number(state.meta.maxOvers) || 20)) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
           });
           document.getElementById('chartSvg').innerHTML = svgHtml;
       }
@@ -756,14 +778,18 @@ onValue(ref(db, "current_match"), snap => {
       let el = document.getElementById('wormTitle');
       if(el) {
           el.innerText = `${actBatTeamName} - WORM GRAPH${isRecall?' (1ST INN)':''}`;
-          let maxOvers = state.meta.maxOvers; 
+          let maxOvers = Math.max(1, Number(state.meta.maxOvers) || 20); 
           
           let w = 1450, h = 500, padX = 80, padY = 60; 
           let graphW = w - padX - 30; let graphH = h - padY - 20;
           let cRuns1 = [0]; let sum1 = 0; let targetHist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
-          targetHist.forEach(r => { sum1 += r; cRuns1.push(sum1); }); if(!isRecall && state.legalBalls % 6 !== 0) { cRuns1.push(sum1 + (state.currentOverRuns||0)); }
+          targetHist.forEach(r => { sum1 += Number(r) || 0; cRuns1.push(sum1); });
+          if(!isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { cRuns1.push(sum1 + (Number(state.currentOverRuns) || 0)); }
           let cRuns2 = [];
-          if(!isRecall && state.innings === 2 && state.firstInnings) { let sum2 = 0; cRuns2.push(0); (state.firstInnings.overHistory || []).forEach(r => { sum2 += r; cRuns2.push(sum2); }); }
+          if(!isRecall && state.innings === 2 && state.firstInnings) {
+              let sum2 = 0; cRuns2.push(0);
+              (state.firstInnings.overHistory || []).forEach(r => { sum2 += Number(r) || 0; cRuns2.push(sum2); });
+          }
           let rawTotal = Math.max(state.score, state.target || 0, 50); if(isRecall) rawTotal = Math.max(state.firstInnings.score, 50);
           let maxTotal = getNiceMax(rawTotal, 5);
           let svgHtml = '';
@@ -774,8 +800,17 @@ onValue(ref(db, "current_match"), snap => {
           svgHtml += `<text x="${w-90}" y="${h-10}" fill="var(--gold)" font-size="22" font-weight="bold">OVERS</text>`;
           
           for(let i=0; i<=5; i++) { let val = Math.round((maxTotal / 5) * i); let y = 20 + graphH - (val/maxTotal * graphH); svgHtml += `<text x="${padX-15}" y="${y+8}" fill="var(--muted)" font-size="24" text-anchor="end">${val}</text>`; svgHtml += `<line x1="${padX}" y1="${y}" x2="${padX+graphW}" y2="${y}" stroke="rgba(255,255,255,0.1)"/>`; }
-          for(let i=2; i<=maxOvers; i+=2) { let x = padX + (i/maxOvers * graphW); svgHtml += `<text x="${x}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" text-anchor="middle">${i}</text>`; svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+12}" stroke="var(--muted)"/>`; }
-          function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && currentBalls % 6 !== 0) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
+          for(let i=2; i<=maxOvers; i+=2) {
+              let x = padX + (i/maxOvers * graphW);
+              svgHtml += `<text x="${x}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" text-anchor="middle">${i}</text>`;
+              svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+12}" stroke="var(--muted)"/>`;
+          }
+          if(maxOvers % 2 !== 0) {
+              let x = padX + graphW;
+              svgHtml += `<text x="${x}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" text-anchor="end">${maxOvers}</text>`;
+              svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+12}" stroke="var(--muted)"/>`;
+          }
+          function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && (currentBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
           function drawWickets(fowArray, color) { let html = ''; (fowArray || []).forEach(f => { let ovrParts = String(f.overs).split('.'); let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0); let x = padX + (balls / (maxOvers * 6)) * graphW; let y = 20 + graphH - (f.score / maxTotal * graphH); html += `<circle cx="${x}" cy="${y}" r="8" fill="${color}" stroke="var(--navy-deep)" stroke-width="4"/>`; html += `<text x="${x}" y="${y - 15}" fill="${color}" font-family="sans-serif" font-size="22" font-weight="900" text-anchor="middle">W</text>`; }); return html; }
 
           if(!isRecall && state.innings === 2) {

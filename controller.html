@@ -357,7 +357,10 @@ window.syncCricbuzzToLive = function() {
     if(autoMatchData.maxOvers) { state.meta.maxOvers = parseInt(autoMatchData.maxOvers) || state.meta.maxOvers; }
     
     state.score = parseInt(autoMatchData.score) || 0; state.wickets = parseInt(autoMatchData.wickets) || 0;
-    if(autoMatchData.overs) { let ov = parseFloat(autoMatchData.overs); state.legalBalls = (Math.floor(ov) * 6) + Math.round((ov - Math.floor(ov)) * 10); }
+    if(autoMatchData.overs !== undefined && autoMatchData.overs !== null) {
+        const ov = parseFloat(autoMatchData.overs);
+        if(Number.isFinite(ov)) state.legalBalls = (Math.floor(ov) * 6) + Math.round((ov - Math.floor(ov)) * 10);
+    }
     if(autoMatchData.target && parseInt(autoMatchData.target) > 0) { state.target = parseInt(autoMatchData.target); state.innings = 2; }
     if(autoMatchData.isComplete || (autoMatchData.matchStatus && autoMatchData.matchStatus.toLowerCase().includes("won"))) { state.inningsOver = true; state.matchResult = autoMatchData.matchStatus; }
     
@@ -409,7 +412,15 @@ window.syncCricbuzzToLive = function() {
         state.extras = (autoMatchData.inn2_details && autoMatchData.inn2_details.extras && autoMatchData.inn2_details.extras.total) || 0;
         state.overHistory = autoMatchData.overHistory_inn2 || [];
     }
-    
+
+    // Keep the in-progress over separate from completed-over run totals. This is
+    // required by both the per-over bar chart and cumulative worm graph.
+    const providedCurrentOverRuns = Number(autoMatchData.currentOverRuns);
+    state.currentOverRuns = Number.isFinite(providedCurrentOverRuns)
+        ? Math.max(0, providedCurrentOverRuns)
+        : Math.max(0, state.score - (state.overHistory || []).reduce((sum, runs) => sum + (Number(runs) || 0), 0));
+    state.overBalls = [];
+
     const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
     state.bowlerStats = {};
     const currentBowlCard = state.innings === 1 ? autoMatchData.bowlingCard_inn1 : autoMatchData.bowlingCard_inn2;
