@@ -112,6 +112,7 @@ def get_cricbuzz_data(url, attempts=3):
     return {}, last_err
 
 def get_playing_11(match_header, team_key):
+    """Return only a real 11-player Playing XI from matchHeader, never a partial bowling card."""
     team_data = match_header.get(team_key, {}) or {}
     team_id = str(team_data.get("id", team_data.get("teamId", "")))
     team_name = str(team_data.get("name", team_data.get("teamName", ""))).strip().lower()
@@ -135,23 +136,16 @@ def get_playing_11(match_header, team_key):
         if isinstance(value, dict):
             if player_name(value):
                 return [value]
-            for key in ("players", "playerDetails", "playingXI", "playing11", "squad", "list"):
+            for key in ("players", "playerDetails", "playingXI", "playing11", "list"):
                 if isinstance(value.get(key), list):
                     return value[key]
         if isinstance(value, str) and value.strip():
             return [part.strip() for part in value.split(",") if part.strip()]
         return []
 
-    # Cricbuzz has returned Playing XI in different places over time. In addition
-    # to team1/team2, inspect the team-matched entry in matchTeamInfo.
     sources = [team_data]
     team_info = match_header.get("matchTeamInfo", [])
-    if isinstance(team_info, dict):
-        entries = list(team_info.values())
-    elif isinstance(team_info, list):
-        entries = team_info
-    else:
-        entries = []
+    entries = list(team_info.values()) if isinstance(team_info, dict) else (team_info if isinstance(team_info, list) else [])
     for index, entry in enumerate(entries):
         if not isinstance(entry, dict):
             continue
@@ -162,7 +156,6 @@ def get_playing_11(match_header, team_key):
                 (not entry_id and not entry_name and index == team_index)):
             sources.append(entry)
 
-    # Build an ID-to-name map from all player records available in the header.
     player_lookup = {}
     def collect_players(obj):
         if isinstance(obj, dict):
@@ -177,41 +170,32 @@ def get_playing_11(match_header, team_key):
                 collect_players(value)
     collect_players(match_header)
 
-    def names_from(value):
-        result = []
-        for item in as_list(value):
-            name = player_name(item)
-            if name:
-                result.append(name)
-            elif isinstance(item, (str, int, float)):
-                text = str(item).strip()
-                resolved = player_lookup.get(text)
-                if resolved:
-                    result.append(resolved)
-                elif isinstance(value, str) and text:
-                    result.append(text)
-        return result
-
-    # Prefer Playing XI. Only use squad/player lists if Cricbuzz omitted the XI.
-    for keys in (
-        ("playingXI", "playing11", "playingXi", "playing_xi"),
-        ("squad", "squadPlayers", "players", "playerDetails", "playersList")
-    ):
-        for source in sources:
-            for key in keys:
-                value = source.get(key)
-                names = names_from(value)
-                if names:
-                    unique = []
-                    seen = set()
-                    for name in names:
-                        marker = name.casefold()
-                        if marker not in seen:
-                            seen.add(marker)
-                            unique.append(name)
-                    return unique
+    # Only trust fields explicitly named Playing XI/Playing 11. A general squad
+    # may contain 15-20 players, and a bowling card only contains used bowlers.
+    for source in sources:
+        for key in ("playingXI", "playing11", "playingXi", "playing_xi"):
+            names = []
+            for item in as_list(source.get(key)):
+                name = player_name(item)
+                if name:
+                    names.append(name)
+                elif isinstance(item, (str, int, float)):
+                    resolved = player_lookup.get(str(item).strip())
+                    text_value = str(item).strip()
+                    if resolved:
+                        names.append(resolved)
+                    elif isinstance(source.get(key), str) and text_value:
+                        names.append(text_value)
+            unique = []
+            seen = set()
+            for name in names:
+                marker = name.casefold()
+                if marker not in seen:
+                    seen.add(marker)
+                    unique.append(name)
+            if len(unique) >= 11:
+                return unique[:11]
     return []
-
 def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
     """Resolve scheduled/revised innings overs, preferring explicit rain-reduced data."""
     def as_positive_int(value):
@@ -311,7 +295,7 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
     return 20
 
 
-def fetch_raw_page(url, attempts=2):
+def fetch_raw_page(url, attempts=1):
     """Fetch a Cricbuzz tab even when its page does not expose matchHeader JSON."""
     last_error = None
     for attempt in range(attempts):
@@ -325,7 +309,7 @@ def fetch_raw_page(url, attempts=2):
                     "Referer": "https://www.cricbuzz.com/",
                     "Cache-Control": "no-cache",
                 },
-                timeout=12,
+                timeout=8,
             )
             if response.status_code == 200:
                 page = response.text
