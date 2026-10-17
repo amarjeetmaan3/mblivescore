@@ -10,21 +10,50 @@ USER_AGENTS = [
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
 ]
 
-over_hist_state = {1: {"lastOver": -1, "history": []}, 2: {"lastOver": -1, "history": []}}
+over_hist_state = {}
 
 def track_over_history(innings_id, overs_val, score):
-    """Self-built over-by-over history. Cricbuzz doesn't reliably expose this on the
-    live page, so we build it ourselves from repeated polling: whenever the overs
-    count ticks up, we record the current score as that over's cumulative total."""
-    st = over_hist_state.setdefault(innings_id, {"lastOver": -1, "history": []})
+    """Track runs scored in each completed over, not the cumulative innings total.
+    The live score is sampled repeatedly, so score deltas are accumulated into the
+    over in progress and committed when the completed-over count advances."""
+    st = over_hist_state.setdefault(innings_id, {
+        "lastOver": None, "lastScore": 0, "currentOverRuns": 0,
+        "history": [], "initialized": False
+    })
     try:
-        over_int = int(float(overs_val or 0))
+        over_int = max(0, int(float(overs_val or 0)))
+        score_now = max(0, int(score or 0))
     except (TypeError, ValueError):
         return st["history"]
-    if over_int > st["lastOver"]:
-        for _ in range(over_int - st["lastOver"]):
-            st["history"].append(score)
+
+    if not st["initialized"]:
+        # Preserve the correct x-axis position if the workflow starts mid-innings.
+        st["history"] = [None] * over_int
         st["lastOver"] = over_int
+        st["lastScore"] = score_now
+        st["currentOverRuns"] = score_now if over_int == 0 else 0
+        st["initialized"] = True
+        return st["history"]
+
+    delta = max(0, score_now - int(st.get("lastScore", 0) or 0))
+    previous_over = st["lastOver"]
+    if over_int == previous_over:
+        st["currentOverRuns"] += delta
+    elif over_int == previous_over + 1:
+        # The score delta since the last poll belongs to the over just completed.
+        st["currentOverRuns"] += delta
+        st["history"].append(st["currentOverRuns"])
+        st["currentOverRuns"] = 0
+        st["lastOver"] = over_int
+    elif over_int > previous_over + 1:
+        # We missed one or more over boundaries. Mark unknown overs as null rather
+        # than incorrectly repeating the full innings score for every over.
+        st["currentOverRuns"] += delta
+        st["history"].extend([None] * max(0, over_int - previous_over - 1))
+        st["history"].append(st["currentOverRuns"])
+        st["currentOverRuns"] = 0
+        st["lastOver"] = over_int
+    st["lastScore"] = score_now
     return st["history"]
 
 def push_status(ok, error=None):
@@ -70,11 +99,13 @@ def get_cricbuzz_data(url, attempts=3):
             if match:
                 try:
                     data = json.loads(match.group(1)).get("props", {}).get("pageProps", {}).get("page", {})
-                    if data and "matchHeader" in data: return data, None
+                    if data and "matchHeader" in data:
+                        data["pageText"] = html
+                        return data, None
                 except Exception as e: last_err = f"Parse err: {e}"
 
             m, h, sc = extract_json_at(html, "miniscore"), extract_json_at(html, "matchHeader"), extract_json_at(html, "scoreCard")
-            if h: return {"miniscore": m or {}, "matchHeader": h or {}, "scoreCard": sc or []}, None
+            if h: return {"miniscore": m or {}, "matchHeader": h or {}, "scoreCard": sc or [], "pageText": html}, None
             last_err = "No match data found"
         except requests.exceptions.RequestException as e:
             last_err = f"Network err: {e}"
@@ -82,37 +113,190 @@ def get_cricbuzz_data(url, attempts=3):
     return {}, last_err
 
 def get_playing_11(match_header, team_key):
-    team_data = match_header.get(team_key, {})
-    p_xi, squad = team_data.get("playingXI", ""), team_data.get("squad", "")
-    names = []
+    team_data = match_header.get(team_key, {}) or {}
+    team_id = str(team_data.get("id", team_data.get("teamId", "")))
+    team_name = str(team_data.get("name", team_data.get("teamName", ""))).strip().lower()
+    team_index = 0 if team_key == "team1" else 1
 
-    def names_from_list_of_dicts(lst):
-        out = []
-        for item in lst:
-            if isinstance(item, dict):
-                nm = item.get("name") or item.get("fullName") or item.get("shortName")
-                if nm: out.append(nm)
-        return out
+    def player_name(item):
+        if not isinstance(item, dict):
+            return None
+        for key in ("fullName", "name", "playerName", "shortName", "batName", "bowlName"):
+            value = item.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        nested = item.get("player") or item.get("playerDetails")
+        if isinstance(nested, dict):
+            return player_name(nested)
+        return None
 
-    if isinstance(p_xi, str) and p_xi.strip(): names = [x.strip() for x in p_xi.split(',') if x.strip()]
-    elif isinstance(p_xi, list) and len(p_xi) > 0:
-        if isinstance(p_xi[0], dict): names = names_from_list_of_dicts(p_xi)
-        else:
-            for pid in p_xi:
-                for p in match_header.get("players", []):
-                    if str(p.get("id")) == str(pid):
-                        names.append(p.get("name") or p.get("shortName")); break
+    def as_list(value):
+        if isinstance(value, list):
+            return value
+        if isinstance(value, dict):
+            for key in ("players", "playerDetails", "playingXI", "playing11", "squad", "list"):
+                if isinstance(value.get(key), list):
+                    return value[key]
+        if isinstance(value, str) and value.strip():
+            return [part.strip() for part in value.split(",") if part.strip()]
+        return []
 
-    if not names:
-        if isinstance(squad, str) and squad.strip(): names = [x.strip() for x in squad.split(',') if x.strip()]
-        elif isinstance(squad, list) and len(squad) > 0:
-            if isinstance(squad[0], dict): names = names_from_list_of_dicts(squad)
-            else:
-                for pid in squad:
-                    for p in match_header.get("players", []):
-                        if str(p.get("id")) == str(pid):
-                            names.append(p.get("name") or p.get("shortName")); break
-    return names
+    # Cricbuzz has returned Playing XI in different places over time. In addition
+    # to team1/team2, inspect the team-matched entry in matchTeamInfo.
+    sources = [team_data]
+    team_info = match_header.get("matchTeamInfo", [])
+    if isinstance(team_info, dict):
+        entries = list(team_info.values())
+    elif isinstance(team_info, list):
+        entries = team_info
+    else:
+        entries = []
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            continue
+        entry_id = str(entry.get("teamId", entry.get("id", entry.get("teamID", ""))))
+        entry_name = str(entry.get("teamName", entry.get("name", ""))).strip().lower()
+        if ((team_id and entry_id == team_id) or
+                (team_name and entry_name == team_name) or
+                (not entry_id and not entry_name and index == team_index)):
+            sources.append(entry)
+
+    # Build an ID-to-name map from all player records available in the header.
+    player_lookup = {}
+    def collect_players(obj):
+        if isinstance(obj, dict):
+            name = player_name(obj)
+            pid = obj.get("id", obj.get("playerId", obj.get("playerID")))
+            if name and pid is not None:
+                player_lookup[str(pid)] = name
+            for value in obj.values():
+                collect_players(value)
+        elif isinstance(obj, list):
+            for value in obj:
+                collect_players(value)
+    collect_players(match_header)
+
+    def names_from(value):
+        result = []
+        for item in as_list(value):
+            name = player_name(item)
+            if name:
+                result.append(name)
+            elif isinstance(item, (str, int, float)):
+                text = str(item).strip()
+                resolved = player_lookup.get(text)
+                if resolved:
+                    result.append(resolved)
+                elif isinstance(value, str) and text:
+                    result.append(text)
+        return result
+
+    # Prefer Playing XI. Only use squad/player lists if Cricbuzz omitted the XI.
+    for keys in (
+        ("playingXI", "playing11", "playingXi", "playing_xi"),
+        ("squad", "squadPlayers", "players", "playerDetails", "playersList")
+    ):
+        for source in sources:
+            for key in keys:
+                value = source.get(key)
+                names = names_from(value)
+                if names:
+                    unique = []
+                    seen = set()
+                    for name in names:
+                        marker = name.casefold()
+                        if marker not in seen:
+                            seen.add(marker)
+                            unique.append(name)
+                    return unique
+    return []
+
+def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
+    """Resolve scheduled/revised innings overs, preferring explicit rain-reduced data."""
+    def as_positive_int(value):
+        if isinstance(value, bool) or value is None:
+            return None
+        try:
+            number = int(str(value).strip())
+        except (TypeError, ValueError):
+            return None
+        return number if 1 <= number <= 100 else None
+
+    explicit_keys = {
+        "maxovers", "revisedovers", "revisedmaxovers", "oversperside",
+        "oversperinnings", "scheduledovers", "matchovers", "reducedovers",
+        "overslimit", "overlimit", "maxoversperinnings"
+    }
+
+    def find_explicit(obj):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                normalized = re.sub(r"[^a-z]", "", str(key).lower())
+                if normalized in explicit_keys:
+                    result = as_positive_int(value)
+                    if result:
+                        return result
+            for value in obj.values():
+                result = find_explicit(value)
+                if result:
+                    return result
+        elif isinstance(obj, list):
+            for value in obj:
+                result = find_explicit(value)
+                if result:
+                    return result
+        return None
+
+    for source in (match_header, miniscore):
+        explicit = find_explicit(source)
+        if explicit:
+            return explicit
+
+    text_fields = []
+    for source in (match_header, miniscore):
+        if isinstance(source, dict):
+            for key in ("status", "stateTitle", "matchDesc", "matchDescription",
+                        "matchStatus", "description", "commentary", "note"):
+                value = source.get(key)
+                if isinstance(value, str) and value.strip():
+                    text_fields.append(value)
+    # Prefer explicit rain/reduction wording over ordinary scorecard references
+    # to 20-over/50-over formats elsewhere on the page.
+    patterns = (
+        r"(?:reduced|shortened|cut\s+down|limited)\s+(?:to\s+)?(\d{1,2})\s*[- ]?overs?\s*(?:per\s+side|each|a\s+side)?",
+        r"(\d{1,2})\s*[- ]?overs?\s*(?:per\s+side|each|a\s+side)\b",
+        r"(?:innings|each\s+side|per\s+side)\s+(?:of\s+)?(\d{1,2})\s*overs?\b"
+    )
+    for text in text_fields:
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                result = as_positive_int(match.group(1))
+                if result:
+                    return result
+    page_text = str(page_text or "").replace("\\u002d", "-").replace("\\u003c", "<")
+    for pattern in patterns:
+        match = re.search(pattern, page_text, re.IGNORECASE)
+        if match:
+            result = as_positive_int(match.group(1))
+            if result:
+                return result
+
+    match_format = str((match_header or {}).get("matchFormat", "")).strip().upper()
+    desc_text = f"{(match_header or {}).get('matchDesc', '')} {(match_header or {}).get('matchDescription', '')}"
+    custom_overs = re.search(r"(\d+)\s*-?\s*overs?\b", desc_text, re.IGNORECASE)
+    if custom_overs and match_format not in ("ODI", "TEST", "T10", "T20", "T20I"):
+        result = as_positive_int(custom_overs.group(1))
+        if result:
+            return result
+    if "ODI" in match_format or "ONE DAY" in match_format:
+        return 50
+    if "TEST" in match_format:
+        return 90
+    if "T10" in match_format:
+        return 10
+    return 20
+
 
 def fetch_match_smart(match_url, sc_cache):
     live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
@@ -145,13 +329,10 @@ def fetch_match_smart(match_url, sc_cache):
 
     toss_res = h.get("tossResults", {})
     toss_winner = "A" if str(toss_res.get("tossWinnerId", "")) == t1_id else ("B" if str(toss_res.get("tossWinnerId", "")) == t2_id else "A")
-    match_format = str(h.get("matchFormat", "")).strip().upper()
-    default_max_overs = 50 if match_format == "ODI" else (90 if match_format == "TEST" else (10 if match_format == "T10" else 20))
-    # Local/custom-overs matches (40, 45, 60 overs etc.) aren't covered by the standard
-    # format labels above — try to spot a number-of-overs mention in the match text first.
-    desc_text = f"{h.get('matchDesc', '')} {h.get('matchDescription', '')} {h.get('seriesName', '')}"
-    custom_overs = re.search(r'(\d+)\s*-?\s*overs?\b', desc_text, re.IGNORECASE)
-    max_overs = int(custom_overs.group(1)) if (custom_overs and match_format not in ("ODI", "TEST", "T10")) else default_max_overs
+    max_overs = get_match_max_overs(
+        h, m, full_sc,
+        live_data.get("pageText", "") + " " + sc_data.get("pageText", "")
+    )
 
     bat_team_inn1 = "A"
     if isinstance(full_sc, list) and len(full_sc) > 0:
@@ -252,7 +433,8 @@ def fetch_match_smart(match_url, sc_cache):
         "battingCard_inn1": batting_card_inn1, "bowlingCard_inn1": bowling_card_inn1, "fow_inn1": fow_inn1, "pastParts_inn1": part_inn1,
         "battingCard_inn2": batting_card_inn2, "bowlingCard_inn2": bowling_card_inn2, "fow_inn2": fow_inn2, "pastParts_inn2": part_inn2,
         "overHistory_inn1": list(over_hist_state.get(1, {}).get("history", [])),
-        "overHistory_inn2": list(over_hist_state.get(2, {}).get("history", []))
+        "overHistory_inn2": list(over_hist_state.get(2, {}).get("history", [])),
+        "currentOverRuns": int(over_hist_state.get(curr_innings_id, {}).get("currentOverRuns", 0) or 0)
     }
     return data, combined_err
 
