@@ -198,6 +198,16 @@
   .popup-event.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .pop-title { font-family: 'Bebas Neue', sans-serif; font-size: 140px; line-height: 0.9; color: #fff; letter-spacing: 4px; }
   .pop-sub { font-size: 22px; letter-spacing: 5px; color: var(--gold-2); margin-top: 8px; font-weight: 800; }
+
+  /* Manual scorecard has its own visual identity; Auto/Cricbuzz keeps the existing theme. */
+  body.manual-mode {
+    --gold: #22d3ee;
+    --gold-2: #a5f3fc;
+    --crimson: #0f766e;
+    --crimson-2: #14b8a6;
+    --navy-3: #0b3442;
+    --line: rgba(34, 211, 238, 0.35);
+  }
 </style>
 </head>
 <body>
@@ -423,7 +433,8 @@ onValue(ref(db, "current_match"), snap => {
   const state = snap.val();
   currentState = state;
   
-  if(!state) { document.querySelectorAll('.scorebug, .center-panel').forEach(el => el.classList.remove('show')); return; }
+  if(!state) { document.body.classList.remove("manual-mode"); document.querySelectorAll('.scorebug, .center-panel').forEach(el => el.classList.remove('show')); return; }
+  document.body.classList.toggle("manual-mode", state.mode === "manual" || String(state.id || "").startsWith("MB_MANUAL_"));
 
   const g = state.graphics || {};
   const tBat = state.meta.batTeam; const tBowl = state.meta.bowlTeam;
