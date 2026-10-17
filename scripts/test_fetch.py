@@ -545,7 +545,14 @@ while time.time() - start_time < 6 * 60 * 60:
         if data:
             data["fetchStatus"] = {"ok": True, "error": err or "", "ts": int(time.time())}
             session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=5)
-            print(f"Pushed: {data['teamA']} vs {data['teamB']} | Score: {data['score']}/{data['wickets']}" + (f" | warn: {err}" if err else ""), flush=True)
+            print(
+                f"Pushed: {data['teamA']} vs {data['teamB']} | "
+                f"Score: {data['score']}/{data['wickets']} ({data.get('overs', '0.0')} ov) | "
+                f"maxOvers={data.get('maxOvers')} | "
+                f"PlayingXI={len(data.get('playing11_A', []))}+{len(data.get('playing11_B', []))}"
+                + (f" | warn: {err}" if err else ""),
+                flush=True
+            )
         else:
             push_status(False, err)
     except Exception as e: push_status(False, f"script error: {e}")
