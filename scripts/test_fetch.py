@@ -507,9 +507,18 @@ def fetch_match_smart(match_url, sc_cache):
     )
     for innings_number in (1, 2):
         parsed_history = page_histories.get(innings_number, [])
+        tracked = over_hist_state.setdefault(innings_number, {"history": [], "currentOverRuns": 0})
+        tracked_history = tracked.get("history", [])
         if parsed_history and any(value is not None for value in parsed_history):
-            tracked = over_hist_state.setdefault(innings_number, {"history": [], "currentOverRuns": 0})
-            tracked["history"] = parsed_history
+            merged_history = []
+            for idx in range(max(len(parsed_history), len(tracked_history))):
+                parsed_value = parsed_history[idx] if idx < len(parsed_history) else None
+                tracked_value = tracked_history[idx] if idx < len(tracked_history) else None
+                merged_history.append(parsed_value if parsed_value is not None else tracked_value)
+            tracked["history"] = merged_history
+            page_histories[innings_number] = merged_history
+        elif tracked_history:
+            page_histories[innings_number] = tracked_history
     current_innings_history = page_histories.get(int(curr_innings_id) if str(curr_innings_id).isdigit() else 1, [])
     try:
         completed_overs = int(float(m.get("overs", 0) or 0))
