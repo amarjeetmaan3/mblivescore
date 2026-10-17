@@ -730,7 +730,7 @@ onValue(ref(db, "current_match"), snap => {
       if(el) {
           el.innerText = `${actBatTeamName} - RUNS PER OVER${isRecall?' (1ST INN)':''}`;
           let hist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []); let oversData = [...hist];
-          if(!isRecall && state.legalBalls % 6 !== 0) { oversData.push(state.currentOverRuns || 0); }
+          if(!isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { oversData.push(state.currentOverRuns || 0); }
           let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
           // Keep the complete innings visible; limiting this to 20 bars hid earlier
           // overs in 50-over matches and caused the labels to drift.
@@ -753,13 +753,13 @@ onValue(ref(db, "current_match"), snap => {
           }
           let barStep = graphW / Math.max(5, displayOvers.length); let barW = Math.min(45, barStep * 0.6);
           displayOvers.forEach((val, idx) => {
-             const isPartialCurrentOver = !isRecall && state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1;
+             const isPartialCurrentOver = !isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0) && idx === displayOvers.length - 1;
              const actualOvIndex = isPartialCurrentOver ? hist.length : idx;
              let x = padX + (idx + 0.5) * barStep - barW/2;
              const knownValue = val !== null && val !== undefined && Number.isFinite(Number(val));
              let barH = knownValue ? ((Number(val) || 0) / maxVal) * graphH : 0;
              let y = 20 + graphH - barH;
-             let isCurrent = (!isRecall && idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
+             let isCurrent = (!isRecall && idx === displayOvers.length - 1 && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0));
              if(knownValue) {
                  svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="5" ry="5"/>`;
                  svgHtml += `<text x="${x + barW/2}" y="${y - 12}" fill="var(--ink)" font-size="28" font-weight="bold" text-anchor="middle">${val}</text>`;
@@ -784,7 +784,7 @@ onValue(ref(db, "current_match"), snap => {
           let graphW = w - padX - 30; let graphH = h - padY - 20;
           let cRuns1 = [0]; let sum1 = 0; let targetHist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
           targetHist.forEach(r => { sum1 += Number(r) || 0; cRuns1.push(sum1); });
-          if(!isRecall && state.legalBalls % 6 !== 0) { cRuns1.push(sum1 + (Number(state.currentOverRuns) || 0)); }
+          if(!isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { cRuns1.push(sum1 + (Number(state.currentOverRuns) || 0)); }
           let cRuns2 = [];
           if(!isRecall && state.innings === 2 && state.firstInnings) {
               let sum2 = 0; cRuns2.push(0);
@@ -810,7 +810,7 @@ onValue(ref(db, "current_match"), snap => {
               svgHtml += `<text x="${x}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" text-anchor="end">${maxOvers}</text>`;
               svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+12}" stroke="var(--muted)"/>`;
           }
-          function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && currentBalls % 6 !== 0) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
+          function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && (currentBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
           function drawWickets(fowArray, color) { let html = ''; (fowArray || []).forEach(f => { let ovrParts = String(f.overs).split('.'); let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0); let x = padX + (balls / (maxOvers * 6)) * graphW; let y = 20 + graphH - (f.score / maxTotal * graphH); html += `<circle cx="${x}" cy="${y}" r="8" fill="${color}" stroke="var(--navy-deep)" stroke-width="4"/>`; html += `<text x="${x}" y="${y - 15}" fill="${color}" font-family="sans-serif" font-size="22" font-weight="900" text-anchor="middle">W</text>`; }); return html; }
 
           if(!isRecall && state.innings === 2) {
