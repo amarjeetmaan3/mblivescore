@@ -756,11 +756,16 @@ onValue(ref(db, "current_match"), snap => {
              const isPartialCurrentOver = !isRecall && state.legalBalls % 6 !== 0 && idx === displayOvers.length - 1;
              const actualOvIndex = isPartialCurrentOver ? hist.length : idx;
              let x = padX + (idx + 0.5) * barStep - barW/2;
-             let barH = ((Number(val) || 0) / maxVal) * graphH;
+             const knownValue = val !== null && val !== undefined && Number.isFinite(Number(val));
+             let barH = knownValue ? ((Number(val) || 0) / maxVal) * graphH : 0;
              let y = 20 + graphH - barH;
              let isCurrent = (!isRecall && idx === displayOvers.length - 1 && state.legalBalls % 6 !== 0);
-             svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="5" ry="5"/>`;
-             svgHtml += `<text x="${x + barW/2}" y="${y - 12}" fill="var(--ink)" font-size="28" font-weight="bold" text-anchor="middle">${val}</text>`;
+             if(knownValue) {
+                 svgHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${isCurrent ? 'var(--crimson-2)' : 'var(--gold)'}" rx="5" ry="5"/>`;
+                 svgHtml += `<text x="${x + barW/2}" y="${y - 12}" fill="var(--ink)" font-size="28" font-weight="bold" text-anchor="middle">${val}</text>`;
+             } else {
+                 svgHtml += `<text x="${x + barW/2}" y="${20+graphH-12}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">—</text>`;
+             }
              let wCount = wktsPerOver[actualOvIndex] || 0;
              for(let wc=0; wc<wCount; wc++) { svgHtml += `<text x="${x + barW/2}" y="${y - 40 - (wc*25)}" fill="var(--crimson-2)" font-size="30" font-weight="900" text-anchor="middle">W</text>`; }
              if ((actualOvIndex + 1) % 2 === 0 || actualOvIndex + 1 === (Number(state.meta.maxOvers) || 20)) { svgHtml += `<text x="${x + barW/2}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" font-weight="bold" text-anchor="middle">${actualOvIndex + 1}</text>`; }
