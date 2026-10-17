@@ -3,6 +3,11 @@ name: Test Fetch
 on:
   workflow_dispatch:
 
+# Keep only one live Cricbuzz poller for this Firebase match at a time.
+concurrency:
+  group: cricbuzz-live-fetch
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
