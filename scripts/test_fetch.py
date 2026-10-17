@@ -248,7 +248,7 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
                     return result
         return None
 
-    for source in (match_header, miniscore):
+    for source in (match_header, miniscore, scorecard):
         for wanted_key in explicit_priority:
             explicit = find_explicit(source, wanted_key)
             if explicit:
