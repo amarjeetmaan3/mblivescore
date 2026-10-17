@@ -733,6 +733,9 @@ while time.time() - start_time < 6 * 60 * 60:
     try:
         config_data = session.get(f"{FIREBASE_URL}/auto_fetch_config.json", timeout=10).json()
         if not config_data or 'url' not in config_data:
+            if os.environ.get('CRICBUZZ_ONCE') == '1':
+                print('Smoke test stopped: no auto_fetch_config URL is configured.', flush=True)
+                break
             time.sleep(4); continue
         current_url = config_data['url']
         if current_url != last_url:
@@ -753,5 +756,7 @@ while time.time() - start_time < 6 * 60 * 60:
         else:
             push_status(False, err)
     except Exception as e: push_status(False, f"script error: {e}")
+    if os.environ.get('CRICBUZZ_ONCE') == '1':
+        break
     time.sleep(4)
     
