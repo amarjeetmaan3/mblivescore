@@ -223,10 +223,10 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
             return None
         return number if 1 <= number <= 100 else None
 
-    explicit_priority = (
-        "revisedovers", "revisedmaxovers", "reducedovers", "oversperside",
-        "oversperinnings", "scheduledovers", "matchovers", "overslimit",
-        "overlimit", "maxoversperinnings", "maxovers"
+    revised_priority = ("revisedovers", "revisedmaxovers", "reducedovers")
+    regular_priority = (
+        "oversperside", "oversperinnings", "scheduledovers", "matchovers",
+        "overslimit", "overlimit", "maxoversperinnings", "maxovers"
     )
 
     def find_explicit(obj, wanted_key):
@@ -248,8 +248,9 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
                     return result
         return None
 
-    for source in (match_header, miniscore, scorecard):
-        for wanted_key in explicit_priority:
+    sources = (match_header, miniscore, scorecard)
+    for source in sources:
+        for wanted_key in revised_priority:
             explicit = find_explicit(source, wanted_key)
             if explicit:
                 return explicit
@@ -283,6 +284,14 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
             result = as_positive_int(match.group(1))
             if result:
                 return result
+
+    # Generic scheduled limits come after explicit reduction text so a default
+    # maxOvers=20 cannot override a rain-reduced "9 overs per side" update.
+    for source in sources:
+        for wanted_key in regular_priority:
+            explicit = find_explicit(source, wanted_key)
+            if explicit:
+                return explicit
 
     match_format = str((match_header or {}).get("matchFormat", "")).strip().upper()
     desc_text = f"{(match_header or {}).get('matchDesc', '')} {(match_header or {}).get('matchDescription', '')} {(match_header or {}).get('seriesName', '')}"
