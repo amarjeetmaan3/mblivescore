@@ -311,129 +311,209 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
     return 20
 
 
+def fetch_raw_page(url, attempts=2):
+    """Fetch a Cricbuzz tab even when its page does not expose matchHeader JSON."""
+    last_error = None
+    for attempt in range(attempts):
+        try:
+            response = session.get(
+                url,
+                headers={
+                    "User-Agent": random.choice(USER_AGENTS),
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Referer": "https://www.cricbuzz.com/",
+                    "Cache-Control": "no-cache",
+                },
+                timeout=12,
+            )
+            if response.status_code == 200:
+                page = response.text
+                sample = page[:6000].lower()
+                if not any(marker in sample for marker in ("captcha", "access denied", "unusual traffic")):
+                    return page
+                last_error = "Bot check page"
+            else:
+                last_error = f"HTTP {response.status_code}"
+        except requests.exceptions.RequestException as exc:
+            last_error = f"Network err: {exc}"
+        if attempt + 1 < attempts:
+            time.sleep(1 + attempt)
+    if last_error:
+        print(f"Cricbuzz tab fetch failed ({url}): {last_error}", flush=True)
+    return ""
+
+
 def extract_playing_xi_from_html(page_text, team_index):
-    """Read both Playing XI lists from Cricbuzz's dedicated squads page HTML."""
+    """Extract a full Playing XI from the squads page, not just used bowlers."""
     if not page_text:
         return []
-    # Only collect actual profile anchors, not arbitrary names from commentary or
-    # bowling figures. The squads page lists the two XIs between Playing XI/Bench.
+
+    # Triple-quoted regex avoids accidental quote escaping in the profile href matcher.
     anchor_re = re.compile(
-        r'<a\\b[^>]*href=["\\'][^"\\']*/profiles/\\d+/[^"\\']*["\\'][^>]*>(.*?)</a>',
-        re.IGNORECASE | re.DOTALL
+        r"""<a\b[^>]*href=["'][^"']*/profiles/\d+/[^"']*["'][^>]*>(.*?)</a>""",
+        re.IGNORECASE | re.DOTALL,
     )
-    markers = list(re.finditer(r'playing\\s+xi\\b', page_text, re.IGNORECASE))
-    best_names = []
-    for marker in reversed(markers):
-        bench = re.search(r'\\bbench\\b', page_text[marker.end():], re.IGNORECASE)
-        end = marker.end() + bench.start() if bench else len(page_text)
-        section = page_text[marker.end():end]
+    def names_in(section):
         names = []
         for anchor in anchor_re.finditer(section):
-            raw_name = re.sub(r'<[^>]+>', ' ', anchor.group(1))
-            name = re.sub(r'\\s+', ' ', raw_name).strip()
-            if name and name.casefold() not in {n.casefold() for n in names}:
+            raw_name = re.sub(r"<[^>]+>", " ", anchor.group(1))
+            name = html.unescape(re.sub(r"\s+", " ", raw_name)).strip()
+            if name and name.casefold() not in {existing.casefold() for existing in names}:
                 names.append(name)
-        if len(names) > len(best_names):
-            best_names = names
+        return names
+
+    # Some Cricbuzz layouts use one combined Playing XI section; others use one
+    # Playing XI/Bench block per team. Support both structures.
+    markers = list(re.finditer(r"\bplaying\s+xi\b", page_text, re.IGNORECASE))
+    candidate_lists = []
+    for marker in markers:
+        next_xi = re.search(r"\bplaying\s+xi\b", page_text[marker.end():], re.IGNORECASE)
+        next_bench = re.search(r"\bbench\b", page_text[marker.end():], re.IGNORECASE)
+        ends = []
+        if next_xi:
+            ends.append(marker.end() + next_xi.start())
+        if next_bench:
+            ends.append(marker.end() + next_bench.start())
+        end = min(ends) if ends else len(page_text)
+        names = names_in(page_text[marker.end():end])
+        if len(names) >= 11:
+            candidate_lists.append(names)
+
+    # Deduplicate repeated labels that can occur in embedded page data.
+    unique_lists = []
+    seen_lists = set()
+    for names in candidate_lists:
+        key = tuple(name.casefold() for name in names)
+        if key not in seen_lists:
+            seen_lists.add(key)
+            unique_lists.append(names)
+
+    for names in unique_lists:
         if len(names) >= 22:
-            break
-    # Standard international XIs contain 11 players per side. Do not treat the
-    # bowling card's 3-5 used bowlers as a complete team roster.
-    if len(best_names) >= 22:
-        start = team_index * 11
-        return best_names[start:start + 11]
-    if len(best_names) == 11 and team_index == 0:
-        return best_names
+            return names[team_index * 11:team_index * 11 + 11]
+    if len(unique_lists) >= 2:
+        names = unique_lists[min(team_index, len(unique_lists) - 1)]
+        if len(names) >= 11:
+            return names[:11]
+
+    # Fallback: the page may expose the two XIs without a separate heading per team.
+    all_names = names_in(page_text)
+    if len(all_names) >= 22:
+        return all_names[team_index * 11:team_index * 11 + 11]
+    if len(all_names) >= 11 and team_index == 0:
+        return all_names[:11]
     return []
 
 
 def fetch_squads_xis(match_url, cache):
     """Fetch/cache the dedicated Cricbuzz squads page as the XI source of truth."""
     now = time.time()
-    cached = cache.get('playing11')
-    if cached and now - cache.get('playing11_ts', 0) < 300:
-        return cached.get('A', []), cached.get('B', [])
+    cached = cache.get("playing11")
+    if cached and now - cache.get("playing11_ts", 0) < 300:
+        return cached.get("A", []), cached.get("B", [])
+
     squads_url = re.sub(
-        r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard)/',
-        '/cricket-match-squads/', match_url, count=1
+        r"/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts)/",
+        "/cricket-match-squads/",
+        match_url,
+        count=1,
     )
-    try:
-        headers = {
-            "User-Agent": random.choice(USER_AGENTS),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Referer": "https://www.cricbuzz.com/",
-            "Cache-Control": "no-cache"
-        }
-        response = session.get(squads_url, headers=headers, timeout=12)
-        if response.status_code == 200:
-            team_a = extract_playing_xi_from_html(response.text, 0)
-            team_b = extract_playing_xi_from_html(response.text, 1)
-            if len(team_a) == 11 and len(team_b) == 11:
-                cache['playing11'] = {'A': team_a, 'B': team_b}
-                cache['playing11_ts'] = now
-                print(f"Playing XI loaded from squads page: {len(team_a)} + {len(team_b)} players", flush=True)
-                return team_a, team_b
-    except Exception as exc:
-        print(f"Squads page fallback failed: {exc}", flush=True)
-    return (cached or {}).get('A', []), (cached or {}).get('B', [])
-
-
-def extract_over_histories(page_text, team_a, team_b):
-    """Recover per-over runs from Cricbuzz's over-by-over page, including history
-    from before this fetcher started. The page gives cumulative score after each over."""
+    page = fetch_raw_page(squads_url)
+    if page:
+        team_a = extract_playing_xi_from_html(page, 0)
+        team_b = extract_playing_xi_from_html(page, 1)
+        if len(team_a) == 11 and len(team_b) == 11:
+            cache["playing11"] = {"A": team_a, "B": team_b}
+            cache["playing11_ts"] = now
+            print(f"Playing XI loaded from squads page: {len(team_a)} + {len(team_b)} players", flush=True)
+            return team_a, team_b
+        print(f"Squads page parsed incomplete XI: {len(team_a)} + {len(team_b)}", flush=True)
+    return (cached or {}).get("A", []), (cached or {}).get("B", [])
+def extract_over_histories(page_text, team_a, team_b, default_innings=1):
+    """Parse per-over run totals from Cricbuzz over summaries and preserve unknown gaps."""
     result = {1: [], 2: []}
     if not page_text:
         return result
-    plain = html.unescape(re.sub(r'<[^>]+>', ' ', str(page_text)))
-    plain = re.sub(r'\\s+', ' ', plain)
-    team_names = {str(team_a or '').strip().upper(), str(team_b or '').strip().upper()}
-    team_names.discard('')
+
+    plain = html.unescape(re.sub(r"<[^>]+>", " ", str(page_text)))
+    plain = re.sub(r"\s+", " ", plain)
+    team_names = {
+        str(team_a or "").strip().upper(),
+        str(team_b or "").strip().upper(),
+    }
+    team_names.discard("")
     heading_re = re.compile(
-        r'\\b(' + '|'.join(re.escape(name) for name in sorted(team_names, key=len, reverse=True)) +
-        r')\\s*\\((1st|2nd)\\s*Inn\\)',
-        re.IGNORECASE
+        r"\b(" + "|".join(re.escape(name) for name in sorted(team_names, key=len, reverse=True)) +
+        r")\s*\((1st|2nd)\s*Inn\)",
+        re.IGNORECASE,
     )
     headings = list(heading_re.finditer(plain))
-    if not headings:
-        return result
-    cumulative_by_innings = {1: {}, 2: {}}
-    score_re = re.compile(r'\\b(?:Ov|Over)\\s*(\\d{1,2})\\s+(\\d{1,3})\\s*[-–]\\s*(\\d{1,2})\\b', re.IGNORECASE)
-    for idx, heading in enumerate(headings):
-        innings_number = 1 if heading.group(2).lower().startswith('1') else 2
-        end = headings[idx + 1].start() if idx + 1 < len(headings) else len(plain)
-        section = plain[heading.end():end]
-        for match in score_re.finditer(section):
-            over_number = int(match.group(1))
-            cumulative_runs = int(match.group(2))
-            # Keep the latest cumulative score if the page repeats an over summary.
-            cumulative_by_innings[innings_number][over_number] = cumulative_runs
 
-    for innings_number, cumulative in cumulative_by_innings.items():
-        if not cumulative:
-            continue
-        history = [None] * max(cumulative)
-        previous_total = 0
-        previous_over = 0
-        for over_number in sorted(cumulative):
-            total = cumulative[over_number]
-            if over_number == 1:
-                history[0] = total
-                previous_total = total
-                previous_over = 1
-                continue
-            if over_number == previous_over + 1:
-                history[over_number - 1] = max(0, total - previous_total)
-                previous_total = total
-                previous_over = over_number
+    # Cricbuzz's visible live page uses blocks such as:
+    # "Over 4 66-2 ... (10 runs)". These contain the per-over total directly.
+    summary_re = re.compile(
+        r"\bOver\s*(\d{1,2})\s+(\d{1,3})\s*[-–]\s*(\d{1,2})\b.{0,260}?\((\d{1,2})\s+runs?\)",
+        re.IGNORECASE,
+    )
+    # Also accept cumulative-only summaries seen on some older Cricbuzz layouts.
+    cumulative_re = re.compile(
+        r"\b(?:Ov|Over)\s*(\d{1,2})\s+(\d{1,3})\s*[-–]\s*(\d{1,2})\b",
+        re.IGNORECASE,
+    )
+
+    found = {1: {}, 2: {}}
+    if headings:
+        sections = []
+        for index, heading in enumerate(headings):
+            end = headings[index + 1].start() if index + 1 < len(headings) else len(plain)
+            inn_no = 1 if heading.group(2).lower().startswith("1") else 2
+            sections.append((inn_no, plain[heading.end():end]))
+        for inn_no, section in sections:
+            summaries = list(summary_re.finditer(section))
+            if summaries:
+                for match in summaries:
+                    found[inn_no][int(match.group(1))] = int(match.group(4))
             else:
-                # Do not invent runs for overs missing from Cricbuzz's page.
-                previous_total = total
-                previous_over = over_number
-        result[innings_number] = history
+                cumulative = {}
+                for match in cumulative_re.finditer(section):
+                    cumulative[int(match.group(1))] = int(match.group(2))
+                previous_over, previous_total = 0, 0
+                for over_no in sorted(cumulative):
+                    total = cumulative[over_no]
+                    if over_no == previous_over + 1:
+                        found[inn_no][over_no] = max(0, total - previous_total)
+                    previous_over, previous_total = over_no, total
+
+    # Commentary/over tabs often omit the "(1st Inn)" heading in the text layer.
+    # In that case assign visible summaries to the current innings from miniscore.
+    if not any(found.values()):
+        summaries = list(summary_re.finditer(plain))
+        if summaries:
+            inn_no = 2 if str(default_innings) == "2" else 1
+            for match in summaries:
+                found[inn_no][int(match.group(1))] = int(match.group(4))
+        else:
+            cumulative = {}
+            for match in cumulative_re.finditer(plain):
+                cumulative[int(match.group(1))] = int(match.group(2))
+            inn_no = 2 if str(default_innings) == "2" else 1
+            previous_over, previous_total = 0, 0
+            for over_no in sorted(cumulative):
+                total = cumulative[over_no]
+                if over_no == previous_over + 1:
+                    found[inn_no][over_no] = max(0, total - previous_total)
+                previous_over, previous_total = over_no, total
+
+    for inn_no, values in found.items():
+        if not values:
+            continue
+        history = [None] * max(values)
+        for over_no, runs in values.items():
+            if 1 <= over_no <= len(history):
+                history[over_no - 1] = runs
+        result[inn_no] = history
     return result
-
-
 def fetch_match_smart(match_url, sc_cache):
     live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
     sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/').replace('/cricket-scores/', '/cricket-scorecard/')
@@ -450,17 +530,30 @@ def fetch_match_smart(match_url, sc_cache):
             
     sc_data = sc_cache.get('data', {}) or {}
 
-    # The over-by-over page supplies completed-over cumulative scores, allowing
-    # charts to be correct even when this workflow starts after an innings begins.
-    if now - sc_cache.get('over_ts', 0) > 20 or not sc_cache.get('over_data'):
-        over_url = re.sub(
-            r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard)/',
-            '/live-cricket-over-by-over/', match_url, count=1
-        )
-        over_data, over_err = get_cricbuzz_data(over_url)
-        if over_data.get("pageText"):
-            sc_cache['over_data'], sc_cache['over_ts'] = over_data, now
-    over_data = sc_cache.get('over_data', {}) or {}
+    # Fetch Cricbuzz's separate tabs too. Several tabs (especially Overs and
+    # Full Commentary) do not expose matchHeader JSON, so fetch their HTML directly.
+    if now - sc_cache.get("tabs_ts", 0) > 45 or not sc_cache.get("tabs"):
+        def tab_url(slug):
+            return re.sub(
+                r"/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts|cricket-match-squads)/",
+                f"/{slug}/",
+                match_url,
+                count=1,
+            )
+        tabs = {
+            "overs": "live-cricket-over-by-over",
+            "squads": "cricket-match-squads",
+            "info": "cricket-match-facts",
+            "commentary": "live-cricket-full-commentary",
+            "graphs": "live-cricket-graphs",
+            "highlights": "live-cricket-highlights",
+        }
+        sc_cache["tabs"] = {
+            key: fetch_raw_page(tab_url(slug))
+            for key, slug in tabs.items()
+        }
+        sc_cache["tabs_ts"] = now
+    tab_pages = sc_cache.get("tabs", {}) or {}
     full_sc = sc_data.get("scoreCard", [])
 
     if not h: m, h = sc_data.get("miniscore", {}), sc_data.get("matchHeader", {})
@@ -477,10 +570,16 @@ def fetch_match_smart(match_url, sc_cache):
 
     toss_res = h.get("tossResults", {})
     toss_winner = "A" if str(toss_res.get("tossWinnerId", "")) == t1_id else ("B" if str(toss_res.get("tossWinnerId", "")) == t2_id else "A")
-    max_overs = get_match_max_overs(
-        h, m, full_sc,
-        live_data.get("pageText", "") + " " + sc_data.get("pageText", "")
-    )
+    max_overs_text = " ".join([
+        live_data.get("pageText", ""),
+        sc_data.get("pageText", ""),
+        tab_pages.get("overs", ""),
+        tab_pages.get("info", ""),
+        tab_pages.get("commentary", ""),
+        tab_pages.get("graphs", ""),
+        tab_pages.get("highlights", ""),
+    ])
+    max_overs = get_match_max_overs(h, m, full_sc, max_overs_text)
 
     bat_team_inn1 = "A"
     if isinstance(full_sc, list) and len(full_sc) > 0:
@@ -500,11 +599,30 @@ def fetch_match_smart(match_url, sc_cache):
 
     curr_innings_id = m.get("inningsId", 1) or 1
     track_over_history(curr_innings_id, m.get("overs", 0), m.get("batTeam", {}).get("teamScore", 0))
-    page_histories = extract_over_histories(
-        over_data.get("pageText", "") + " " + live_data.get("pageText", ""),
-        h.get("team1", {}).get("shortName", ""),
-        h.get("team2", {}).get("shortName", "")
-    )
+    page_histories = {1: [], 2: []}
+    history_pages = [
+        live_data.get("pageText", ""),
+        sc_data.get("pageText", ""),
+        tab_pages.get("overs", ""),
+        tab_pages.get("commentary", ""),
+    ]
+    for history_page in history_pages:
+        parsed = extract_over_histories(
+            history_page,
+            h.get("team1", {}).get("shortName", ""),
+            h.get("team2", {}).get("shortName", ""),
+            default_innings=curr_innings_id,
+        )
+        for innings_number in (1, 2):
+            existing = page_histories[innings_number]
+            incoming = parsed.get(innings_number, [])
+            if incoming and any(value is not None for value in incoming):
+                merged = []
+                for idx in range(max(len(existing), len(incoming))):
+                    old_value = existing[idx] if idx < len(existing) else None
+                    new_value = incoming[idx] if idx < len(incoming) else None
+                    merged.append(new_value if new_value is not None else old_value)
+                page_histories[innings_number] = merged
     for innings_number in (1, 2):
         parsed_history = page_histories.get(innings_number, [])
         tracked = over_hist_state.setdefault(innings_number, {"history": [], "currentOverRuns": 0})
