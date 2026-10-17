@@ -223,35 +223,36 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
             return None
         return number if 1 <= number <= 100 else None
 
-    explicit_keys = {
-        "maxovers", "revisedovers", "revisedmaxovers", "oversperside",
-        "oversperinnings", "scheduledovers", "matchovers", "reducedovers",
-        "overslimit", "overlimit", "maxoversperinnings"
-    }
+    explicit_priority = (
+        "revisedovers", "revisedmaxovers", "reducedovers", "oversperside",
+        "oversperinnings", "scheduledovers", "matchovers", "overslimit",
+        "overlimit", "maxoversperinnings", "maxovers"
+    )
 
-    def find_explicit(obj):
+    def find_explicit(obj, wanted_key):
         if isinstance(obj, dict):
             for key, value in obj.items():
                 normalized = re.sub(r"[^a-z]", "", str(key).lower())
-                if normalized in explicit_keys:
+                if normalized == wanted_key:
                     result = as_positive_int(value)
                     if result:
                         return result
             for value in obj.values():
-                result = find_explicit(value)
+                result = find_explicit(value, wanted_key)
                 if result:
                     return result
         elif isinstance(obj, list):
             for value in obj:
-                result = find_explicit(value)
+                result = find_explicit(value, wanted_key)
                 if result:
                     return result
         return None
 
     for source in (match_header, miniscore):
-        explicit = find_explicit(source)
-        if explicit:
-            return explicit
+        for wanted_key in explicit_priority:
+            explicit = find_explicit(source, wanted_key)
+            if explicit:
+                return explicit
 
     text_fields = []
     for source in (match_header, miniscore):
