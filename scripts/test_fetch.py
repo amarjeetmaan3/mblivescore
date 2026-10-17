@@ -267,6 +267,8 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
     # to 20-over/50-over formats elsewhere on the page.
     patterns = (
         r"(?:reduced|shortened|cut\s+down|limited)\s+(?:to\s+)?(\d{1,2})\s*[- ]?overs?\s*(?:per\s+side|each|a\s+side)?",
+        # Cricbuzz's live page for rain-shortened matches says e.g. "9 Overs game due to rain".
+        r"(\d{1,2})\s*[- ]?overs?\s+game\b",
         r"(\d{1,2})\s*[- ]?overs?\s*(?:per\s+side|each|a\s+side)\b",
         r"(?:innings|each\s+side|per\s+side)\s+(?:of\s+)?(\d{1,2})\s*overs?\b"
     )
@@ -307,6 +309,74 @@ def get_match_max_overs(match_header, miniscore, scorecard, page_text=""):
     if "T10" in match_format:
         return 10
     return 20
+
+
+def extract_playing_xi_from_html(page_text, team_index):
+    """Read both Playing XI lists from Cricbuzz's dedicated squads page HTML."""
+    if not page_text:
+        return []
+    # Only collect actual profile anchors, not arbitrary names from commentary or
+    # bowling figures. The squads page lists the two XIs between Playing XI/Bench.
+    anchor_re = re.compile(
+        r'<a\\b[^>]*href=["\\'][^"\\']*/profiles/\\d+/[^"\\']*["\\'][^>]*>(.*?)</a>',
+        re.IGNORECASE | re.DOTALL
+    )
+    markers = list(re.finditer(r'playing\\s+xi\\b', page_text, re.IGNORECASE))
+    best_names = []
+    for marker in reversed(markers):
+        bench = re.search(r'\\bbench\\b', page_text[marker.end():], re.IGNORECASE)
+        end = marker.end() + bench.start() if bench else len(page_text)
+        section = page_text[marker.end():end]
+        names = []
+        for anchor in anchor_re.finditer(section):
+            raw_name = re.sub(r'<[^>]+>', ' ', anchor.group(1))
+            name = re.sub(r'\\s+', ' ', raw_name).strip()
+            if name and name.casefold() not in {n.casefold() for n in names}:
+                names.append(name)
+        if len(names) > len(best_names):
+            best_names = names
+        if len(names) >= 22:
+            break
+    # Standard international XIs contain 11 players per side. Do not treat the
+    # bowling card's 3-5 used bowlers as a complete team roster.
+    if len(best_names) >= 22:
+        start = team_index * 11
+        return best_names[start:start + 11]
+    if len(best_names) == 11 and team_index == 0:
+        return best_names
+    return []
+
+
+def fetch_squads_xis(match_url, cache):
+    """Fetch/cache the dedicated Cricbuzz squads page as the XI source of truth."""
+    now = time.time()
+    cached = cache.get('playing11')
+    if cached and now - cache.get('playing11_ts', 0) < 300:
+        return cached.get('A', []), cached.get('B', [])
+    squads_url = re.sub(
+        r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard)/',
+        '/cricket-match-squads/', match_url, count=1
+    )
+    try:
+        headers = {
+            "User-Agent": random.choice(USER_AGENTS),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.cricbuzz.com/",
+            "Cache-Control": "no-cache"
+        }
+        response = session.get(squads_url, headers=headers, timeout=12)
+        if response.status_code == 200:
+            team_a = extract_playing_xi_from_html(response.text, 0)
+            team_b = extract_playing_xi_from_html(response.text, 1)
+            if len(team_a) == 11 and len(team_b) == 11:
+                cache['playing11'] = {'A': team_a, 'B': team_b}
+                cache['playing11_ts'] = now
+                print(f"Playing XI loaded from squads page: {len(team_a)} + {len(team_b)} players", flush=True)
+                return team_a, team_b
+    except Exception as exc:
+        print(f"Squads page fallback failed: {exc}", flush=True)
+    return (cached or {}).get('A', []), (cached or {}).get('B', [])
 
 
 def fetch_match_smart(match_url, sc_cache):
@@ -352,6 +422,14 @@ def fetch_match_smart(match_url, sc_cache):
         bat_team_inn1 = "B" if str(m.get("batTeam", {}).get("teamId", "")) == t2_id else "A"
 
     playing11_A, playing11_B = get_playing_11(h, "team1"), get_playing_11(h, "team2")
+    # Header data can omit the not-yet-used players; fetch the dedicated squads
+    # page if either XI is incomplete instead of letting bowling figures fill it.
+    if len(playing11_A) < 11 or len(playing11_B) < 11:
+        squads_A, squads_B = fetch_squads_xis(match_url, sc_cache)
+        if len(squads_A) == 11:
+            playing11_A = squads_A
+        if len(squads_B) == 11:
+            playing11_B = squads_B
 
     curr_innings_id = m.get("inningsId", 1) or 1
     track_over_history(curr_innings_id, m.get("overs", 0), m.get("batTeam", {}).get("teamScore", 0))
