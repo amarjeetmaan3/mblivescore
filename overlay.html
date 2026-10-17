@@ -729,8 +729,17 @@ onValue(ref(db, "current_match"), snap => {
       let el = document.getElementById('chartTitle');
       if(el) {
           el.innerText = `${actBatTeamName} - RUNS PER OVER${isRecall?' (1ST INN)':''}`;
-          let hist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []); let oversData = [...hist];
-          if(!isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { oversData.push(state.currentOverRuns || 0); }
+          const inningsBalls = Math.max(0, Number(isRecall ? state.firstInnings.legalBalls : state.legalBalls) || 0);
+          const completedOvers = Math.floor(inningsBalls / 6);
+          const sourceHistory = isRecall ? (state.firstInnings.overHistory || []) : (state.overHistory || []);
+          // Cricbuzz tabs can expose extra summaries; plot only completed legal overs.
+          let hist = Array.from({length: completedOvers}, (_, i) => i < sourceHistory.length ? sourceHistory[i] : null);
+          let oversData = [...hist];
+          if(!isRecall && (inningsBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) {
+              oversData.push(Number(state.currentOverRuns) || 0);
+          } else if(isRecall && inningsBalls % 6 !== 0 && hist.every(v => v !== null && v !== undefined && Number.isFinite(Number(v)))) {
+              oversData.push(Math.max(0, (Number(state.firstInnings.score) || 0) - hist.reduce((sum, v) => sum + Number(v), 0)));
+          }
           let wktsPerOver = {}; (actFow || []).forEach(f => { let ovIndex = Math.floor(parseFloat(f.overs)); wktsPerOver[ovIndex] = (wktsPerOver[ovIndex] || 0) + 1; });
           // Keep the complete innings visible; limiting this to 20 bars hid earlier
           // overs in 50-over matches and caused the labels to drift.
@@ -782,13 +791,29 @@ onValue(ref(db, "current_match"), snap => {
           
           let w = 1450, h = 500, padX = 80, padY = 60; 
           let graphW = w - padX - 30; let graphH = h - padY - 20;
-          let cRuns1 = [0]; let sum1 = 0; let targetHist = isRecall ? state.firstInnings.overHistory : (state.overHistory || []);
-          targetHist.forEach(r => { sum1 += Number(r) || 0; cRuns1.push(sum1); });
-          if(!isRecall && (state.legalBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { cRuns1.push(sum1 + (Number(state.currentOverRuns) || 0)); }
+          const activeBalls = Math.max(0, Number(isRecall ? state.firstInnings.legalBalls : state.legalBalls) || 0);
+          const completedWormOvers = Math.floor(activeBalls / 6);
+          const rawTargetHist = isRecall ? (state.firstInnings.overHistory || []) : (state.overHistory || []);
+          const targetHist = Array.from({length: completedWormOvers}, (_, i) => i < rawTargetHist.length ? rawTargetHist[i] : null);
+          let cRuns1 = [0]; let sum1 = 0;
+          targetHist.forEach(r => {
+              if (r === null || r === undefined || !Number.isFinite(Number(r))) cRuns1.push(null);
+              else { sum1 += Number(r); cRuns1.push(sum1); }
+          });
+          if(!isRecall && (activeBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) cRuns1.push(sum1 + (Number(state.currentOverRuns) || 0));
+          else if(isRecall && activeBalls % 6 !== 0 && targetHist.every(v => v !== null && v !== undefined && Number.isFinite(Number(v)))) cRuns1.push(Number(state.firstInnings.score) || sum1);
           let cRuns2 = [];
           if(!isRecall && state.innings === 2 && state.firstInnings) {
+              const firstBalls = Math.max(0, Number(state.firstInnings.legalBalls) || 0);
+              const firstCompletedOvers = Math.floor(firstBalls / 6);
+              const rawFirstHist = state.firstInnings.overHistory || [];
+              const firstHist = Array.from({length: firstCompletedOvers}, (_, i) => i < rawFirstHist.length ? rawFirstHist[i] : null);
               let sum2 = 0; cRuns2.push(0);
-              (state.firstInnings.overHistory || []).forEach(r => { sum2 += Number(r) || 0; cRuns2.push(sum2); });
+              firstHist.forEach(r => {
+                  if (r === null || r === undefined || !Number.isFinite(Number(r))) cRuns2.push(null);
+                  else { sum2 += Number(r); cRuns2.push(sum2); }
+              });
+              if(firstBalls % 6 !== 0 && firstHist.every(v => v !== null && v !== undefined && Number.isFinite(Number(v)))) cRuns2.push(Number(state.firstInnings.score) || sum2);
           }
           let rawTotal = Math.max(state.score, state.target || 0, 50); if(isRecall) rawTotal = Math.max(state.firstInnings.score, 50);
           let maxTotal = getNiceMax(rawTotal, 5);
@@ -810,7 +835,20 @@ onValue(ref(db, "current_match"), snap => {
               svgHtml += `<text x="${x}" y="${20+graphH+32}" fill="var(--muted)" font-size="24" text-anchor="end">${maxOvers}</text>`;
               svgHtml += `<line x1="${x}" y1="${20+graphH}" x2="${x}" y2="${20+graphH+12}" stroke="var(--muted)"/>`;
           }
-          function buildPath(dataArr, currentBalls, isComplete) { let d = `M ${padX} ${20+graphH}`; dataArr.forEach((val, idx) => { let x = 0; if(idx === dataArr.length - 1 && !isComplete && (currentBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) { x = padX + (((idx - 1) + (currentBalls % 6)/6) / maxOvers * graphW); } else { x = padX + (idx / maxOvers) * graphW; } let y = 20 + graphH - (val / maxTotal * graphH); d += ` L ${x} ${y}`; }); return d; }
+          function buildPath(dataArr, currentBalls, isComplete) {
+              let d = '', penDown = false;
+              dataArr.forEach((val, idx) => {
+                  if (val === null || val === undefined || !Number.isFinite(Number(val))) { penDown = false; return; }
+                  let x = padX + (idx / maxOvers) * graphW;
+                  if(idx === dataArr.length - 1 && !isComplete && (currentBalls % 6 !== 0 || (Number(state.currentOverRuns) || 0) > 0)) {
+                      x = padX + ((Math.floor(currentBalls / 6) + (currentBalls % 6) / 6) / maxOvers * graphW);
+                  }
+                  const y = 20 + graphH - (Number(val) / maxTotal * graphH);
+                  if (!penDown) { d += ` M ${x} ${y}`; penDown = true; }
+                  else { d += ` L ${x} ${y}`; }
+              });
+              return d;
+          }
           function drawWickets(fowArray, color) { let html = ''; (fowArray || []).forEach(f => { let ovrParts = String(f.overs).split('.'); let balls = parseInt(ovrParts[0]) * 6 + (parseInt(ovrParts[1]) || 0); let x = padX + (balls / (maxOvers * 6)) * graphW; let y = 20 + graphH - (f.score / maxTotal * graphH); html += `<circle cx="${x}" cy="${y}" r="8" fill="${color}" stroke="var(--navy-deep)" stroke-width="4"/>`; html += `<text x="${x}" y="${y - 15}" fill="${color}" font-family="sans-serif" font-size="22" font-weight="900" text-anchor="middle">W</text>`; }); return html; }
 
           if(!isRecall && state.innings === 2) {
