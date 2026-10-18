@@ -958,6 +958,21 @@ while time.time() - start_time < 6 * 60 * 60:
                 }
                 print("Source page status: " + json.dumps(source_summary, ensure_ascii=False), flush=True)
                 print("Structured archive payloads: " + json.dumps(extract_summary, ensure_ascii=False), flush=True)
+                commentary_payload = extracts.get("commentary") or {}
+                commentary_data = commentary_payload.get("data") if isinstance(commentary_payload, dict) else None
+                if isinstance(commentary_data, dict):
+                    commentary_shape = {"key": commentary_payload.get("key"), "topKeys": list(commentary_data.keys())[:30]}
+                    for candidate_key, candidate_value in commentary_data.items():
+                        if isinstance(candidate_value, list):
+                            commentary_shape["firstList"] = candidate_key
+                            commentary_shape["listLength"] = len(candidate_value)
+                            commentary_shape["firstItemKeys"] = list(candidate_value[0].keys())[:30] if candidate_value and isinstance(candidate_value[0], dict) else []
+                            break
+                elif isinstance(commentary_data, list):
+                    commentary_shape = {"key": commentary_payload.get("key"), "listLength": len(commentary_data), "firstItemKeys": list(commentary_data[0].keys())[:30] if commentary_data and isinstance(commentary_data[0], dict) else []}
+                else:
+                    commentary_shape = {"key": commentary_payload.get("key"), "type": type(commentary_data).__name__}
+                print("Commentary payload shape: " + json.dumps(commentary_shape, ensure_ascii=False), flush=True)
             print(
                 f"Pushed: {data['teamA']} vs {data['teamB']} | "
                 f"Score: {data['score']}/{data['wickets']} ({data.get('overs', '0.0')} ov) | "
