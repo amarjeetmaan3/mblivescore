@@ -554,19 +554,19 @@ def extract_visible_commentary_events(page_text):
     """Fallback ball-by-ball extraction from the visible full-commentary page text."""
     if not page_text:
         return []
-    visible = re.sub(r'<(script|style)\\b[^>]*>.*?</\\1>', ' ', str(page_text), flags=re.IGNORECASE | re.DOTALL)
+    visible = re.sub(r'<(script|style)\b[^>]*>.*?</\1>', ' ', str(page_text), flags=re.IGNORECASE | re.DOTALL)
     plain = html.unescape(re.sub(r'<[^>]+>', ' ', visible))
-    plain = re.sub(r'\\s+', ' ', plain).strip()
-    result_token = r'(?:W|[0-6]|(?:\\d{1,2})?(?:WD|NB|LB|B))'
+    plain = re.sub(r'\s+', ' ', plain).strip()
+    result_token = r'(?:W|[0-6]|(?:\d{1,2})?(?:WD|NB|LB|B))'
     event_re = re.compile(
-        r'(?<![\\d.])(?P<ball>\\d{1,2}\\.\\d)\\s+(?P<result>' + result_token + r')\\b\\s+(?P<text>.{8,700}?)(?=\\s+\\d{1,2}\\.\\d\\s+' + result_token + r'\\b|$)',
+        r'(?<![\d.])(?P<ball>\d{1,2}\.\d)\s+(?P<result>' + result_token + r')\b\s+(?P<text>.{8,700}?)(?=\s+\d{1,2}\.\d\s+' + result_token + r'\b|$)',
         re.IGNORECASE,
     )
     events = []
     seen = set()
     for match in event_re.finditer(plain):
-        description = re.sub(r'\\s+', ' ', match.group('text')).strip()
-        if not re.search(r'\\bto\\b', description, re.IGNORECASE):
+        description = re.sub(r'\s+', ' ', match.group('text')).strip()
+        if not re.search(r'\bto\b', description, re.IGNORECASE):
             continue
         ball = match.group('ball')
         result = match.group('result').upper()
