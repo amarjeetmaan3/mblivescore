@@ -836,13 +836,26 @@ def fetch_match_smart(match_url, sc_cache):
     data["sourceStatus"] = source_status
     data["historyCoverage"] = history_coverage
 
+    over_by_over_payload = extract_first_json_payload(
+        tab_pages.get("overs", ""),
+        ["overSummary", "overSummaries", "oversList", "overByOver", "ballByBall", "commentaryList"],
+    )
+    if not over_by_over_payload and (data.get("overHistory_inn1") or data.get("overHistory_inn2")):
+        over_by_over_payload = {
+            "key": "parsedOverHistory",
+            "data": {
+                "innings1": data.get("overHistory_inn1") or [],
+                "innings2": data.get("overHistory_inn2") or [],
+            },
+        }
+
     source_extracts = {
         # Keep Cricbuzz's structured scorecard innings too, so fields not currently
         # used by the overlay are still available for later logic.
         "scorecard": full_sc if isinstance(full_sc, list) and full_sc else None,
         "squads": extract_first_json_payload(tab_pages.get("squads", ""), ["squadDetails", "squadData", "playersList", "playingXI", "playing11", "matchTeamInfo"]),
         "commentary": extract_first_json_payload(tab_pages.get("commentary", ""), ["commentaryList", "commentaryAllList", "commentaryData", "commEvents", "ballByBall", "commentary"]),
-        "overByOver": extract_first_json_payload(tab_pages.get("overs", ""), ["overSummary", "overSummaries", "oversList", "overByOver", "ballByBall", "commentaryList"]),
+        "overByOver": over_by_over_payload,
         "graphs": extract_first_json_payload(tab_pages.get("graphs", ""), ["graphData", "wormData", "runRateData", "partnershipData", "winProbability", "ballMapData", "seriesData"]),
         "info": extract_first_json_payload(tab_pages.get("info", ""), ["matchInfo", "matchFacts", "matchHeader", "venueInfo"]),
     }
