@@ -864,6 +864,31 @@ def fetch_match_smart(match_url, sc_cache):
     }
     return data, combined_err
 
+def merge_archive_preserving_history(existing, incoming, path=''):
+    """Merge new archive data without deleting older values when a source is temporarily incomplete."""
+    if incoming is None:
+        return existing
+    if isinstance(incoming, dict):
+        result = dict(existing) if isinstance(existing, dict) else {}
+        for key, value in incoming.items():
+            child_path = f"{path}.{key}" if path else str(key)
+            result[key] = merge_archive_preserving_history(result.get(key), value, child_path)
+        return result
+    if isinstance(incoming, list):
+        if not incoming and isinstance(existing, list) and existing:
+            return existing
+        if 'overHistory' in path or 'overHistory_inn' in path:
+            previous = existing if isinstance(existing, list) else []
+            merged = []
+            for index in range(max(len(previous), len(incoming))):
+                old_value = previous[index] if index < len(previous) else None
+                new_value = incoming[index] if index < len(incoming) else None
+                merged.append(old_value if new_value is None and old_value is not None else new_value)
+            return merged
+        return incoming
+    return incoming
+
+
 start_time = time.time()
 last_url = ""
 sc_cache = {}
@@ -891,9 +916,14 @@ while time.time() - start_time < 6 * 60 * 60:
                 write_response = session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
                 write_response.raise_for_status()
                 if archive_payload and data.get("matchId"):
+                    archive_url = f"{FIREBASE_URL}/match_archive/{data['matchId']}.json"
+                    existing_response = session.get(archive_url, timeout=10)
+                    existing_response.raise_for_status()
+                    existing_archive = existing_response.json() or {}
+                    merged_archive = merge_archive_preserving_history(existing_archive, archive_payload)
                     archive_response = session.patch(
-                        f"{FIREBASE_URL}/match_archive/{data['matchId']}.json",
-                        json=archive_payload,
+                        archive_url,
+                        json=merged_archive,
                         timeout=15,
                     )
                     archive_response.raise_for_status()
