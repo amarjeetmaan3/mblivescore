@@ -972,6 +972,21 @@ while time.time() - start_time < 6 * 60 * 60:
                     commentary_shape = {"key": commentary_payload.get("key"), "listLength": len(commentary_data), "firstItemKeys": list(commentary_data[0].keys())[:30] if commentary_data and isinstance(commentary_data[0], dict) else []}
                 else:
                     commentary_shape = {"key": commentary_payload.get("key"), "type": type(commentary_data).__name__}
+                if isinstance(commentary_data, list):
+                    sample_items = commentary_data[:2] + commentary_data[-2:]
+                    commentary_shape["sample"] = [
+                        {
+                            "ballNbr": item.get("ballNbr"),
+                            "event": item.get("event"),
+                            "commText": str(item.get("commText", ""))[:100],
+                            "legalRuns": item.get("legalRuns"),
+                            "totalRuns": item.get("totalRuns"),
+                            "batTeamScore": item.get("batTeamScore"),
+                            "batsmanStriker": item.get("batsmanStriker"),
+                            "bowlerStriker": item.get("bowlerStriker"),
+                        }
+                        for item in sample_items if isinstance(item, dict)
+                    ]
                 print("Commentary payload shape: " + json.dumps(commentary_shape, ensure_ascii=False), flush=True)
             print(
                 f"Pushed: {data['teamA']} vs {data['teamB']} | "
