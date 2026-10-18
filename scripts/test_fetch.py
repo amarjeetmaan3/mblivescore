@@ -108,6 +108,44 @@ def extract_json_at(html, key):
         except Exception: continue
     return None
 
+def extract_all_json_at(source_text, key, limit=20):
+    """Return multiple structured occurrences of a key; Cricbuzz pages can embed stale and live copies."""
+    source_text = str(source_text or '')
+    pattern = '"' + str(key) + '":'
+    values = []
+    cursor = 0
+    decoder = json.JSONDecoder()
+    while len(values) < limit:
+        index = source_text.find(pattern, cursor)
+        if index < 0:
+            break
+        start = index + len(pattern)
+        while start < len(source_text) and source_text[start] in ' \\t\\r\\n':
+            start += 1
+        if start >= len(source_text) or source_text[start] not in '{[':
+            cursor = index + len(pattern)
+            continue
+        try:
+            value, consumed = decoder.raw_decode(source_text[start:start + 400000])
+            values.append(value)
+            cursor = start + consumed
+        except Exception:
+            cursor = index + len(pattern)
+    return values
+
+
+def count_delivery_events(value):
+    if isinstance(value, list):
+        return sum(
+            1 for item in value
+            if isinstance(item, dict)
+            and str(item.get("ballNbr") or item.get("ball") or "").strip() not in ("", "0", "0.0")
+        )
+    if isinstance(value, dict):
+        return sum(count_delivery_events(item) for item in value.values())
+    return 0
+
+
 def get_cricbuzz_data(url, attempts=3):
     last_err = None
     for i in range(attempts):
@@ -535,19 +573,26 @@ def extract_over_histories(page_text, team_a, team_b, default_innings=1):
         result[inn_no] = history
     return result
 def extract_first_json_payload(page_text, candidate_keys, max_chars=300000):
-    """Extract the first structured JSON payload found under known Cricbuzz page keys."""
+    """Choose the most useful structured occurrence instead of the first embedded copy."""
+    best = None
+    best_score = -1
     for key in candidate_keys:
-        value = extract_json_at(page_text or '', key)
-        if value is None:
-            continue
-        try:
-            encoded = json.dumps(value, ensure_ascii=False)
-            if len(encoded) > max_chars:
-                return {"truncated": True, "originalChars": len(encoded), "preview": encoded[:max_chars]}
-            return {"key": key, "data": value}
-        except (TypeError, ValueError):
-            continue
-    return None
+        for value in extract_all_json_at(page_text or '', key):
+            try:
+                encoded = json.dumps(value, ensure_ascii=False)
+            except (TypeError, ValueError):
+                continue
+            delivery_count = count_delivery_events(value)
+            score = delivery_count * 1000000 + (len(value) * 100 if isinstance(value, (list, dict)) else 0) + min(len(encoded), 99999)
+            if score > best_score:
+                best_score = score
+                best = (key, value, encoded)
+    if best is None:
+        return None
+    key, value, encoded = best
+    if len(encoded) > max_chars:
+        return {"truncated": True, "originalChars": len(encoded), "preview": encoded[:max_chars]}
+    return {"key": key, "data": value}
 
 
 def extract_visible_commentary_events(page_text):
@@ -886,7 +931,7 @@ def fetch_match_smart(match_url, sc_cache):
         tab_pages.get("commentary", ""),
         ["commentaryList", "commentaryAllList", "commentaryData", "commEvents", "ballByBall", "commentary"],
     )
-    visible_commentary_events = extract_visible_commentary_events(tab_pages.get("commentary", ""))
+    visible_commentary_events = extract_visible_commentary_events(tab_pages.get("commentary", "")) or extract_visible_commentary_events(live_data.get("pageText", "")) or extract_visible_commentary_events(sc_data.get("pageText", ""))
     commentary_data = commentary_payload.get("data") if isinstance(commentary_payload, dict) else None
     has_structured_ball_events = isinstance(commentary_data, list) and any(
         isinstance(item, dict) and str(item.get("ballNbr") or "").strip() not in ("", "0", "0.0")
