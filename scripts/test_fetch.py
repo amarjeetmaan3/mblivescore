@@ -1,4 +1,5 @@
 import requests, json, os, re, time, random, html
+from urllib.parse import urlparse
 
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
 session = requests.Session()
@@ -11,6 +12,36 @@ USER_AGENTS = [
 ]
 
 over_hist_state = {}
+page_fetch_status = {}
+
+
+def normalize_match_url(url):
+    """Accept any Cricbuzz tab URL and return the canonical live-score URL + match identity."""
+    parsed = urlparse(str(url or '').strip())
+    host = (parsed.hostname or '').lower()
+    if parsed.scheme not in ('http', 'https') or not (host == 'cricbuzz.com' or host.endswith('.cricbuzz.com')):
+        raise ValueError('Please provide a valid Cricbuzz match URL.')
+    match = re.search(
+        r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts|cricket-match-squads)/(\d+)/([^/?#]+)',
+        parsed.path,
+        re.IGNORECASE,
+    )
+    if not match:
+        raise ValueError('Could not identify a match ID from this Cricbuzz URL.')
+    match_id, slug = match.group(1), match.group(2)
+    return f'https://www.cricbuzz.com/live-cricket-scores/{match_id}/{slug}', match_id, slug
+
+
+def page_status(url, success=False, error=''):
+    saved = page_fetch_status.get(url, {})
+    return {
+        'ok': bool(success),
+        'url': url,
+        'httpStatus': saved.get('httpStatus'),
+        'bytes': saved.get('bytes', 0),
+        'fetchedAt': saved.get('fetchedAt', int(time.time())),
+        'error': '' if success else (error or saved.get('error', 'Data not found')),
+    }
 
 def track_over_history(innings_id, overs_val, score):
     """Track runs scored in each completed over, not the cumulative innings total.
@@ -56,6 +87,8 @@ def track_over_history(innings_id, overs_val, score):
     return st["history"]
 
 def push_status(ok, error=None):
+    if os.environ.get('CRICBUZZ_DRY_RUN') == '1':
+        return
     try:
         session.patch(f"{FIREBASE_URL}/current_match_auto.json", json={"fetchStatus": {"ok": ok, "error": error or "", "ts": int(time.time())}}, timeout=5)
     except Exception: pass
@@ -75,6 +108,53 @@ def extract_json_at(html, key):
         except Exception: continue
     return None
 
+def extract_all_json_at(source_text, key, limit=20):
+    """Return multiple structured occurrences of a key; Cricbuzz pages can embed stale and live copies."""
+    source_text = str(source_text or '')
+    slash = chr(92)
+    patterns = ['"' + str(key) + '":', slash + '"' + str(key) + slash + '":']
+    values = []
+    decoder = json.JSONDecoder()
+    for pattern in patterns:
+        cursor = 0
+        while len(values) < limit:
+            index = source_text.find(pattern, cursor)
+            if index < 0:
+                break
+            start = index + len(pattern)
+            while start < len(source_text) and source_text[start].isspace():
+                start += 1
+            if start >= len(source_text) or source_text[start] not in '{[':
+                cursor = index + len(pattern)
+                continue
+            snippet = source_text[start:start + 400000]
+            if pattern.startswith(slash):
+                snippet = snippet.replace(slash + '"', '"').replace(slash + slash, slash).replace(slash + '/', '/')
+            try:
+                value, consumed = decoder.raw_decode(snippet)
+                values.append(value)
+                cursor = start + consumed
+            except Exception:
+                cursor = index + len(pattern)
+    if not values:
+        fallback = extract_json_at(source_text, key)
+        if fallback is not None:
+            values.append(fallback)
+    return values
+
+
+def count_delivery_events(value):
+    if isinstance(value, list):
+        return sum(
+            1 for item in value
+            if isinstance(item, dict)
+            and str(item.get("ballNbr") or item.get("ball") or "").strip() not in ("", "0", "0.0")
+        )
+    if isinstance(value, dict):
+        return sum(count_delivery_events(item) for item in value.values())
+    return 0
+
+
 def get_cricbuzz_data(url, attempts=3):
     last_err = None
     for i in range(attempts):
@@ -82,13 +162,16 @@ def get_cricbuzz_data(url, attempts=3):
         try:
             res = session.get(url, headers=headers, timeout=12)
             if res.status_code in (403, 429):
+                page_fetch_status[url] = {"httpStatus": res.status_code, "bytes": 0, "fetchedAt": int(time.time()), "error": "HTTP rate limit / access restriction"}
                 last_err = f"HTTP {res.status_code} — Rate limiting"
                 time.sleep(3 + i * 3); continue
             if res.status_code != 200:
                 last_err = f"HTTP {res.status_code}"
+                page_fetch_status[url] = {"httpStatus": res.status_code, "bytes": 0, "fetchedAt": int(time.time()), "error": last_err}
                 time.sleep(1.5); continue
 
             html = res.text
+            page_fetch_status[url] = {"httpStatus": 200, "bytes": len(html.encode("utf-8", errors="ignore")), "fetchedAt": int(time.time()), "error": ""}
             head_sample = html[:6000].lower()
             if "captcha" in head_sample or "access denied" in head_sample or "unusual traffic" in head_sample:
                 last_err = "Bot check page"
@@ -108,6 +191,7 @@ def get_cricbuzz_data(url, attempts=3):
             last_err = "No match data found"
         except requests.exceptions.RequestException as e:
             last_err = f"Network err: {e}"
+            page_fetch_status[url] = {"httpStatus": None, "bytes": 0, "fetchedAt": int(time.time()), "error": last_err}
             time.sleep(1.5)
     return {}, last_err
 
@@ -315,12 +399,16 @@ def fetch_raw_page(url, attempts=1):
                 page = response.text
                 sample = page[:6000].lower()
                 if not any(marker in sample for marker in ("captcha", "access denied", "unusual traffic")):
+                    page_fetch_status[url] = {"httpStatus": 200, "bytes": len(page.encode("utf-8", errors="ignore")), "fetchedAt": int(time.time()), "error": ""}
                     return page
                 last_error = "Bot check page"
+                page_fetch_status[url] = {"httpStatus": 200, "bytes": len(page.encode("utf-8", errors="ignore")), "fetchedAt": int(time.time()), "error": last_error}
             else:
                 last_error = f"HTTP {response.status_code}"
+                page_fetch_status[url] = {"httpStatus": response.status_code, "bytes": 0, "fetchedAt": int(time.time()), "error": last_error}
         except requests.exceptions.RequestException as exc:
             last_error = f"Network err: {exc}"
+            page_fetch_status[url] = {"httpStatus": None, "bytes": 0, "fetchedAt": int(time.time()), "error": last_error}
         if attempt + 1 < attempts:
             time.sleep(1 + attempt)
     if last_error:
@@ -454,40 +542,35 @@ def extract_over_histories(page_text, team_a, team_b, default_innings=1):
             inn_no = 1 if heading.group(2).lower().startswith("1") else 2
             sections.append((inn_no, plain[heading.end():end]))
         for inn_no, section in sections:
-            summaries = list(summary_re.finditer(section))
-            if summaries:
-                for match in summaries:
-                    found[inn_no][int(match.group(1))] = int(match.group(4))
-            else:
-                cumulative = {}
-                for match in cumulative_re.finditer(section):
-                    cumulative[int(match.group(1))] = int(match.group(2))
-                previous_over, previous_total = 0, 0
-                for over_no in sorted(cumulative):
-                    total = cumulative[over_no]
-                    if over_no == previous_over + 1:
-                        found[inn_no][over_no] = max(0, total - previous_total)
-                    previous_over, previous_total = over_no, total
+            # Use explicit per-over run totals where present, then fill only missing
+            # overs from consecutive cumulative scores. Never infer across a gap.
+            for match in summary_re.finditer(section):
+                found[inn_no][int(match.group(1))] = int(match.group(4))
+            cumulative = {}
+            for match in cumulative_re.finditer(section):
+                cumulative[int(match.group(1))] = int(match.group(2))
+            previous_over, previous_total = 0, 0
+            for over_no in sorted(cumulative):
+                total = cumulative[over_no]
+                if over_no not in found[inn_no] and over_no == previous_over + 1:
+                    found[inn_no][over_no] = max(0, total - previous_total)
+                previous_over, previous_total = over_no, total
 
     # Commentary/over tabs often omit the "(1st Inn)" heading in the text layer.
     # In that case assign visible summaries to the current innings from miniscore.
     if not any(found.values()):
-        summaries = list(summary_re.finditer(plain))
-        if summaries:
-            inn_no = 2 if str(default_innings) == "2" else 1
-            for match in summaries:
-                found[inn_no][int(match.group(1))] = int(match.group(4))
-        else:
-            cumulative = {}
-            for match in cumulative_re.finditer(plain):
-                cumulative[int(match.group(1))] = int(match.group(2))
-            inn_no = 2 if str(default_innings) == "2" else 1
-            previous_over, previous_total = 0, 0
-            for over_no in sorted(cumulative):
-                total = cumulative[over_no]
-                if over_no == previous_over + 1:
-                    found[inn_no][over_no] = max(0, total - previous_total)
-                previous_over, previous_total = over_no, total
+        inn_no = 2 if str(default_innings) == "2" else 1
+        for match in summary_re.finditer(plain):
+            found[inn_no][int(match.group(1))] = int(match.group(4))
+        cumulative = {}
+        for match in cumulative_re.finditer(plain):
+            cumulative[int(match.group(1))] = int(match.group(2))
+        previous_over, previous_total = 0, 0
+        for over_no in sorted(cumulative):
+            total = cumulative[over_no]
+            if over_no not in found[inn_no] and over_no == previous_over + 1:
+                found[inn_no][over_no] = max(0, total - previous_total)
+            previous_over, previous_total = over_no, total
 
     for inn_no, values in found.items():
         if not values:
@@ -498,9 +581,69 @@ def extract_over_histories(page_text, team_a, team_b, default_innings=1):
                 history[over_no - 1] = runs
         result[inn_no] = history
     return result
+def extract_first_json_payload(page_text, candidate_keys, max_chars=300000):
+    """Choose the most useful structured occurrence instead of the first embedded copy."""
+    best = None
+    best_score = -1
+    for key in candidate_keys:
+        for value in extract_all_json_at(page_text or '', key):
+            try:
+                encoded = json.dumps(value, ensure_ascii=False)
+            except (TypeError, ValueError):
+                continue
+            delivery_count = count_delivery_events(value)
+            score = delivery_count * 1000000 + (len(value) * 100 if isinstance(value, (list, dict)) else 0) + min(len(encoded), 99999)
+            if score > best_score:
+                best_score = score
+                best = (key, value, encoded)
+    if best is None:
+        return None
+    key, value, encoded = best
+    if len(encoded) > max_chars:
+        return {"truncated": True, "originalChars": len(encoded), "preview": encoded[:max_chars]}
+    return {"key": key, "data": value}
+
+
+def extract_visible_commentary_events(page_text):
+    """Fallback ball-by-ball extraction from the visible full-commentary page text."""
+    if not page_text:
+        return []
+    visible = re.sub(r'<(script|style)\b[^>]*>.*?</\1>', ' ', str(page_text), flags=re.IGNORECASE | re.DOTALL)
+    plain = html.unescape(re.sub(r'<[^>]+>', ' ', visible))
+    plain = re.sub(r'\s+', ' ', plain).strip()
+    result_token = r'(?:W|[0-6]|(?:\d{1,2})?(?:WD|NB|LB|B))'
+    event_re = re.compile(
+        r'(?<![\d.])(?P<ball>\d{1,2}\.\d)\s+(?P<result>' + result_token + r')\b\s+(?P<text>.{8,700}?)(?=\s+\d{1,2}\.\d\s+' + result_token + r'\b|$)',
+        re.IGNORECASE,
+    )
+    events = []
+    seen = set()
+    for match in event_re.finditer(plain):
+        description = re.sub(r'\s+', ' ', match.group('text')).strip()
+        if not re.search(r'\bto\b', description, re.IGNORECASE):
+            continue
+        ball = match.group('ball')
+        result = match.group('result').upper()
+        marker = (ball, result, description[:160].casefold())
+        if marker in seen:
+            continue
+        seen.add(marker)
+        events.append({
+            "ball": ball,
+            "result": result,
+            "description": description[:700],
+            "source": "visible-commentary",
+        })
+    return events
+
+
 def fetch_match_smart(match_url, sc_cache):
-    live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
-    sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/').replace('/cricket-scores/', '/cricket-scorecard/')
+    try:
+        live_url, match_id, match_slug = normalize_match_url(match_url)
+    except ValueError as exc:
+        return None, str(exc)
+    match_url = live_url
+    sc_url = live_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
 
     live_data, live_err = get_cricbuzz_data(live_url)
     m, h = live_data.get("miniscore", {}), live_data.get("matchHeader", {})
@@ -722,7 +865,160 @@ def fetch_match_smart(match_url, sc_cache):
         "overHistory_inn2": list(page_histories.get(2) or over_hist_state.get(2, {}).get("history", [])),
         "currentOverRuns": int(over_hist_state.get(curr_innings_id, {}).get("currentOverRuns", 0) or 0)
     }
+
+    # Record which source tabs were actually readable; a failed optional tab must not
+    # erase scorecard data or be mistaken for a complete backfill.
+    tab_slugs = {
+        "overs": "live-cricket-over-by-over",
+        "squads": "cricket-match-squads",
+        "info": "cricket-match-facts",
+        "commentary": "live-cricket-full-commentary",
+        "graphs": "live-cricket-graphs",
+        "highlights": "live-cricket-highlights",
+    }
+    source_links = {"liveScore": live_url, "scorecard": sc_url}
+    for key, slug in tab_slugs.items():
+        source_links[key] = re.sub(
+            r"/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts|cricket-match-squads)/",
+            f"/{slug}/", live_url, count=1
+        )
+    source_status = {
+        "liveScore": page_status(live_url, bool(live_data.get("matchHeader")), live_err or "Live score data not found"),
+        "scorecard": page_status(sc_url, bool(sc_data.get("matchHeader") or sc_data.get("scoreCard")), sc_err or "Scorecard data not found"),
+    }
+    for key, url in source_links.items():
+        if key in tab_slugs:
+            source_status[key] = page_status(url, bool(tab_pages.get(key)), "Tab returned no readable HTML" if not tab_pages.get(key) else "")
+
+    def over_count(value):
+        try:
+            return max(0, int(float(str(value or "0.0"))))
+        except (TypeError, ValueError):
+            return 0
+
+    history_coverage = {}
+    for inn_no, key in ((1, "overHistory_inn1"), (2, "overHistory_inn2")):
+        history = data.get(key) or []
+        details = data.get("inn1_details" if inn_no == 1 else "inn2_details", {}) or {}
+        innings_overs = over_count(details.get("overs", 0))
+        known = sum(value is not None for value in history)
+        scorecard_present = len(full_sc) >= inn_no
+        try:
+            current_innings_number = int(curr_innings_id)
+        except (TypeError, ValueError):
+            current_innings_number = 1
+        history_coverage[str(inn_no)] = {
+            "scorecardPresent": scorecard_present,
+            "notStarted": (not scorecard_present) and inn_no > current_innings_number,
+            "reportedOvers": innings_overs,
+            "historySlots": len(history),
+            "knownOverTotals": known,
+            "completeThroughReportedOvers": scorecard_present and innings_overs > 0 and len(history) >= innings_overs and all(value is not None for value in history[:innings_overs]),
+        }
+
+    data["matchId"] = match_id
+    data["matchSlug"] = match_slug
+    data["fetchedAt"] = int(time.time())
+    data["sourceLinks"] = source_links
+    data["sourceStatus"] = source_status
+    data["historyCoverage"] = history_coverage
+
+    over_by_over_payload = extract_first_json_payload(
+        tab_pages.get("overs", ""),
+        ["overSummary", "overSummaries", "oversList", "overByOver", "ballByBall", "commentaryList"],
+    )
+    if not over_by_over_payload and (data.get("overHistory_inn1") or data.get("overHistory_inn2")):
+        over_by_over_payload = {
+            "key": "parsedOverHistory",
+            "data": {
+                "innings1": data.get("overHistory_inn1") or [],
+                "innings2": data.get("overHistory_inn2") or [],
+            },
+        }
+
+    commentary_payload = extract_first_json_payload(
+        tab_pages.get("commentary", ""),
+        ["commentaryList", "commentaryAllList", "commentaryData", "commEvents", "ballByBall", "commentary"],
+    )
+    visible_commentary_events = extract_visible_commentary_events(tab_pages.get("commentary", "")) or extract_visible_commentary_events(live_data.get("pageText", "")) or extract_visible_commentary_events(sc_data.get("pageText", ""))
+    commentary_data = commentary_payload.get("data") if isinstance(commentary_payload, dict) else None
+    has_structured_ball_events = isinstance(commentary_data, list) and any(
+        isinstance(item, dict) and str(item.get("ballNbr") or "").strip() not in ("", "0", "0.0")
+        for item in commentary_data
+    )
+    commentary_metadata_payload = commentary_payload
+    if visible_commentary_events and not has_structured_ball_events:
+        commentary_payload = {"key": "visibleCommentaryEvents", "data": visible_commentary_events}
+    elif not has_structured_ball_events:
+        # Keep metadata separately, but do not label it as ball-by-ball commentary.
+        commentary_payload = None
+
+    commentary_event_count = count_delivery_events(
+        commentary_payload.get("data") if isinstance(commentary_payload, dict) else None
+    )
+    try:
+        overs_text = str(m.get("overs", "0.0") or "0.0").split(".")
+        expected_legal_balls = max(0, int(overs_text[0]) * 6 + int((overs_text[1] if len(overs_text) > 1 else "0")[:1] or "0"))
+    except (TypeError, ValueError):
+        expected_legal_balls = 0
+    data["commentaryCoverage"] = {
+        "extractedEvents": commentary_event_count,
+        "expectedLegalBalls": expected_legal_balls,
+        "appearsComplete": expected_legal_balls > 0 and commentary_event_count >= expected_legal_balls,
+    }
+
+    source_extracts = {
+        # Keep Cricbuzz's structured scorecard innings too, so fields not currently
+        # used by the overlay are still available for later logic.
+        "scorecard": full_sc if isinstance(full_sc, list) and full_sc else None,
+        "squads": extract_first_json_payload(tab_pages.get("squads", ""), ["squadDetails", "squadData", "playersList", "playingXI", "playing11", "matchTeamInfo"]),
+        "commentary": commentary_payload,
+        "commentaryMetadata": commentary_metadata_payload if not has_structured_ball_events else None,
+        "overByOver": over_by_over_payload,
+        "graphs": extract_first_json_payload(tab_pages.get("graphs", ""), ["graphData", "wormData", "runRateData", "partnershipData", "winProbability", "ballMapData", "seriesData"]),
+        "info": extract_first_json_payload(tab_pages.get("info", ""), ["matchInfo", "matchFacts", "matchHeader", "venueInfo"]),
+    }
+    archive_latest = dict(data)
+    data["_archive"] = {
+        "matchId": match_id,
+        "matchSlug": match_slug,
+        "updatedAt": int(time.time()),
+        "sourceLinks": source_links,
+        "sourceStatus": source_status,
+        "historyCoverage": history_coverage,
+        "latest": archive_latest,
+        "sourceExtracts": source_extracts,
+        "innings": {
+            "1": {"details": data.get("inn1_details"), "battingCard": data.get("battingCard_inn1"), "bowlingCard": data.get("bowlingCard_inn1"), "fallOfWickets": data.get("fow_inn1"), "partnerships": data.get("pastParts_inn1"), "overHistory": data.get("overHistory_inn1")},
+            "2": {"details": data.get("inn2_details"), "battingCard": data.get("battingCard_inn2"), "bowlingCard": data.get("bowlingCard_inn2"), "fallOfWickets": data.get("fow_inn2"), "partnerships": data.get("pastParts_inn2"), "overHistory": data.get("overHistory_inn2")},
+        },
+    }
     return data, combined_err
+
+def merge_archive_preserving_history(existing, incoming, path=''):
+    """Merge new archive data without deleting older values when a source is temporarily incomplete."""
+    if incoming is None:
+        return existing
+    if isinstance(incoming, dict):
+        result = dict(existing) if isinstance(existing, dict) else {}
+        for key, value in incoming.items():
+            child_path = f"{path}.{key}" if path else str(key)
+            result[key] = merge_archive_preserving_history(result.get(key), value, child_path)
+        return result
+    if isinstance(incoming, list):
+        if not incoming and isinstance(existing, list) and existing:
+            return existing
+        if 'overHistory' in path or 'overHistory_inn' in path:
+            previous = existing if isinstance(existing, list) else []
+            merged = []
+            for index in range(max(len(previous), len(incoming))):
+                old_value = previous[index] if index < len(previous) else None
+                new_value = incoming[index] if index < len(incoming) else None
+                merged.append(old_value if new_value is None and old_value is not None else new_value)
+            return merged
+        return incoming
+    return incoming
+
 
 start_time = time.time()
 last_url = ""
@@ -739,12 +1035,50 @@ while time.time() - start_time < 6 * 60 * 60:
             time.sleep(4); continue
         current_url = config_data['url']
         if current_url != last_url:
-            last_url = current_url; sc_cache = {}; over_hist_state.clear(); session.delete(f"{FIREBASE_URL}/current_match_auto.json")
+            last_url = current_url; sc_cache = {}; over_hist_state.clear(); page_fetch_status.clear()
             print(f"New Link: {current_url}", flush=True)
         data, err = fetch_match_smart(current_url, sc_cache)
         if data:
+            archive_payload = data.pop("_archive", None)
             data["fetchStatus"] = {"ok": True, "error": err or "", "ts": int(time.time())}
-            session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=5)
+            if os.environ.get('CRICBUZZ_DRY_RUN') == '1':
+                print(f"DRY RUN: parsed {data.get('teamA')} vs {data.get('teamB')} | matchId={data.get('matchId')} | history={data.get('historyCoverage')}", flush=True)
+            else:
+                write_response = session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
+                write_response.raise_for_status()
+                if archive_payload and data.get("matchId"):
+                    archive_url = f"{FIREBASE_URL}/match_archive/{data['matchId']}.json"
+                    existing_response = session.get(archive_url, timeout=10)
+                    existing_response.raise_for_status()
+                    existing_archive = existing_response.json() or {}
+                    merged_archive = merge_archive_preserving_history(existing_archive, archive_payload)
+                    archive_response = session.patch(
+                        archive_url,
+                        json=merged_archive,
+                        timeout=15,
+                    )
+                    archive_response.raise_for_status()
+                    print(f"Archive synced: match_archive/{data['matchId']}", flush=True)
+            if archive_payload:
+                source_summary = {
+                    key: {"ok": value.get("ok"), "httpStatus": value.get("httpStatus"), "bytes": value.get("bytes"), "error": value.get("error")}
+                    for key, value in (archive_payload.get("sourceStatus") or {}).items()
+                }
+                extracts = archive_payload.get("sourceExtracts") or {}
+                extract_summary = {
+                    "scorecardInnings": len(extracts.get("scorecard") or []),
+                    "squads": bool(extracts.get("squads")),
+                    "commentary": bool(extracts.get("commentary")),
+                    "commentaryMetadata": bool(extracts.get("commentaryMetadata")),
+                    "commentaryEvents": count_delivery_events((extracts.get("commentary") or {}).get("data") if isinstance(extracts.get("commentary"), dict) else None),
+                    "overByOver": bool(extracts.get("overByOver")),
+                    "graphs": bool(extracts.get("graphs")),
+                    "info": bool(extracts.get("info")),
+                    "overHistoryInn1": data.get("overHistory_inn1"),
+                    "overHistoryInn2": data.get("overHistory_inn2"),
+                }
+                print("Source page status: " + json.dumps(source_summary, ensure_ascii=False), flush=True)
+                print("Structured archive payloads: " + json.dumps(extract_summary, ensure_ascii=False), flush=True)
             print(
                 f"Pushed: {data['teamA']} vs {data['teamB']} | "
                 f"Score: {data['score']}/{data['wickets']} ({data.get('overs', '0.0')} ov) | "
@@ -755,7 +1089,10 @@ while time.time() - start_time < 6 * 60 * 60:
             )
         else:
             push_status(False, err)
-    except Exception as e: push_status(False, f"script error: {e}")
+    except Exception as e:
+        if os.environ.get('CRICBUZZ_DRY_RUN') != '1':
+            push_status(False, f"script error: {e}")
+        print(f"Fetch cycle failed: {e}", flush=True)
     if os.environ.get('CRICBUZZ_ONCE') == '1':
         break
     time.sleep(4)

@@ -1,0 +1,35 @@
+name: Cricbuzz Match Data Sync
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A sync run is a single backfill + refresh pass. Do not cancel an in-progress
+# run; if a fetch takes longer than expected, let GitHub queue the next one.
+concurrency:
+  group: cricbuzz-match-data-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Backfill and refresh configured match
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install fetcher dependency
+        run: pip install requests
+      - name: Validate fetcher syntax
+        run: python -m py_compile scripts/test_fetch.py
+      - name: Fetch Cricbuzz pages and sync Firebase
+        run: python scripts/test_fetch.py
+        env:
+          FIREBASE_DB_URL: ${{ secrets.FIREBASE_DB_URL }}
+          CRICBUZZ_ONCE: '1'
