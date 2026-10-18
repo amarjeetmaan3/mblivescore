@@ -946,8 +946,26 @@ def fetch_match_smart(match_url, sc_cache):
         isinstance(item, dict) and str(item.get("ballNbr") or "").strip() not in ("", "0", "0.0")
         for item in commentary_data
     )
+    commentary_metadata_payload = commentary_payload
     if visible_commentary_events and not has_structured_ball_events:
         commentary_payload = {"key": "visibleCommentaryEvents", "data": visible_commentary_events}
+    elif not has_structured_ball_events:
+        # Keep metadata separately, but do not label it as ball-by-ball commentary.
+        commentary_payload = None
+
+    commentary_event_count = count_delivery_events(
+        commentary_payload.get("data") if isinstance(commentary_payload, dict) else None
+    )
+    try:
+        overs_text = str(m.get("overs", "0.0") or "0.0").split(".")
+        expected_legal_balls = max(0, int(overs_text[0]) * 6 + int((overs_text[1] if len(overs_text) > 1 else "0")[:1] or "0"))
+    except (TypeError, ValueError):
+        expected_legal_balls = 0
+    data["commentaryCoverage"] = {
+        "extractedEvents": commentary_event_count,
+        "expectedLegalBalls": expected_legal_balls,
+        "appearsComplete": expected_legal_balls > 0 and commentary_event_count >= expected_legal_balls,
+    }
 
     source_extracts = {
         # Keep Cricbuzz's structured scorecard innings too, so fields not currently
@@ -955,6 +973,7 @@ def fetch_match_smart(match_url, sc_cache):
         "scorecard": full_sc if isinstance(full_sc, list) and full_sc else None,
         "squads": extract_first_json_payload(tab_pages.get("squads", ""), ["squadDetails", "squadData", "playersList", "playingXI", "playing11", "matchTeamInfo"]),
         "commentary": commentary_payload,
+        "commentaryMetadata": commentary_metadata_payload if not has_structured_ball_events else None,
         "overByOver": over_by_over_payload,
         "graphs": extract_first_json_payload(tab_pages.get("graphs", ""), ["graphData", "wormData", "runRateData", "partnershipData", "winProbability", "ballMapData", "seriesData"]),
         "info": extract_first_json_payload(tab_pages.get("info", ""), ["matchInfo", "matchFacts", "matchHeader", "venueInfo"]),
@@ -1050,6 +1069,8 @@ while time.time() - start_time < 6 * 60 * 60:
                     "scorecardInnings": len(extracts.get("scorecard") or []),
                     "squads": bool(extracts.get("squads")),
                     "commentary": bool(extracts.get("commentary")),
+                    "commentaryMetadata": bool(extracts.get("commentaryMetadata")),
+                    "commentaryEvents": count_delivery_events((extracts.get("commentary") or {}).get("data") if isinstance(extracts.get("commentary"), dict) else None),
                     "overByOver": bool(extracts.get("overByOver")),
                     "graphs": bool(extracts.get("graphs")),
                     "info": bool(extracts.get("info")),
@@ -1058,38 +1079,6 @@ while time.time() - start_time < 6 * 60 * 60:
                 }
                 print("Source page status: " + json.dumps(source_summary, ensure_ascii=False), flush=True)
                 print("Structured archive payloads: " + json.dumps(extract_summary, ensure_ascii=False), flush=True)
-                commentary_payload = extracts.get("commentary") or {}
-                commentary_data = commentary_payload.get("data") if isinstance(commentary_payload, dict) else None
-                if isinstance(commentary_data, dict):
-                    commentary_shape = {"key": commentary_payload.get("key"), "topKeys": list(commentary_data.keys())[:30]}
-                    for candidate_key, candidate_value in commentary_data.items():
-                        if isinstance(candidate_value, list):
-                            commentary_shape["firstList"] = candidate_key
-                            commentary_shape["listLength"] = len(candidate_value)
-                            commentary_shape["firstItemKeys"] = list(candidate_value[0].keys())[:30] if candidate_value and isinstance(candidate_value[0], dict) else []
-                            break
-                elif isinstance(commentary_data, list):
-                    commentary_shape = {"key": commentary_payload.get("key"), "listLength": len(commentary_data), "firstItemKeys": list(commentary_data[0].keys())[:30] if commentary_data and isinstance(commentary_data[0], dict) else []}
-                else:
-                    commentary_shape = {"key": commentary_payload.get("key"), "type": type(commentary_data).__name__}
-                if isinstance(commentary_data, list):
-                    ball_items = [item for item in commentary_data if isinstance(item, dict) and str(item.get("ball") or item.get("ballNbr") or "").strip() not in ("", "0", "0.0")]
-                    commentary_shape["ballEntryCount"] = len(ball_items)
-                    sample_items = ball_items[:3] + ball_items[-2:]
-                    commentary_shape["sample"] = [
-                        {
-                            "ball": item.get("ball") or item.get("ballNbr"),
-                            "result": item.get("result") or item.get("event"),
-                            "commentary": str(item.get("description") or item.get("commText") or "")[:100],
-                            "legalRuns": item.get("legalRuns"),
-                            "totalRuns": item.get("totalRuns"),
-                            "batTeamScore": item.get("batTeamScore"),
-                            "batsman": (item.get("batsmanStriker") or {}).get("batName"),
-                            "bowler": (item.get("bowlerStriker") or {}).get("bowlName"),
-                        }
-                        for item in sample_items
-                    ]
-                print("Commentary payload shape: " + json.dumps(commentary_shape, ensure_ascii=False), flush=True)
             print(
                 f"Pushed: {data['teamA']} vs {data['teamB']} | "
                 f"Score: {data['score']}/{data['wickets']} ({data.get('overs', '0.0')} ov) | "
