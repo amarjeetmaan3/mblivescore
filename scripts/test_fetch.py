@@ -550,6 +550,39 @@ def extract_first_json_payload(page_text, candidate_keys, max_chars=300000):
     return None
 
 
+def extract_visible_commentary_events(page_text):
+    """Fallback ball-by-ball extraction from the visible full-commentary page text."""
+    if not page_text:
+        return []
+    visible = re.sub(r'<(script|style)\\b[^>]*>.*?</\\1>', ' ', str(page_text), flags=re.IGNORECASE | re.DOTALL)
+    plain = html.unescape(re.sub(r'<[^>]+>', ' ', visible))
+    plain = re.sub(r'\\s+', ' ', plain).strip()
+    result_token = r'(?:W|[0-6]|(?:\\d{1,2})?(?:WD|NB|LB|B))'
+    event_re = re.compile(
+        r'(?<![\\d.])(?P<ball>\\d{1,2}\\.\\d)\\s+(?P<result>' + result_token + r')\\b\\s+(?P<text>.{8,700}?)(?=\\s+\\d{1,2}\\.\\d\\s+' + result_token + r'\\b|$)',
+        re.IGNORECASE,
+    )
+    events = []
+    seen = set()
+    for match in event_re.finditer(plain):
+        description = re.sub(r'\\s+', ' ', match.group('text')).strip()
+        if not re.search(r'\\bto\\b', description, re.IGNORECASE):
+            continue
+        ball = match.group('ball')
+        result = match.group('result').upper()
+        marker = (ball, result, description[:160].casefold())
+        if marker in seen:
+            continue
+        seen.add(marker)
+        events.append({
+            "ball": ball,
+            "result": result,
+            "description": description[:700],
+            "source": "visible-commentary",
+        })
+    return events
+
+
 def fetch_match_smart(match_url, sc_cache):
     try:
         live_url, match_id, match_slug = normalize_match_url(match_url)
@@ -849,12 +882,25 @@ def fetch_match_smart(match_url, sc_cache):
             },
         }
 
+    commentary_payload = extract_first_json_payload(
+        tab_pages.get("commentary", ""),
+        ["commentaryList", "commentaryAllList", "commentaryData", "commEvents", "ballByBall", "commentary"],
+    )
+    visible_commentary_events = extract_visible_commentary_events(tab_pages.get("commentary", ""))
+    commentary_data = commentary_payload.get("data") if isinstance(commentary_payload, dict) else None
+    has_structured_ball_events = isinstance(commentary_data, list) and any(
+        isinstance(item, dict) and str(item.get("ballNbr") or "").strip() not in ("", "0", "0.0")
+        for item in commentary_data
+    )
+    if visible_commentary_events and not has_structured_ball_events:
+        commentary_payload = {"key": "visibleCommentaryEvents", "data": visible_commentary_events}
+
     source_extracts = {
         # Keep Cricbuzz's structured scorecard innings too, so fields not currently
         # used by the overlay are still available for later logic.
         "scorecard": full_sc if isinstance(full_sc, list) and full_sc else None,
         "squads": extract_first_json_payload(tab_pages.get("squads", ""), ["squadDetails", "squadData", "playersList", "playingXI", "playing11", "matchTeamInfo"]),
-        "commentary": extract_first_json_payload(tab_pages.get("commentary", ""), ["commentaryList", "commentaryAllList", "commentaryData", "commEvents", "ballByBall", "commentary"]),
+        "commentary": commentary_payload,
         "overByOver": over_by_over_payload,
         "graphs": extract_first_json_payload(tab_pages.get("graphs", ""), ["graphData", "wormData", "runRateData", "partnershipData", "winProbability", "ballMapData", "seriesData"]),
         "info": extract_first_json_payload(tab_pages.get("info", ""), ["matchInfo", "matchFacts", "matchHeader", "venueInfo"]),
