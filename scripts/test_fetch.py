@@ -18,10 +18,11 @@ page_fetch_status = {}
 def normalize_match_url(url):
     """Accept any Cricbuzz tab URL and return the canonical live-score URL + match identity."""
     parsed = urlparse(str(url or '').strip())
-    if parsed.scheme not in ('http', 'https') or not parsed.netloc.lower().endswith('cricbuzz.com'):
+    host = (parsed.hostname or '').lower()
+    if parsed.scheme not in ('http', 'https') or not (host == 'cricbuzz.com' or host.endswith('.cricbuzz.com')):
         raise ValueError('Please provide a valid Cricbuzz match URL.')
     match = re.search(
-        r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts|cricket-match-squads)/(\\d+)/([^/?#]+)',
+        r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts|cricket-match-squads)/(\d+)/([^/?#]+)',
         parsed.path,
         re.IGNORECASE,
     )
@@ -556,7 +557,6 @@ def fetch_match_smart(match_url, sc_cache):
     except ValueError as exc:
         return None, str(exc)
     match_url = live_url
-    page_fetch_status.clear()
     sc_url = live_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
 
     live_data, live_err = get_cricbuzz_data(live_url)
@@ -869,7 +869,7 @@ while time.time() - start_time < 6 * 60 * 60:
             time.sleep(4); continue
         current_url = config_data['url']
         if current_url != last_url:
-            last_url = current_url; sc_cache = {}; over_hist_state.clear()
+            last_url = current_url; sc_cache = {}; over_hist_state.clear(); page_fetch_status.clear()
             print(f"New Link: {current_url}", flush=True)
         data, err = fetch_match_smart(current_url, sc_cache)
         if data:
