@@ -122,7 +122,7 @@ def extract_all_json_at(source_text, key, limit=20):
             if index < 0:
                 break
             start = index + len(pattern)
-            while start < len(source_text) and source_text[start] in ' \\t\\r\\n':
+            while start < len(source_text) and source_text[start].isspace():
                 start += 1
             if start >= len(source_text) or source_text[start] not in '{[':
                 cursor = index + len(pattern)
