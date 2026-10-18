@@ -2,6 +2,12 @@ name: Cricbuzz Fetch Validation
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/test_fetch.py'
+      - '.github/workflows/test.yml'
+      - '.github/workflows/sync-cricbuzz.yml'
   push:
     branches: [main]
     paths:
