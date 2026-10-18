@@ -932,6 +932,22 @@ while time.time() - start_time < 6 * 60 * 60:
                     )
                     archive_response.raise_for_status()
                     print(f"Archive synced: match_archive/{data['matchId']}", flush=True)
+            if archive_payload:
+                source_summary = {
+                    key: {"ok": value.get("ok"), "httpStatus": value.get("httpStatus"), "bytes": value.get("bytes"), "error": value.get("error")}
+                    for key, value in (archive_payload.get("sourceStatus") or {}).items()
+                }
+                extracts = archive_payload.get("sourceExtracts") or {}
+                extract_summary = {
+                    "scorecardInnings": len(extracts.get("scorecard") or []),
+                    "squads": bool(extracts.get("squads")),
+                    "commentary": bool(extracts.get("commentary")),
+                    "overByOver": bool(extracts.get("overByOver")),
+                    "graphs": bool(extracts.get("graphs")),
+                    "info": bool(extracts.get("info")),
+                }
+                print("Source page status: " + json.dumps(source_summary, ensure_ascii=False), flush=True)
+                print("Structured archive payloads: " + json.dumps(extract_summary, ensure_ascii=False), flush=True)
             print(
                 f"Pushed: {data['teamA']} vs {data['teamB']} | "
                 f"Score: {data['score']}/{data['wickets']} ({data.get('overs', '0.0')} ov) | "
