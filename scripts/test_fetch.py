@@ -1019,14 +1019,14 @@ while time.time() - start_time < 6 * 60 * 60:
                 else:
                     commentary_shape = {"key": commentary_payload.get("key"), "type": type(commentary_data).__name__}
                 if isinstance(commentary_data, list):
-                    ball_items = [item for item in commentary_data if isinstance(item, dict) and str(item.get("ballNbr") or "").strip() not in ("", "0", "0.0")]
+                    ball_items = [item for item in commentary_data if isinstance(item, dict) and str(item.get("ball") or item.get("ballNbr") or "").strip() not in ("", "0", "0.0")]
                     commentary_shape["ballEntryCount"] = len(ball_items)
                     sample_items = ball_items[:3] + ball_items[-2:]
                     commentary_shape["sample"] = [
                         {
-                            "ballNbr": item.get("ballNbr"),
-                            "event": item.get("event"),
-                            "commText": str(item.get("commText", ""))[:100],
+                            "ball": item.get("ball") or item.get("ballNbr"),
+                            "result": item.get("result") or item.get("event"),
+                            "commentary": str(item.get("description") or item.get("commText") or "")[:100],
                             "legalRuns": item.get("legalRuns"),
                             "totalRuns": item.get("totalRuns"),
                             "batTeamScore": item.get("batTeamScore"),
