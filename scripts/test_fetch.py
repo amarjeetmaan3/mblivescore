@@ -111,26 +111,35 @@ def extract_json_at(html, key):
 def extract_all_json_at(source_text, key, limit=20):
     """Return multiple structured occurrences of a key; Cricbuzz pages can embed stale and live copies."""
     source_text = str(source_text or '')
-    pattern = '"' + str(key) + '":'
+    slash = chr(92)
+    patterns = ['"' + str(key) + '":', slash + '"' + str(key) + slash + '":']
     values = []
-    cursor = 0
     decoder = json.JSONDecoder()
-    while len(values) < limit:
-        index = source_text.find(pattern, cursor)
-        if index < 0:
-            break
-        start = index + len(pattern)
-        while start < len(source_text) and source_text[start] in ' \\t\\r\\n':
-            start += 1
-        if start >= len(source_text) or source_text[start] not in '{[':
-            cursor = index + len(pattern)
-            continue
-        try:
-            value, consumed = decoder.raw_decode(source_text[start:start + 400000])
-            values.append(value)
-            cursor = start + consumed
-        except Exception:
-            cursor = index + len(pattern)
+    for pattern in patterns:
+        cursor = 0
+        while len(values) < limit:
+            index = source_text.find(pattern, cursor)
+            if index < 0:
+                break
+            start = index + len(pattern)
+            while start < len(source_text) and source_text[start] in ' \\t\\r\\n':
+                start += 1
+            if start >= len(source_text) or source_text[start] not in '{[':
+                cursor = index + len(pattern)
+                continue
+            snippet = source_text[start:start + 400000]
+            if pattern.startswith(slash):
+                snippet = snippet.replace(slash + '"', '"').replace(slash + slash, slash).replace(slash + '/', '/')
+            try:
+                value, consumed = decoder.raw_decode(snippet)
+                values.append(value)
+                cursor = start + consumed
+            except Exception:
+                cursor = index + len(pattern)
+    if not values:
+        fallback = extract_json_at(source_text, key)
+        if fallback is not None:
+            values.append(fallback)
     return values
 
 
