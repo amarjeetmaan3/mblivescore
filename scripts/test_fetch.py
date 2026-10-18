@@ -495,40 +495,35 @@ def extract_over_histories(page_text, team_a, team_b, default_innings=1):
             inn_no = 1 if heading.group(2).lower().startswith("1") else 2
             sections.append((inn_no, plain[heading.end():end]))
         for inn_no, section in sections:
-            summaries = list(summary_re.finditer(section))
-            if summaries:
-                for match in summaries:
-                    found[inn_no][int(match.group(1))] = int(match.group(4))
-            else:
-                cumulative = {}
-                for match in cumulative_re.finditer(section):
-                    cumulative[int(match.group(1))] = int(match.group(2))
-                previous_over, previous_total = 0, 0
-                for over_no in sorted(cumulative):
-                    total = cumulative[over_no]
-                    if over_no == previous_over + 1:
-                        found[inn_no][over_no] = max(0, total - previous_total)
-                    previous_over, previous_total = over_no, total
+            # Use explicit per-over run totals where present, then fill only missing
+            # overs from consecutive cumulative scores. Never infer across a gap.
+            for match in summary_re.finditer(section):
+                found[inn_no][int(match.group(1))] = int(match.group(4))
+            cumulative = {}
+            for match in cumulative_re.finditer(section):
+                cumulative[int(match.group(1))] = int(match.group(2))
+            previous_over, previous_total = 0, 0
+            for over_no in sorted(cumulative):
+                total = cumulative[over_no]
+                if over_no not in found[inn_no] and over_no == previous_over + 1:
+                    found[inn_no][over_no] = max(0, total - previous_total)
+                previous_over, previous_total = over_no, total
 
     # Commentary/over tabs often omit the "(1st Inn)" heading in the text layer.
     # In that case assign visible summaries to the current innings from miniscore.
     if not any(found.values()):
-        summaries = list(summary_re.finditer(plain))
-        if summaries:
-            inn_no = 2 if str(default_innings) == "2" else 1
-            for match in summaries:
-                found[inn_no][int(match.group(1))] = int(match.group(4))
-        else:
-            cumulative = {}
-            for match in cumulative_re.finditer(plain):
-                cumulative[int(match.group(1))] = int(match.group(2))
-            inn_no = 2 if str(default_innings) == "2" else 1
-            previous_over, previous_total = 0, 0
-            for over_no in sorted(cumulative):
-                total = cumulative[over_no]
-                if over_no == previous_over + 1:
-                    found[inn_no][over_no] = max(0, total - previous_total)
-                previous_over, previous_total = over_no, total
+        inn_no = 2 if str(default_innings) == "2" else 1
+        for match in summary_re.finditer(plain):
+            found[inn_no][int(match.group(1))] = int(match.group(4))
+        cumulative = {}
+        for match in cumulative_re.finditer(plain):
+            cumulative[int(match.group(1))] = int(match.group(2))
+        previous_over, previous_total = 0, 0
+        for over_no in sorted(cumulative):
+            total = cumulative[over_no]
+            if over_no not in found[inn_no] and over_no == previous_over + 1:
+                found[inn_no][over_no] = max(0, total - previous_total)
+            previous_over, previous_total = over_no, total
 
     for inn_no, values in found.items():
         if not values:
@@ -945,6 +940,8 @@ while time.time() - start_time < 6 * 60 * 60:
                     "overByOver": bool(extracts.get("overByOver")),
                     "graphs": bool(extracts.get("graphs")),
                     "info": bool(extracts.get("info")),
+                    "overHistoryInn1": data.get("overHistory_inn1"),
+                    "overHistoryInn2": data.get("overHistory_inn2"),
                 }
                 print("Source page status: " + json.dumps(source_summary, ensure_ascii=False), flush=True)
                 print("Structured archive payloads: " + json.dumps(extract_summary, ensure_ascii=False), flush=True)
