@@ -115,13 +115,16 @@ def get_cricbuzz_data(url, attempts=3):
         try:
             res = session.get(url, headers=headers, timeout=12)
             if res.status_code in (403, 429):
+                page_fetch_status[url] = {"httpStatus": res.status_code, "bytes": 0, "fetchedAt": int(time.time()), "error": "HTTP rate limit / access restriction"}
                 last_err = f"HTTP {res.status_code} — Rate limiting"
                 time.sleep(3 + i * 3); continue
             if res.status_code != 200:
                 last_err = f"HTTP {res.status_code}"
+                page_fetch_status[url] = {"httpStatus": res.status_code, "bytes": 0, "fetchedAt": int(time.time()), "error": last_err}
                 time.sleep(1.5); continue
 
             html = res.text
+            page_fetch_status[url] = {"httpStatus": 200, "bytes": len(html.encode("utf-8", errors="ignore")), "fetchedAt": int(time.time()), "error": ""}
             head_sample = html[:6000].lower()
             if "captcha" in head_sample or "access denied" in head_sample or "unusual traffic" in head_sample:
                 last_err = "Bot check page"
@@ -141,6 +144,7 @@ def get_cricbuzz_data(url, attempts=3):
             last_err = "No match data found"
         except requests.exceptions.RequestException as e:
             last_err = f"Network err: {e}"
+            page_fetch_status[url] = {"httpStatus": None, "bytes": 0, "fetchedAt": int(time.time()), "error": last_err}
             time.sleep(1.5)
     return {}, last_err
 
@@ -816,12 +820,18 @@ def fetch_match_smart(match_url, sc_cache):
         details = data.get("inn1_details" if inn_no == 1 else "inn2_details", {}) or {}
         innings_overs = over_count(details.get("overs", 0))
         known = sum(value is not None for value in history)
+        scorecard_present = len(full_sc) >= inn_no
+        try:
+            current_innings_number = int(curr_innings_id)
+        except (TypeError, ValueError):
+            current_innings_number = 1
         history_coverage[str(inn_no)] = {
-            "scorecardPresent": len(full_sc) >= inn_no,
+            "scorecardPresent": scorecard_present,
+            "notStarted": (not scorecard_present) and inn_no > current_innings_number,
             "reportedOvers": innings_overs,
             "historySlots": len(history),
             "knownOverTotals": known,
-            "completeThroughReportedOvers": len(history) >= innings_overs and all(value is not None for value in history[:innings_overs]),
+            "completeThroughReportedOvers": scorecard_present and innings_overs > 0 and len(history) >= innings_overs and all(value is not None for value in history[:innings_overs]),
         }
 
     data["matchId"] = match_id
