@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/test_fetch.py'
+      - '.github/workflows/sync-cricbuzz.yml'
 
 permissions:
   contents: read
