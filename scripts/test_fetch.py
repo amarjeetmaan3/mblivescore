@@ -1,4 +1,5 @@
 import requests, json, os, re, time, random, html
+from urllib.parse import urlparse
 
 FIREBASE_URL = os.environ.get('FIREBASE_DB_URL', '')
 session = requests.Session()
@@ -11,6 +12,35 @@ USER_AGENTS = [
 ]
 
 over_hist_state = {}
+page_fetch_status = {}
+
+
+def normalize_match_url(url):
+    """Accept any Cricbuzz tab URL and return the canonical live-score URL + match identity."""
+    parsed = urlparse(str(url or '').strip())
+    if parsed.scheme not in ('http', 'https') or not parsed.netloc.lower().endswith('cricbuzz.com'):
+        raise ValueError('Please provide a valid Cricbuzz match URL.')
+    match = re.search(
+        r'/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts|cricket-match-squads)/(\\d+)/([^/?#]+)',
+        parsed.path,
+        re.IGNORECASE,
+    )
+    if not match:
+        raise ValueError('Could not identify a match ID from this Cricbuzz URL.')
+    match_id, slug = match.group(1), match.group(2)
+    return f'https://www.cricbuzz.com/live-cricket-scores/{match_id}/{slug}', match_id, slug
+
+
+def page_status(url, success=False, error=''):
+    saved = page_fetch_status.get(url, {})
+    return {
+        'ok': bool(success),
+        'url': url,
+        'httpStatus': saved.get('httpStatus'),
+        'bytes': saved.get('bytes', 0),
+        'fetchedAt': saved.get('fetchedAt', int(time.time())),
+        'error': '' if success else (error or saved.get('error', 'Data not found')),
+    }
 
 def track_over_history(innings_id, overs_val, score):
     """Track runs scored in each completed over, not the cumulative innings total.
@@ -56,6 +86,8 @@ def track_over_history(innings_id, overs_val, score):
     return st["history"]
 
 def push_status(ok, error=None):
+    if os.environ.get('CRICBUZZ_DRY_RUN') == '1':
+        return
     try:
         session.patch(f"{FIREBASE_URL}/current_match_auto.json", json={"fetchStatus": {"ok": ok, "error": error or "", "ts": int(time.time())}}, timeout=5)
     except Exception: pass
@@ -315,12 +347,16 @@ def fetch_raw_page(url, attempts=1):
                 page = response.text
                 sample = page[:6000].lower()
                 if not any(marker in sample for marker in ("captcha", "access denied", "unusual traffic")):
+                    page_fetch_status[url] = {"httpStatus": 200, "bytes": len(page.encode("utf-8", errors="ignore")), "fetchedAt": int(time.time()), "error": ""}
                     return page
                 last_error = "Bot check page"
+                page_fetch_status[url] = {"httpStatus": 200, "bytes": len(page.encode("utf-8", errors="ignore")), "fetchedAt": int(time.time()), "error": last_error}
             else:
                 last_error = f"HTTP {response.status_code}"
+                page_fetch_status[url] = {"httpStatus": response.status_code, "bytes": 0, "fetchedAt": int(time.time()), "error": last_error}
         except requests.exceptions.RequestException as exc:
             last_error = f"Network err: {exc}"
+            page_fetch_status[url] = {"httpStatus": None, "bytes": 0, "fetchedAt": int(time.time()), "error": last_error}
         if attempt + 1 < attempts:
             time.sleep(1 + attempt)
     if last_error:
@@ -498,9 +534,30 @@ def extract_over_histories(page_text, team_a, team_b, default_innings=1):
                 history[over_no - 1] = runs
         result[inn_no] = history
     return result
+def extract_first_json_payload(page_text, candidate_keys, max_chars=300000):
+    """Extract the first structured JSON payload found under known Cricbuzz page keys."""
+    for key in candidate_keys:
+        value = extract_json_at(page_text or '', key)
+        if value is None:
+            continue
+        try:
+            encoded = json.dumps(value, ensure_ascii=False)
+            if len(encoded) > max_chars:
+                return {"truncated": True, "originalChars": len(encoded), "preview": encoded[:max_chars]}
+            return {"key": key, "data": value}
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def fetch_match_smart(match_url, sc_cache):
-    live_url = match_url.replace('/live-cricket-scorecard/', '/live-cricket-scores/').replace('/cricket-scorecard/', '/cricket-scores/')
-    sc_url = match_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/').replace('/cricket-scores/', '/cricket-scorecard/')
+    try:
+        live_url, match_id, match_slug = normalize_match_url(match_url)
+    except ValueError as exc:
+        return None, str(exc)
+    match_url = live_url
+    page_fetch_status.clear()
+    sc_url = live_url.replace('/live-cricket-scores/', '/live-cricket-scorecard/')
 
     live_data, live_err = get_cricbuzz_data(live_url)
     m, h = live_data.get("miniscore", {}), live_data.get("matchHeader", {})
@@ -722,6 +779,79 @@ def fetch_match_smart(match_url, sc_cache):
         "overHistory_inn2": list(page_histories.get(2) or over_hist_state.get(2, {}).get("history", [])),
         "currentOverRuns": int(over_hist_state.get(curr_innings_id, {}).get("currentOverRuns", 0) or 0)
     }
+
+    # Record which source tabs were actually readable; a failed optional tab must not
+    # erase scorecard data or be mistaken for a complete backfill.
+    tab_slugs = {
+        "overs": "live-cricket-over-by-over",
+        "squads": "cricket-match-squads",
+        "info": "cricket-match-facts",
+        "commentary": "live-cricket-full-commentary",
+        "graphs": "live-cricket-graphs",
+        "highlights": "live-cricket-highlights",
+    }
+    source_links = {"liveScore": live_url, "scorecard": sc_url}
+    for key, slug in tab_slugs.items():
+        source_links[key] = re.sub(
+            r"/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard|live-cricket-over-by-over|live-cricket-full-commentary|live-cricket-graphs|live-cricket-highlights|cricket-match-facts|cricket-match-squads)/",
+            f"/{slug}/", live_url, count=1
+        )
+    source_status = {
+        "liveScore": page_status(live_url, bool(live_data.get("matchHeader")), live_err or "Live score data not found"),
+        "scorecard": page_status(sc_url, bool(sc_data.get("matchHeader") or sc_data.get("scoreCard")), sc_err or "Scorecard data not found"),
+    }
+    for key, url in source_links.items():
+        if key in tab_slugs:
+            source_status[key] = page_status(url, bool(tab_pages.get(key)), "Tab returned no readable HTML" if not tab_pages.get(key) else "")
+
+    def over_count(value):
+        try:
+            return max(0, int(float(str(value or "0.0"))))
+        except (TypeError, ValueError):
+            return 0
+
+    history_coverage = {}
+    for inn_no, key in ((1, "overHistory_inn1"), (2, "overHistory_inn2")):
+        history = data.get(key) or []
+        details = data.get("inn1_details" if inn_no == 1 else "inn2_details", {}) or {}
+        innings_overs = over_count(details.get("overs", 0))
+        known = sum(value is not None for value in history)
+        history_coverage[str(inn_no)] = {
+            "scorecardPresent": len(full_sc) >= inn_no,
+            "reportedOvers": innings_overs,
+            "historySlots": len(history),
+            "knownOverTotals": known,
+            "completeThroughReportedOvers": len(history) >= innings_overs and all(value is not None for value in history[:innings_overs]),
+        }
+
+    data["matchId"] = match_id
+    data["matchSlug"] = match_slug
+    data["fetchedAt"] = int(time.time())
+    data["sourceLinks"] = source_links
+    data["sourceStatus"] = source_status
+    data["historyCoverage"] = history_coverage
+
+    source_extracts = {
+        "commentary": extract_first_json_payload(tab_pages.get("commentary", ""), ["commentaryList", "commentaryAllList", "commentaryData", "commEvents", "ballByBall", "commentary"]),
+        "overByOver": extract_first_json_payload(tab_pages.get("overs", ""), ["overSummary", "overSummaries", "oversList", "overByOver", "ballByBall", "commentaryList"]),
+        "graphs": extract_first_json_payload(tab_pages.get("graphs", ""), ["graphData", "wormData", "runRateData", "partnershipData", "winProbability", "ballMapData", "seriesData"]),
+        "info": extract_first_json_payload(tab_pages.get("info", ""), ["matchInfo", "matchFacts", "matchHeader", "venueInfo"]),
+    }
+    archive_latest = dict(data)
+    data["_archive"] = {
+        "matchId": match_id,
+        "matchSlug": match_slug,
+        "updatedAt": int(time.time()),
+        "sourceLinks": source_links,
+        "sourceStatus": source_status,
+        "historyCoverage": history_coverage,
+        "latest": archive_latest,
+        "sourceExtracts": source_extracts,
+        "innings": {
+            "1": {"details": data.get("inn1_details"), "battingCard": data.get("battingCard_inn1"), "bowlingCard": data.get("bowlingCard_inn1"), "fallOfWickets": data.get("fow_inn1"), "partnerships": data.get("pastParts_inn1"), "overHistory": data.get("overHistory_inn1")},
+            "2": {"details": data.get("inn2_details"), "battingCard": data.get("battingCard_inn2"), "bowlingCard": data.get("bowlingCard_inn2"), "fallOfWickets": data.get("fow_inn2"), "partnerships": data.get("pastParts_inn2"), "overHistory": data.get("overHistory_inn2")},
+        },
+    }
     return data, combined_err
 
 start_time = time.time()
@@ -739,12 +869,25 @@ while time.time() - start_time < 6 * 60 * 60:
             time.sleep(4); continue
         current_url = config_data['url']
         if current_url != last_url:
-            last_url = current_url; sc_cache = {}; over_hist_state.clear(); session.delete(f"{FIREBASE_URL}/current_match_auto.json")
+            last_url = current_url; sc_cache = {}; over_hist_state.clear()
             print(f"New Link: {current_url}", flush=True)
         data, err = fetch_match_smart(current_url, sc_cache)
         if data:
+            archive_payload = data.pop("_archive", None)
             data["fetchStatus"] = {"ok": True, "error": err or "", "ts": int(time.time())}
-            session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=5)
+            if os.environ.get('CRICBUZZ_DRY_RUN') == '1':
+                print(f"DRY RUN: parsed {data.get('teamA')} vs {data.get('teamB')} | matchId={data.get('matchId')} | history={data.get('historyCoverage')}", flush=True)
+            else:
+                write_response = session.put(f"{FIREBASE_URL}/current_match_auto.json", json=data, timeout=10)
+                write_response.raise_for_status()
+                if archive_payload and data.get("matchId"):
+                    archive_response = session.patch(
+                        f"{FIREBASE_URL}/match_archive/{data['matchId']}.json",
+                        json=archive_payload,
+                        timeout=15,
+                    )
+                    archive_response.raise_for_status()
+                    print(f"Archive synced: match_archive/{data['matchId']}", flush=True)
             print(
                 f"Pushed: {data['teamA']} vs {data['teamB']} | "
                 f"Score: {data['score']}/{data['wickets']} ({data.get('overs', '0.0')} ov) | "
@@ -755,7 +898,10 @@ while time.time() - start_time < 6 * 60 * 60:
             )
         else:
             push_status(False, err)
-    except Exception as e: push_status(False, f"script error: {e}")
+    except Exception as e:
+        if os.environ.get('CRICBUZZ_DRY_RUN') != '1':
+            push_status(False, f"script error: {e}")
+        print(f"Fetch cycle failed: {e}", flush=True)
     if os.environ.get('CRICBUZZ_ONCE') == '1':
         break
     time.sleep(4)
