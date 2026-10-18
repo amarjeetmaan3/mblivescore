@@ -1,4 +1,4 @@
-name: Test Fetch
+name: Cricbuzz Fetch Validation
 
 on:
   workflow_dispatch:
@@ -7,15 +7,14 @@ on:
     paths:
       - 'scripts/test_fetch.py'
       - '.github/workflows/test.yml'
+      - '.github/workflows/sync-cricbuzz.yml'
 
-# Keep only one live Cricbuzz poller for this Firebase match at a time.
-concurrency:
-  group: cricbuzz-live-fetch
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
   smoke:
-    name: Cricbuzz parser smoke test
+    name: Validate and inspect Cricbuzz data without writing
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -26,25 +25,9 @@ jobs:
       - run: pip install requests
       - name: Validate Python syntax
         run: python -m py_compile scripts/test_fetch.py
-      - name: Fetch Cricbuzz tabs once and log parsed values
+      - name: Fetch configured match once (read-only diagnostic)
         run: python scripts/test_fetch.py
         env:
           FIREBASE_DB_URL: ${{ secrets.FIREBASE_DB_URL }}
           CRICBUZZ_ONCE: '1'
-
-  test:
-    name: Live Cricbuzz poller
-    needs: smoke
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install requests
-      - name: Validate Python syntax
-        run: python -m py_compile scripts/test_fetch.py
-      - run: python scripts/test_fetch.py
-        env:
-          FIREBASE_DB_URL: ${{ secrets.FIREBASE_DB_URL }}
+          CRICBUZZ_DRY_RUN: '1'
