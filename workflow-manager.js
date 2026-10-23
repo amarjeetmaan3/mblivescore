@@ -252,7 +252,7 @@
     try { parsed = new URL(url); } catch (_) { show("Paste a valid Cricbuzz match URL first.", true); return false; }
     if (!["http:", "https:"].includes(parsed.protocol) ||
         !(parsed.hostname === "cricbuzz.com" || parsed.hostname.endsWith(".cricbuzz.com")) ||
-        !new RegExp("/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard)/\\d+/","i").test(parsed.pathname)) {
+        !parsed.pathname.split("/").some((part, idx, parts) => ["live-cricket-scores", "live-cricket-scorecard", "cricket-scores", "cricket-scorecard"].includes(part) && /^\d+$/.test(parts[idx + 1] || ""))) {
       show("Invalid Cricbuzz match URL. Paste a match page URL containing its match ID.", true); return false;
     }
     show("Saving link to Firebase…");
