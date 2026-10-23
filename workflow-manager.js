@@ -136,10 +136,43 @@
       host.appendChild(card);
     });
 
+    const pagesCard = document.createElement("div");
+    pagesCard.style.cssText = "border:1px solid var(--line);border-radius:6px;padding:9px;margin:7px 0;background:var(--navy-deep)";
+    const pagesTitle = document.createElement("div");
+    pagesTitle.style.cssText = "font-size:14px;font-weight:700;color:var(--gold-2);margin-bottom:3px";
+    pagesTitle.textContent = "Page Build and Deployment (GitHub-managed)";
+    const pagesDesc = document.createElement("div");
+    pagesDesc.style.cssText = "font-size:11px;color:var(--muted);margin-bottom:6px";
+    pagesDesc.textContent = "A dynamic GitHub Pages deployment run was found. It starts automatically after relevant repository changes; it is not a normal workflow_dispatch workflow, so this panel cannot manually start it.";
+    const pagesRun = runs.find(run => (run.path || "").includes("pages-build-deployment"));
+    const pagesLatest = document.createElement("div");
+    pagesLatest.style.cssText = "font-size:11px;margin-bottom:7px";
+    pagesLatest.textContent = "Latest: " + runLabel(pagesRun);
+    pagesCard.append(pagesTitle, pagesDesc, pagesLatest);
+    if (pagesRun && pagesRun.status !== "completed") {
+      const pagesCancel = document.createElement("button");
+      pagesCancel.className = "btn-danger";
+      pagesCancel.textContent = "CANCEL DEPLOYMENT";
+      pagesCancel.style.width = "100%";
+      pagesCancel.onclick = async () => {
+        if (!confirm("Cancel the active Pages deployment run? The latest site changes may remain unpublished.")) return;
+        pagesCancel.disabled = true;
+        try {
+          await api("/repos/" + OWNER + "/" + REPO + "/actions/runs/" + pagesRun.id + "/cancel", { method: "POST" });
+          status("Cancel requested for the Pages deployment.");
+          await refresh();
+        } catch (e) {
+          status(e.message, true);
+          pagesCancel.disabled = false;
+        }
+      };
+      pagesCard.appendChild(pagesCancel);
+    }
+    host.appendChild(pagesCard);
+
     const notFound = $("workflowManagerNotFound");
     if (notFound) {
-      const names = ["Quick Button Match Skin", "Page Build Deployment"];
-      notFound.textContent = names.join(" and ") + " are not present as workflow files in amarjeetmaan3/mblivescore's main branch. They may belong to another repository; no run buttons are shown for them until their actual workflow files are identified.";
+      notFound.textContent = "Quick Button Match Skin was not found among this repository's workflow files. It may belong to another repository or be a Controller feature rather than a GitHub Actions workflow. No Run button is shown until its actual workflow is identified.";
     }
   }
 
