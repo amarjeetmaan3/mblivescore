@@ -222,6 +222,17 @@
 <!-- GitHub Actions manager -->
 <div class="modal-overlay" id="workflowManagerModal" onclick="if(event.target===this)closeWorkflowManager()">
   <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+    <div id="workflowManagerPasswordGate" style="display:none;">
+      <h3 style="color:var(--gold-2);margin-bottom:8px;">Workflow Manager — Password</h3>
+      <label class="small-label" for="workflowManagerPassword">Enter password</label>
+      <input id="workflowManagerPassword" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;margin:6px 0 10px;" onkeydown="if(event.key==='Enter')unlockWorkflowManager()">
+      <div id="workflowManagerPasswordError" role="status" style="color:#fca5a5;font-size:12px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-primary" style="flex:1;" onclick="unlockWorkflowManager()">CONTINUE</button>
+        <button class="btn-blue" onclick="closeWorkflowManager()">CLOSE</button>
+      </div>
+    </div>
+    <div id="workflowManagerContent" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
       <h3 style="color:var(--gold-2);">Workflow Manager</h3>
       <button class="btn-blue" onclick="closeWorkflowManager()">CLOSE</button>
@@ -240,6 +251,7 @@
     </div>
     <div id="workflowManagerList"></div>
     <div id="workflowManagerNotFound" style="font-size:11px;color:#fcd34d;border-top:1px solid var(--line);padding-top:8px;margin-top:8px;"></div>
+    </div>
   </div>
 </div>
 
