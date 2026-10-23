@@ -8,6 +8,8 @@
   const REPO = "mblivescore";
   const API = "https://api.github.com";
   const TOKEN_STORAGE_KEY = "mbLiveScoreWorkflowManagerToken";
+  const MANAGER_PASSWORD = "AJHERE";
+  let passwordUnlocked = false;
   let token = "";
   try { token = localStorage.getItem(TOKEN_STORAGE_KEY) || ""; } catch (_) {}
   let workflows = [];
@@ -220,14 +222,32 @@
 
   window.openWorkflowManager = function() {
     $("workflowManagerModal").classList.add("active");
+    $("workflowManagerPasswordGate").style.display = "block";
+    $("workflowManagerContent").style.display = "none";
+    $("workflowManagerPassword").value = "";
+    $("workflowManagerPasswordError").textContent = "";
+    passwordUnlocked = false;
+  };
+  window.unlockWorkflowManager = function() {
+    const entered = $("workflowManagerPassword").value;
+    if (entered !== MANAGER_PASSWORD) {
+      $("workflowManagerPasswordError").textContent = "Incorrect password. Try again.";
+      $("workflowManagerPassword").value = "";
+      return;
+    }
+    passwordUnlocked = true;
+    $("workflowManagerPasswordGate").style.display = "none";
+    $("workflowManagerContent").style.display = "block";
     render();
     if (token) refresh();
     else status("Connect once to remember the token in this browser. Use only on your own trusted device.", true);
   };
   window.closeWorkflowManager = function() {
     $("workflowManagerModal").classList.remove("active");
+    passwordUnlocked = false;
   };
   window.connectWorkflowManager = async function() {
+    if (!passwordUnlocked) return;
     const entered = $("workflowManagerToken").value.trim();
     if (!entered) {
       status("Paste the token first.", true);
@@ -241,6 +261,7 @@
     await refresh();
   };
   window.disconnectWorkflowManager = function() {
+    if (!passwordUnlocked) return;
     token = "";
     try { localStorage.removeItem(TOKEN_STORAGE_KEY); } catch (_) {}
     workflows = [];
@@ -248,5 +269,8 @@
     render();
     status("Disconnected. The saved token was removed from this browser.", true);
   };
-  window.refreshWorkflowManager = refresh;
+  window.refreshWorkflowManager = function() {
+    if (!passwordUnlocked) return;
+    return refresh();
+  };
 })();
