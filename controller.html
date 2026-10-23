@@ -66,6 +66,12 @@
     <button class="btn-primary" style="background:#16a34a; border-color:#15803d; color:#fff; width:100%; height:36px;" onclick="createAutoMatch()">START AUTO MATCH</button>
   </div>
 
+  <div class="card" style="border-color:var(--gold);">
+    <div class="card-title"><span><i class="fas fa-gears"></i> WORKFLOW MANAGER</span><span style="color:var(--muted)">GitHub Actions</span></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:7px;">Run fetch validation, start a real Cricbuzz sync, inspect debug runs, or cancel an active run without navigating through the Actions tabs.</div>
+    <button class="btn-accent" style="width:100%;height:34px;" onclick="openWorkflowManager()"><i class="fas fa-play-circle"></i> OPEN WORKFLOW MANAGER</button>
+  </div>
+
   <div class="card">
     <div class="card-title">Create New Manual Match</div>
     <div class="grid-2">
@@ -210,6 +216,29 @@
   <div class="card">
     <div class="card-title">TIMELINE & DEEP UNDO</div>
     <div class="timeline" id="timelineList"></div>
+  </div>
+</div>
+
+<!-- GitHub Actions manager -->
+<div class="modal-overlay" id="workflowManagerModal" onclick="if(event.target===this)closeWorkflowManager()">
+  <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
+      <h3 style="color:var(--gold-2);">Workflow Manager</h3>
+      <button class="btn-blue" onclick="closeWorkflowManager()">CLOSE</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">A fine-grained GitHub token is required because the Controller must not contain a permanent repository secret. Grant this token access only to <b>amarjeetmaan3/mblivescore</b> with <b>Actions: Read and write</b>. The token is held in page memory only; it is not saved to Firebase, local storage, or this repository.</div>
+    <label class="small-label" for="workflowManagerToken">GitHub token (not saved)</label>
+    <div style="display:flex;gap:5px;margin-bottom:8px;">
+      <input id="workflowManagerToken" type="password" autocomplete="off" placeholder="Paste fine-grained token" style="min-width:0;flex:1;">
+      <button class="btn-primary" onclick="connectWorkflowManager()">CONNECT</button>
+    </div>
+    <div id="workflowManagerStatus" role="status" style="font-size:11px;margin:6px 0;color:var(--muted);">Not connected.</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button class="btn-blue" style="flex:1;" onclick="refreshWorkflowManager()"><i class="fas fa-rotate"></i> REFRESH STATUS</button>
+      <button class="btn-danger" onclick="closeWorkflowManager()">CANCEL / CLOSE</button>
+    </div>
+    <div id="workflowManagerList"></div>
+    <div id="workflowManagerNotFound" style="font-size:11px;color:#fcd34d;border-top:1px solid var(--line);padding-top:8px;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -568,5 +597,6 @@ function updateUI() {
 }
 renderSavedMatches();
 </script>
+  <script type="module" src="./workflow-manager.js"></script>
 </body>
 </html>
