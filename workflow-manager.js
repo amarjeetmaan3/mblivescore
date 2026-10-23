@@ -106,7 +106,13 @@
             const configResponse = await fetch("https://mb-live-score-default-rtdb.firebaseio.com/auto_fetch_config.json", { cache: "no-store" });
             if (!configResponse.ok) throw new Error("Could not verify Firebase auto_fetch_config (HTTP " + configResponse.status + ").");
             const config = await configResponse.json();
-            if (!config || typeof config.url !== "string" || !/https?:\\/\\/(www\\.)?cricbuzz\\.com\\//i.test(config.url)) {
+            let validMatchUrl = false;
+            try {
+              const parsedUrl = new URL(config && config.url);
+              validMatchUrl = ["http:", "https:"].includes(parsedUrl.protocol) &&
+                (parsedUrl.hostname === "cricbuzz.com" || parsedUrl.hostname.endsWith(".cricbuzz.com"));
+            } catch (_) {}
+            if (!validMatchUrl) {
               throw new Error("No valid Cricbuzz URL is saved in Firebase auto_fetch_config. In Controller, paste the match URL and press START AUTO MATCH first.");
             }
           }
