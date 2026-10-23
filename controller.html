@@ -226,8 +226,8 @@
       <h3 style="color:var(--gold-2);">Workflow Manager</h3>
       <button class="btn-blue" onclick="closeWorkflowManager()">CLOSE</button>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">A fine-grained GitHub token is required because the Controller must not contain a permanent repository secret. Grant this token access only to <b>amarjeetmaan3/mblivescore</b> with <b>Actions: Read and write</b>. The token is held in page memory only; it is not saved to Firebase, local storage, or this repository.</div>
-    <label class="small-label" for="workflowManagerToken">GitHub token (not saved)</label>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">A fine-grained GitHub token is required. Grant access only to <b>amarjeetmaan3/mblivescore</b> with <b>Actions: Read and write</b>. You can remember it in this browser to avoid pasting it every time. It stays on this device, not in the repository or Firebase. Use only on your own trusted device.</div>
+    <label class="small-label" for="workflowManagerToken">GitHub token (remembered in this browser after connect)</label>
     <div style="display:flex;gap:5px;margin-bottom:8px;">
       <input id="workflowManagerToken" type="password" autocomplete="off" placeholder="Paste fine-grained token" style="min-width:0;flex:1;">
       <button class="btn-primary" onclick="connectWorkflowManager()">CONNECT</button>
@@ -235,7 +235,8 @@
     <div id="workflowManagerStatus" role="status" style="font-size:11px;margin:6px 0;color:var(--muted);">Not connected.</div>
     <div style="display:flex;gap:6px;margin-bottom:8px;">
       <button class="btn-blue" style="flex:1;" onclick="refreshWorkflowManager()"><i class="fas fa-rotate"></i> REFRESH STATUS</button>
-      <button class="btn-danger" onclick="closeWorkflowManager()">CANCEL / CLOSE</button>
+      <button class="btn-danger" onclick="disconnectWorkflowManager()">DISCONNECT / FORGET</button>
+      <button class="btn-danger" onclick="closeWorkflowManager()">CLOSE</button>
     </div>
     <div id="workflowManagerList"></div>
     <div id="workflowManagerNotFound" style="font-size:11px;color:#fcd34d;border-top:1px solid var(--line);padding-top:8px;margin-top:8px;"></div>
