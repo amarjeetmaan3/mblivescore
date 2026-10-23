@@ -63,7 +63,8 @@
   }
 
   function latestRunFor(file) {
-    return runs.find(run => (run.path || "").endsWith("/" + file)) || null;
+    const matching = runs.filter(run => (run.path || "").endsWith("/" + file));
+    return matching.find(run => run.status !== "completed") || matching[0] || null;
   }
 
   function runLabel(run) {
@@ -101,6 +102,14 @@
         if (def.caution && !confirm("This runs the real sync and writes fetched data to Firebase. Continue?")) return;
         runBtn.disabled = true;
         try {
+          if (def.file === "sync-cricbuzz.yml" || def.file === "test.yml") {
+            const configResponse = await fetch("https://mb-live-score-default-rtdb.firebaseio.com/auto_fetch_config.json", { cache: "no-store" });
+            if (!configResponse.ok) throw new Error("Could not verify Firebase auto_fetch_config (HTTP " + configResponse.status + ").");
+            const config = await configResponse.json();
+            if (!config || typeof config.url !== "string" || !/https?:\\/\\/(www\\.)?cricbuzz\\.com\\//i.test(config.url)) {
+              throw new Error("No valid Cricbuzz URL is saved in Firebase auto_fetch_config. In Controller, paste the match URL and press START AUTO MATCH first.");
+            }
+          }
           await api("/repos/" + OWNER + "/" + REPO + "/actions/workflows/" + def.file + "/dispatches", {
             method: "POST", body: JSON.stringify({ ref: "main" })
           });
