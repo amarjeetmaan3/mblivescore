@@ -1,12 +1,15 @@
 /* Controller-side GitHub Actions manager.
- * The fine-grained token is held in memory only and is never persisted.
+ * The token can be remembered in this browser's local storage when the user connects.
+ * Never put a real token in repository source: this file is public client-side code.
  * Required repository permission: Actions (read and write).
  */
 (() => {
   const OWNER = "amarjeetmaan3";
   const REPO = "mblivescore";
   const API = "https://api.github.com";
+  const TOKEN_STORAGE_KEY = "mbLiveScoreWorkflowManagerToken";
   let token = "";
+  try { token = localStorage.getItem(TOKEN_STORAGE_KEY) || ""; } catch (_) {}
   let workflows = [];
   let runs = [];
 
@@ -219,7 +222,7 @@
     $("workflowManagerModal").classList.add("active");
     render();
     if (token) refresh();
-    else status("Enter a GitHub fine-grained token with Actions read/write permission to enable Run and Cancel.", true);
+    else status("Connect once to remember the token in this browser. Use only on your own trusted device.", true);
   };
   window.closeWorkflowManager = function() {
     $("workflowManagerModal").classList.remove("active");
@@ -231,8 +234,19 @@
       return;
     }
     token = entered;
+    try { localStorage.setItem(TOKEN_STORAGE_KEY, token); } catch (_) {
+      status("Browser storage is unavailable. Token will work until this page is closed.", true);
+    }
     $("workflowManagerToken").value = "";
     await refresh();
+  };
+  window.disconnectWorkflowManager = function() {
+    token = "";
+    try { localStorage.removeItem(TOKEN_STORAGE_KEY); } catch (_) {}
+    workflows = [];
+    runs = [];
+    render();
+    status("Disconnected. The saved token was removed from this browser.", true);
   };
   window.refreshWorkflowManager = refresh;
 })();
