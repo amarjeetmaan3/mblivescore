@@ -239,28 +239,55 @@
     } catch (_) {}
   }
 
-  window.startAutoMatchFromWorkflowManager = function() {
+  window.verifyAndSaveWorkflowManagerUrl = async function() {
+    if (!passwordUnlocked) return false;
+    const input = $("workflowManagerCricbuzzUrl");
+    const url = (input && input.value || "").trim();
+    const info = $("workflowManagerLinkStatus");
+    const show = (message, bad = false) => {
+      if (info) { info.textContent = message; info.style.color = bad ? "#fca5a5" : "#86efac"; }
+      status(message, bad);
+    };
+    let parsed;
+    try { parsed = new URL(url); } catch (_) { show("Paste a valid Cricbuzz match URL first.", true); return false; }
+    if (!["http:", "https:"].includes(parsed.protocol) ||
+        !(parsed.hostname === "cricbuzz.com" || parsed.hostname.endsWith(".cricbuzz.com")) ||
+        !/\\/(?:live-cricket-scores|live-cricket-scorecard|cricket-scores|cricket-scorecard)\\/\\d+\\//i.test(parsed.pathname)) {
+      show("Invalid Cricbuzz match URL. Paste a match page URL containing its match ID.", true); return false;
+    }
+    show("Saving link to Firebase…");
+    try {
+      const response = await fetch("https://mb-live-score-default-rtdb.firebaseio.com/auto_fetch_config.json", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url, updatedAt: new Date().toISOString() })
+      });
+      if (!response.ok) throw new Error("Firebase HTTP " + response.status);
+      const saved = await response.json();
+      if (!saved || saved.url !== url) throw new Error("Firebase did not confirm the saved URL");
+      show("LINK SAVED ✓ Firebase confirmed the match link.");
+      return true;
+    } catch (e) {
+      show("LINK NOT SAVED — " + e.message + ". Check Firebase URL/rules.", true);
+      return false;
+    }
+  };
+
+  window.startAutoMatchFromWorkflowManager = async function() {
     if (!passwordUnlocked) return;
     const input = $("workflowManagerCricbuzzUrl");
     const url = (input && input.value || "").trim();
-    let parsed;
-    try { parsed = new URL(url); } catch (_) {
-      status("Paste a valid Cricbuzz match URL first.", true);
-      return;
-    }
-    if (!["http:", "https:"].includes(parsed.protocol) ||
-        !(parsed.hostname === "cricbuzz.com" || parsed.hostname.endsWith(".cricbuzz.com"))) {
-      status("Only a valid Cricbuzz match URL is accepted.", true);
-      return;
-    }
     const mainInput = $("cricbuzz_url");
     if (!mainInput || typeof window.createAutoMatch !== "function") {
       status("The Controller's Auto Match form is not available on this page.", true);
       return;
     }
     mainInput.value = url;
-    window.closeWorkflowManager();
+    const saved = await window.verifyAndSaveWorkflowManagerUrl();
+    if (!saved) return;
     window.createAutoMatch();
+    const info = $("workflowManagerLinkStatus");
+    if (info) { info.textContent = "START REQUEST SENT. Workflow Manager stays open. Check Cloud Saved Matches after match initialization."; info.style.color = "#86efac"; }
+    setTimeout(() => { if (passwordUnlocked) { loadSavedCricbuzzUrl(); refresh(); } }, 1500);
   };
 
   window.unlockWorkflowManager = function() {
