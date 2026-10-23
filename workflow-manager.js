@@ -228,6 +228,41 @@
     $("workflowManagerPasswordError").textContent = "";
     passwordUnlocked = false;
   };
+  async function loadSavedCricbuzzUrl() {
+    const input = $("workflowManagerCricbuzzUrl");
+    if (!input) return;
+    try {
+      const response = await fetch("https://mb-live-score-default-rtdb.firebaseio.com/auto_fetch_config.json", { cache: "no-store" });
+      if (!response.ok) return;
+      const config = await response.json();
+      if (config && typeof config.url === "string" && !input.value) input.value = config.url;
+    } catch (_) {}
+  }
+
+  window.startAutoMatchFromWorkflowManager = function() {
+    if (!passwordUnlocked) return;
+    const input = $("workflowManagerCricbuzzUrl");
+    const url = (input && input.value || "").trim();
+    let parsed;
+    try { parsed = new URL(url); } catch (_) {
+      status("Paste a valid Cricbuzz match URL first.", true);
+      return;
+    }
+    if (!["http:", "https:"].includes(parsed.protocol) ||
+        !(parsed.hostname === "cricbuzz.com" || parsed.hostname.endsWith(".cricbuzz.com"))) {
+      status("Only a valid Cricbuzz match URL is accepted.", true);
+      return;
+    }
+    const mainInput = $("cricbuzz_url");
+    if (!mainInput || typeof window.createAutoMatch !== "function") {
+      status("The Controller's Auto Match form is not available on this page.", true);
+      return;
+    }
+    mainInput.value = url;
+    window.closeWorkflowManager();
+    window.createAutoMatch();
+  };
+
   window.unlockWorkflowManager = function() {
     const entered = $("workflowManagerPassword").value;
     if (entered !== MANAGER_PASSWORD) {
@@ -239,6 +274,7 @@
     $("workflowManagerPasswordGate").style.display = "none";
     $("workflowManagerContent").style.display = "block";
     render();
+    loadSavedCricbuzzUrl();
     if (token) refresh();
     else status("Connect once to remember the token in this browser. Use only on your own trusted device.", true);
   };
